@@ -1,0 +1,15 @@
+---
+services:
+  oxicount:
+    container_name: oxicount
+    build:
+      context: .
+      dockerfile: Containerfile
+    restart: unless-stopped
+    volumes:
+      # You can change the source directory from ./data.
+      - ./data:/volumes/data:Z
+    # You can remove the ports section and add a networks one if you use an internal Traefik network.
+    ports:
+      # You can change the source port from 8080.
+      - 8080:80
