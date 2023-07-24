@@ -1,0 +1,26 @@
+[package]
+name = "oxicount"
+version = "0.0.1"
+edition = "2021"
+authors = ["Mo Bitar <mo8it@proton.me>"]
+repository = "https://codeberg.org/mo8it/oxicount"
+license = "AGPL-3.0"
+
+[dependencies]
+axum = { version = "0.6.19", default-features = false, features = ["http1", "tokio"] }
+charming = "0.2.3"
+config_builder = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
+figment = { version = "0.10.10", features = ["yaml", "env"] }
+init_err = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
+mime_guess = "2.0.4"
+resp_err = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
+runner = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
+serde = { version = "1.0.174", features = ["derive"] }
+sqlx = { version = "0.7.1", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "time"] }
+time = "0.3.23"
+tokio = { version = "1.29.1", default-features = false, features = ["fs"] }
+tracer = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
+tracing = "0.1.37"
+
+[profile.dev.package.sqlx-macros]
+opt-level = 3

@@ -1,0 +1,7 @@
+# Rust
+target/
+
+# Dev
+/dev/
+*.log
+.env
