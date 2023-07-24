@@ -1,0 +1,5 @@
+default_job = "clippy"
+
+[jobs.clippy]
+command = ["cargo", "clippy", "--all-targets", "--color", "always", "--workspace"]
+need_stdout = false
