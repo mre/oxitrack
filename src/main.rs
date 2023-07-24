@@ -39,7 +39,7 @@ async fn init() -> Result<(), InitErr> {
 
     info!("Listening on {socket_address}");
     Server::bind(&socket_address)
-        .serve(router.into_make_service())
+        .serve(router.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .init_ctx("Server error!")
 }

@@ -2,14 +2,14 @@ pub mod states;
 
 use axum::{
     body::Full,
-    extract::{Path, State},
+    extract::{ConnectInfo, Path, State},
     http::header,
     response::{IntoResponse, Response},
     Json,
 };
 use futures::TryStreamExt;
 use resp_err::{RespErr, RespErrCtx, Status};
-use std::sync::Arc;
+use std::{net::SocketAddr, sync::Arc};
 use tracing::instrument;
 
 use self::states::AppState;
@@ -20,15 +20,36 @@ struct Id {
     id: i64,
 }
 
+fn call_reponse(state: Arc<AppState>) -> Response {
+    let headers = [(header::CONTENT_TYPE, &state.mime)];
+    let body = Full::from(state.file_content);
+
+    (headers, body).into_response()
+}
+
 #[instrument(skip_all)]
-pub async fn call(State(state): AppStateT, Path(path): Path<String>) -> Result<Response, RespErr> {
+pub async fn call(
+    State(state): AppStateT,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Path(path): Path<String>,
+) -> Result<Response, RespErr> {
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_optional(&*state.db)
         .await
         .ctx(Status::Internal)?;
 
     let path_id = match path_id {
-        Some(id) => id.id,
+        Some(id) => {
+            let id = id.id;
+
+            let new_call = state.anti_spam.lock().unwrap().insert((id, addr));
+
+            if !new_call {
+                return Ok(call_reponse(state));
+            }
+
+            id
+        }
         None => {
             let status = reqwest::get(format!("{}/{path}", state.tracked_base_url))
                 .await
@@ -52,10 +73,7 @@ pub async fn call(State(state): AppStateT, Path(path): Path<String>) -> Result<R
         .await
         .ctx(Status::Internal)?;
 
-    let headers = [(header::CONTENT_TYPE, &state.mime)];
-    let body = Full::from(state.file_content);
-
-    Ok((headers, body).into_response())
+    Ok(call_reponse(state))
 }
 
 struct TimeStamp {

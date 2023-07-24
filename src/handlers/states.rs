@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashSet, net::SocketAddr, path::PathBuf, sync::Mutex};
 
 use init_err::{InitErr, InitErrCtx};
 
@@ -10,6 +10,7 @@ pub struct AppState {
     pub file_content: &'static [u8],
     pub mime: String,
     pub tracked_base_url: String,
+    pub anti_spam: Mutex<HashSet<(i64, SocketAddr)>>,
 }
 
 impl AppState {
@@ -27,14 +28,17 @@ impl AppState {
             })?
             .leak();
 
-        let mime = mime_guess::from_path(response_file).first_or_octet_stream();
-        let mime = mime.as_ref().to_string();
+        let mime = mime_guess::from_path(response_file)
+            .first_or_octet_stream()
+            .as_ref()
+            .to_owned();
 
         Ok(Self {
             db,
             file_content,
             mime,
             tracked_base_url: config.tracked_base_url,
+            anti_spam: Mutex::new(HashSet::with_capacity(1024)),
         })
     }
 }

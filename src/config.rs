@@ -30,7 +30,7 @@ pub struct Config {
     pub tracked_base_url: String,
 }
 fn default_socket_address() -> String {
-    "0.0.0.0:80".to_string()
+    "0.0.0.0:80".to_owned()
 }
 
 impl ConfigBuilder for Config {
