@@ -42,7 +42,7 @@ pub async fn call(
         Some(id) => {
             let id = id.id;
 
-            let new_call = state.anti_spam.lock().unwrap().insert((id, addr));
+            let new_call = state.anti_spam.lock().unwrap().insert((id, addr.ip()));
 
             if !new_call {
                 return Ok(call_reponse(state));

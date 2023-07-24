@@ -1,4 +1,4 @@
-use std::{collections::HashSet, net::SocketAddr, path::PathBuf, sync::Mutex};
+use std::{collections::HashSet, net::IpAddr, path::PathBuf, sync::Mutex};
 
 use init_err::{InitErr, InitErrCtx};
 
@@ -10,7 +10,7 @@ pub struct AppState {
     pub file_content: &'static [u8],
     pub mime: String,
     pub tracked_base_url: String,
-    pub anti_spam: Mutex<HashSet<(i64, SocketAddr)>>,
+    pub anti_spam: Mutex<HashSet<(i64, IpAddr)>>,
 }
 
 impl AppState {
