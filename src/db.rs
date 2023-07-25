@@ -45,3 +45,7 @@ impl Database {
         Ok(Self { pool })
     }
 }
+
+pub struct Id {
+    pub id: i64,
+}

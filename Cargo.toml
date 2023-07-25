@@ -1,9 +1,9 @@
 [package]
-name = "oxicount"
+name = "oxitraffic"
 version = "0.0.1"
 edition = "2021"
 authors = ["Mo Bitar <mo8it@proton.me>"]
-repository = "https://codeberg.org/mo8it/oxicount"
+repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
 
 [dependencies]

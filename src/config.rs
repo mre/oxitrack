@@ -39,13 +39,13 @@ impl ConfigBuilder for Config {
             let config_file_path = data_dir.join("config.yaml");
 
             Figment::new()
-                .merge(Env::prefixed("OXICOUNT_").split("__"))
+                .merge(Env::prefixed("OXITRAFFIC_").split("__"))
                 .join(Yaml::file(config_file_path))
                 .extract()
                 .init_ctx("Failed to parse the configuration!")?
         };
 
-        tracer::init(data_dir, &slf.utc_offset, "oxicount")?;
+        tracer::init(data_dir, &slf.utc_offset, "oxitraffic")?;
         *tracer_initialized = true;
 
         Ok(slf)

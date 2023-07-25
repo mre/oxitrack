@@ -1,7 +1,7 @@
 ---
 services:
-  oxicount:
-    container_name: oxicount
+  oxitraffic:
+    container_name: oxitraffic
     build:
       context: .
       dockerfile: Containerfile

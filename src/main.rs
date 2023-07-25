@@ -14,7 +14,7 @@ use tracing::info;
 use config::Config;
 use handlers::states::AppState;
 
-const DATA_DIR_ENV_VAR: &str = "OXICOUNT_DATA_DIR";
+const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
 
 async fn init() -> Result<(), InitErr> {
     let Ok(env_var) = env::var(DATA_DIR_ENV_VAR) else {
@@ -32,9 +32,13 @@ async fn init() -> Result<(), InitErr> {
 
     let app_state = Arc::new(AppState::build(config, data_dir).await?);
 
+    let api_router = Router::new()
+        .route("/history/*path", get(handlers::api::history))
+        .route("/counts", get(handlers::api::counts));
+
     let router = Router::new()
         .route("/call/*path", get(handlers::call))
-        .route("/data/*path", get(handlers::data))
+        .nest("/api", api_router)
         .with_state(app_state);
 
     info!("Listening on {socket_address}");
