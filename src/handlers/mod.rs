@@ -1,4 +1,6 @@
 pub mod api;
+mod base_template;
+pub mod dashboard;
 pub mod states;
 
 use axum::{
