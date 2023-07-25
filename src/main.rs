@@ -39,6 +39,7 @@ async fn init() -> Result<(), InitErr> {
     let app_state = Arc::new(AppState::build(config, data_dir).await?);
 
     let api_router = Router::new()
+        .route_with_tsr("/history", get(handlers::api::history_index))
         .route("/history/*path", get(handlers::api::history))
         .route("/counts", get(handlers::api::counts));
 

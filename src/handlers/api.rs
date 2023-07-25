@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::{Path, State},
     Json,
@@ -9,17 +11,13 @@ use tracing::instrument;
 
 use crate::db::Id;
 
-use super::AppStateT;
+use super::{states::AppState, AppStateT};
 
 struct TimeStamp {
     timestamp: Option<String>,
 }
 
-#[instrument(skip_all)]
-pub async fn history(
-    State(state): AppStateT,
-    Path(path): Path<String>,
-) -> Result<Json<Vec<String>>, RespErr> {
+async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<String>>, RespErr> {
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_one(&*state.db)
         .await
@@ -39,6 +37,23 @@ pub async fn history(
     .ctx(Status::Internal)
     .err_msg("History query failed!")
     .map(Json)
+}
+
+#[instrument(skip_all)]
+pub async fn history_index(State(state): AppStateT) -> Result<Json<Vec<String>>, RespErr> {
+    let path = "";
+
+    handle_history(state, path).await
+}
+
+#[instrument(skip_all)]
+pub async fn history(
+    State(state): AppStateT,
+    Path(path): Path<String>,
+) -> Result<Json<Vec<String>>, RespErr> {
+    let path = path.trim_end_matches('/');
+
+    handle_history(state, path).await
 }
 
 #[derive(Serialize)]
