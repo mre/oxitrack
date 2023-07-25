@@ -6,6 +6,7 @@ use axum::{
     routing::{get, Router},
     Server,
 };
+use axum_extra::routing::RouterExt;
 use config_builder::ConfigBuilder;
 use init_err::{InitErr, InitErrCtx};
 use std::{env, net::SocketAddr, path::PathBuf, process, sync::Arc};
@@ -37,6 +38,7 @@ async fn init() -> Result<(), InitErr> {
         .route("/counts", get(handlers::api::counts));
 
     let router = Router::new()
+        .route_with_tsr("/call", get(handlers::call_index))
         .route("/call/*path", get(handlers::call))
         .nest("/api", api_router)
         .with_state(app_state);

@@ -8,6 +8,7 @@ license = "AGPL-3.0"
 
 [dependencies]
 axum = { version = "0.6.19", default-features = false, features = ["http1", "tokio", "json"] }
+axum-extra = "0.7.5"
 config_builder = { git = "https://codeberg.org/mo8it/axum_helpers.git" }
 figment = { version = "0.10.10", features = ["yaml", "env"] }
 futures = "0.3.28"
