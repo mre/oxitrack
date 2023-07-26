@@ -4,18 +4,15 @@ use axum::{
     extract::{Path, State},
     Json,
 };
-use futures::TryStreamExt;
+use futures::{StreamExt, TryStreamExt};
 use resp_err::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
+use time::format_description::well_known::Rfc3339;
 use tracing::instrument;
 
-use crate::db::Id;
+use crate::db::{Id, TimeStamp};
 
 use super::{states::AppState, AppStateT};
-
-struct TimeStamp {
-    timestamp: Option<String>,
-}
 
 async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<String>>, RespErr> {
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
@@ -27,15 +24,21 @@ async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<Str
 
     sqlx::query_as!(
         TimeStamp,
-        "SELECT timestamp::text FROM calls WHERE path_id = $1 ORDER BY timestamp",
+        "SELECT timestamp FROM calls WHERE path_id = $1 ORDER BY timestamp",
         path_id,
     )
     .fetch(&*state.db)
-    .try_filter_map(|row| async move { Ok(row.timestamp) })
+    .map(|row| {
+        row.ctx(Status::Internal)
+            .err_msg("History query failed!")?
+            .timestamp
+            .assume_utc()
+            .format(&Rfc3339)
+            .ctx(Status::Internal)
+            .err_msg("Failed to format datetime!")
+    })
     .try_collect()
     .await
-    .ctx(Status::Internal)
-    .err_msg("History query failed!")
     .map(Json)
 }
 
