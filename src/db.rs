@@ -5,6 +5,7 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, PgPool,
 };
+use time::PrimitiveDateTime;
 
 use crate::config;
 
@@ -48,4 +49,8 @@ impl Database {
 
 pub struct Id {
     pub id: i64,
+}
+
+pub struct TimeStamp {
+    pub timestamp: PrimitiveDateTime,
 }
