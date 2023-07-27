@@ -1,6 +1,7 @@
 use std::{collections::HashSet, net::IpAddr, path::PathBuf, sync::Mutex};
 
-use init_err::{InitErr, InitErrCtx};
+use oxi_axum_helpers::{InitErr, InitErrCtx};
+use time::UtcOffset;
 
 use crate::{config::Config, db::Database};
 
@@ -11,10 +12,15 @@ pub struct AppState {
     pub mime: String,
     pub tracked_base_url: String,
     pub anti_spam: Mutex<HashSet<(i64, IpAddr)>>,
+    pub utc_offset: UtcOffset,
 }
 
 impl AppState {
-    pub async fn build(config: Config, data_dir: PathBuf) -> Result<Self, InitErr> {
+    pub async fn build(
+        data_dir: PathBuf,
+        config: Config,
+        utc_offset: UtcOffset,
+    ) -> Result<Self, InitErr> {
         let db = Database::build(config.db).await?;
 
         let response_file = data_dir.join(config.response_filename);
@@ -39,6 +45,7 @@ impl AppState {
             mime,
             tracked_base_url: config.tracked_base_url,
             anti_spam: Mutex::new(HashSet::with_capacity(1024)),
+            utc_offset,
         })
     }
 }

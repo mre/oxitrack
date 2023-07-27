@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use init_err::{InitErr, InitErrCtx};
+use oxi_axum_helpers::{InitErr, InitErrCtx};
 use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, PgPool,

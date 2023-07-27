@@ -7,8 +7,7 @@ use axum::{
     response::Response,
 };
 use futures::TryStreamExt;
-use resp_err::{RespErr, RespErrCtx, RespErrExt, Status};
-use templ_resp::TryIntoTemplResp;
+use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
 use time::format_description::well_known::Rfc3339;
 use tracing::instrument;
 
@@ -81,7 +80,11 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
         path_id,
     )
     .fetch(&*state.db)
-    .map_ok(|row| row.timestamp.assume_utc().unix_timestamp())
+    .map_ok(|row| {
+        row.timestamp
+            .assume_offset(state.utc_offset)
+            .unix_timestamp()
+    })
     .try_collect::<Vec<_>>()
     .await
     .ctx(Status::Internal)

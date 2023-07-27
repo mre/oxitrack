@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use futures::{StreamExt, TryStreamExt};
-use resp_err::{RespErr, RespErrCtx, RespErrExt, Status};
+use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use time::format_description::well_known::Rfc3339;
 use tracing::instrument;
@@ -32,7 +32,7 @@ async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<Str
         row.ctx(Status::Internal)
             .err_msg("History query failed!")?
             .timestamp
-            .assume_utc()
+            .assume_offset(state.utc_offset)
             .format(&Rfc3339)
             .ctx(Status::Internal)
             .err_msg("Failed to format datetime!")
