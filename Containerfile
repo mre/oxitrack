@@ -6,5 +6,5 @@ FROM docker.io/library/debian:stable-slim AS runtime
 EXPOSE 80
 WORKDIR app
 ENV OXITRAFFIC_DATA_DIR=/volumes/data
-COPY --from=builder /root/.cargo/bin/oxitraffic /usr/local/bin/oxitraffic
+COPY --from=builder /usr/local/cargo/bin/oxitraffic /usr/local/bin/oxitraffic
 CMD ["oxitraffic"]
