@@ -1,15 +1,18 @@
 [package]
 name = "oxitraffic"
-version = "0.0.1"
+description = "Self-hosted, simple and privacy respecting website traffic tracker"
+version = "0.1.0"
 edition = "2021"
 authors = ["Mo Bitar <mo8it@proton.me>"]
 repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
+keywords = ["selfhosted", "analytics", "traffic"]
+exclude = ["bacon.toml", "Containerfile", "compose.yaml"]
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
 axum-extra = "0.7.5"
-axum = { version = "0.6.19", default-features = false, features = ["http1", "tokio", "json"] }
+axum = { version = "0.6.19", default-features = false, features = ["http2", "tokio", "json"] }
 figment = { version = "0.10.10", features = ["yaml", "env"] }
 futures = "0.3.28"
 mime_guess = "2.0.4"
@@ -17,7 +20,7 @@ oxi-axum-helpers = { version = "0.0.3", features = ["templates", "static_handler
 plotters = { version = "0.3.5", default-features = false, features = ["svg_backend", "line_series"] }
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls"] }
 rust-embed = "6.8.1"
-serde = { version = "1.0.176", features = ["derive"] }
+serde = { version = "1.0.177", features = ["derive"] }
 sqlx = { version = "0.7.1", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "time"] }
 time = { version = "0.3.23", features = ["formatting"] }
 tokio = { version = "1.29.1", default-features = false, features = ["fs"] }

@@ -9,6 +9,11 @@ Visit the website and look for the image of Ferris (happy crab 🦀) on the bott
 Klick on it to see a plot of the call history for that page.
 Each page on the website has its own call history.
 
+Try out the following API endpoints (with `curl` for example):
+
+- `https://oxitraffic.mo8it.com/api/counts`
+- `https://oxitraffic.mo8it.com/api/history/blog`
+
 ## Features
 
 - Protection against spam from the same IP ❌
