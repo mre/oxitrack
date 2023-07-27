@@ -6,7 +6,7 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 
 My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
 Visit the website and look for the image of Ferris (happy crab 🦀) on the bottom.
-Klick on it to see a plot of the call history for that page.
+Click on it to see a plot of the call history for that page.
 Each page on the website has its own call history.
 
 Try out the following API endpoints (with `curl` for example):
@@ -76,7 +76,7 @@ You can also host OxiTraffic directly with the binary that you can install with 
 cargo install oxitraffic
 ```
 
-Make sure to provide the environment varialbe `OXITRAFFIC_DATA_DIR` when using the binary directly.
+Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
 
 In both cases (container or binary), you need a PostgreSQL database.
 There are many guides in the internet that explain how to host one either in a container or directly on the host.
@@ -87,7 +87,7 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 | Parameter          | Description                                                                                                                                  | Default      |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | socket_address     | Use `127.0.0.1:8080` for testing on `http://localhost:8080`. `0.0.0.0` is important for usage in a container, but you can pick another port. | "0.0.0.0:80" |
-| repsonse_filename  | The filename of the response image                                                                                                           |              |
+| response_filename  | The filename of the response image                                                                                                           |              |
 | tracked_base_url   | The base URL of your tracked website                                                                                                         |              |
 | db.host            | PostgreSQL host                                                                                                                              |              |
 | db.port            | PostgreSQL port                                                                                                                              |              |

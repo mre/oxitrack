@@ -20,7 +20,7 @@ use self::states::AppState;
 
 pub type AppStateT = State<Arc<AppState>>;
 
-fn call_reponse(state: Arc<AppState>) -> Response {
+fn call_response(state: Arc<AppState>) -> Response {
     let headers = [(header::CONTENT_TYPE, &state.mime)];
     let body = Full::from(state.file_content);
 
@@ -43,7 +43,7 @@ async fn handle_call(
             let new_call = state.anti_spam.lock().unwrap().insert((id, addr.ip()));
 
             if !new_call {
-                return Ok(call_reponse(state));
+                return Ok(call_response(state));
             }
 
             id
@@ -80,7 +80,7 @@ async fn handle_call(
         .ctx(Status::Internal)
         .err_msg("Failed to insert call!")?;
 
-    Ok(call_reponse(state))
+    Ok(call_response(state))
 }
 
 #[instrument(skip_all)]

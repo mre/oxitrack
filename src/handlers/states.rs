@@ -28,7 +28,7 @@ impl AppState {
             .await
             .init_ctx_lz(|| {
                 format!(
-                    "Failed to open the reponse file {}",
+                    "Failed to open the response file {}",
                     response_file.display()
                 )
             })?
