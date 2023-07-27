@@ -36,3 +36,7 @@ pub struct Id {
 pub struct TimeStamp {
     pub timestamp: OffsetDateTime,
 }
+
+pub struct Path {
+    pub path: String,
+}

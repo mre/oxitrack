@@ -12,4 +12,5 @@ pub struct Plot<'a> {
 #[template(path = "dashboard/index.html")]
 pub struct Index<'a> {
     pub base: Base<'a>,
+    pub paths: Vec<String>,
 }

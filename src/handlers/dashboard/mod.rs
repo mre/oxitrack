@@ -11,13 +11,26 @@ use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp
 use time::{format_description::well_known::Rfc3339, UtcOffset};
 use tracing::instrument;
 
-use crate::db::{Id, TimeStamp};
+use crate::db::{self, Id, TimeStamp};
+
+use self::templates::Index;
 
 use super::{base_template::Base, states::AppState, AppStateT};
 
 #[instrument(skip_all)]
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
-    todo!()
+    let paths = sqlx::query_as!(db::Path, "SELECT path FROM paths ORDER BY path")
+        .map(|row| row.path)
+        .fetch_all(&*state.db)
+        .await
+        .ctx(Status::Internal)
+        .err_msg("Paths query failed!")?;
+
+    Index {
+        base: Base { title: "Dashboard" },
+        paths,
+    }
+    .try_into_resp()
 }
 
 fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> Result<(), RespErr> {
