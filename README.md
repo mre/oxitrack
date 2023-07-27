@@ -1,0 +1,135 @@
+# OxiTraffic
+
+Self-hosted, simple and privacy respecting website traffic tracker 🌐
+
+## Demonstration
+
+My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
+Visit the website and look for the image of Ferris (happy crab 🦀) on the bottom.
+Klick on it to see a plot of the call history for that page.
+Each page on the website has its own call history.
+
+## Features
+
+- Protection against spam from the same IP ❌
+- Visualization of call history 📈
+- API for call history and count 🤖
+- Respects privacy (no personal data or IP is logged) 🥷🏼
+- Self-hosted 🕊️
+- Low memory usage (about 8 MB) 🏅
+- First class container support 📦️
+- Asynchronous and multithreaded 🔀
+- Informative tracing (logging) to stdout and to a log file 📜
+- YAML configuration 🛠️
+- Free & open source (AGPLv3) 🆓
+- Written in Rust (**oxi**dized) 🦀
+
+## How it works
+
+You place a remote image on your website that points to your OxiTraffic instance like the following:
+
+```html
+<img src="https://oxitraffic.YOURDOMAIN.com/call{{ PATH }}" />
+```
+
+`{{ PATH }}` is the path of the page that is visited (`/blog` for example).
+
+When the image is being rendered, OxiTraffic receives a request, logs it as a call to that path and responses with the requested image.
+
+If the visitor of your page reloads the page, the image should be cached by the browser and a second request is not sent.
+
+Even if the user invalidates the browser cache and tries to send multiple requests, only one request is registered for each pair of IP and path.
+
+This spam protection works by hashing the incoming IP with the path and accepting that hash only once.
+The hashes are stored in the RAM, therefore OxiTraffic will accept one new request for each pair of IP and path after each restart.
+
+How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
+
+Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_base_url` (TRACKED_BASE_URL/PATH).
+If the status code is 200 (OK), the path is added to the database.
+Otherwise, the request is rejected.
+
+## Setup
+
+### Data directory
+
+The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores:
+
+1. The YAML configuration file `config.yaml`
+2. The response image
+
+The log file `oxitraffic.log` will be also placed in that directory.
+
+## Hosting
+
+If you want to host OxiTraffic in a container, check [`Containerfile`](Containerfile) and [`compose.yaml`](compose.yaml) as a starting point.
+The container expects the data directory to be mounted as a **volume** at `/volumes/data`.
+
+You can also host OxiTraffic directly with the binary that you can install with Cargo:
+
+```fish
+cargo install oxitraffic
+```
+
+Make sure to provide the environment varialbe `OXITRAFFIC_DATA_DIR` when using the binary directly.
+
+In both cases (container or binary), you need a PostgreSQL database.
+There are many guides in the internet that explain how to host one either in a container or directly on the host.
+You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it.com/blog/containerized-postgresql-with-rootless-podman/).
+
+### Configuration
+
+| Parameter          | Description                                                                                                                                  | Default      |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| socket_address     | Use `127.0.0.1:8080` for testing on `http://localhost:8080`. `0.0.0.0` is important for usage in a container, but you can pick another port. | "0.0.0.0:80" |
+| repsonse_filename  | The filename of the response image                                                                                                           |              |
+| tracked_base_url   | The base URL of your tracked website                                                                                                         |              |
+| db.host            | PostgreSQL host                                                                                                                              |              |
+| db.port            | PostgreSQL port                                                                                                                              |              |
+| db.username        | PostgreSQL username                                                                                                                          |              |
+| db.password        | PostgreSQL password                                                                                                                          |              |
+| db.database        | PostgreSQL database                                                                                                                          |              |
+| utc_offset.hours   | The hours of your UTC offset                                                                                                                 | 0            |
+| utc_offset.minutes | The minutes of your UTC offset                                                                                                               | 0            |
+
+#### Example configuration
+
+```yaml
+socket_address: 0.0.0.0:80
+response_filename: happy_ferris.svg
+tracked_base_url: https://mo8it.com
+
+db:
+  host: oxitraffic-db
+  port: 5432
+  username: postgres
+  password: CHANGE_ME
+  database: postgres
+
+utc_offset:
+  hours: 2
+  minutes: 0
+```
+
+## Usage
+
+OxiTraffic has the following endpoints:
+
+- `/call/PATH`: For the remote image with call logging as explained above.
+- `/dashboard`: A list of registered paths to plot their call history.
+- `/dashboard/plot/PATH`: Plot of the call history of a specific path.
+- `/api/counts`: JSON with the call count for each registered path.
+- `/api/history/PATH`: JSON with the call datetimes for a specific path. You can use it to make your own analysis and plots.
+
+## Questions?
+
+Don't hesitate to open an issue ^^
+
+## Contributing
+
+You are welcome to contribute to the project!
+
+You can always open an issue.
+**Wait** for a response on the issue before starting with a pull request (Rejected pull request are very disappointing).
+
+Use Clippy and rustfmt before submitting code :)
