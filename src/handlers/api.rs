@@ -32,7 +32,7 @@ async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<Str
         row.ctx(Status::Internal)
             .err_msg("History query failed!")?
             .timestamp
-            .assume_offset(state.utc_offset)
+            .to_offset(state.utc_offset)
             .format(&Rfc3339)
             .ctx(Status::Internal)
             .err_msg("Failed to format datetime!")

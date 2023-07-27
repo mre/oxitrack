@@ -80,11 +80,7 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
         path_id,
     )
     .fetch(&*state.db)
-    .map_ok(|row| {
-        row.timestamp
-            .assume_offset(state.utc_offset)
-            .unix_timestamp()
-    })
+    .map_ok(|row| row.timestamp.unix_timestamp())
     .try_collect::<Vec<_>>()
     .await
     .ctx(Status::Internal)

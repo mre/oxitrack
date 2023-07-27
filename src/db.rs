@@ -5,7 +5,7 @@ use sqlx::{
     postgres::{PgConnectOptions, PgPoolOptions},
     ConnectOptions, PgPool,
 };
-use time::PrimitiveDateTime;
+use time::OffsetDateTime;
 
 use crate::config;
 
@@ -52,5 +52,5 @@ pub struct Id {
 }
 
 pub struct TimeStamp {
-    pub timestamp: PrimitiveDateTime,
+    pub timestamp: OffsetDateTime,
 }

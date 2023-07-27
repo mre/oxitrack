@@ -24,7 +24,7 @@ pub struct Config {
     pub socket_address: String,
     pub db: Database,
     #[serde(default)]
-    pub hm_utc_offset: HMUtcOffset,
+    pub utc_offset: HMUtcOffset,
     pub response_filename: String,
     pub tracked_base_url: String,
 }
@@ -44,6 +44,6 @@ impl ConfigBuilder for Config {
     }
 
     fn hm_utc_offset(&self) -> &HMUtcOffset {
-        &self.hm_utc_offset
+        &self.utc_offset
     }
 }
