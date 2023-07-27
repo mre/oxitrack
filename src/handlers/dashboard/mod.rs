@@ -32,7 +32,9 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
 
     let root = SVGBackend::with_string(svg, (1280, 700)).into_drawing_area();
     let mut chart = ChartBuilder::on(&root)
-        .margin(8)
+        .margin_left(12)
+        .margin_right(12)
+        .margin_top(8)
         .x_label_area_size(32)
         .y_label_area_size(32)
         .build_cartesian_2d(min..max, 1..history.len())
@@ -49,7 +51,7 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
                 .format(&Rfc3339)
                 .unwrap()
         })
-        .x_labels(6)
+        .x_labels(5)
         .x_desc("Timestamp")
         .y_desc("Calls")
         .draw()
