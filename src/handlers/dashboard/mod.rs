@@ -8,8 +8,8 @@ use axum::{
 };
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
-use time::{format_description::well_known::Rfc3339, UtcOffset};
-use tracing::instrument;
+use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
+use tracing::{error, instrument};
 
 use crate::db::{self, Id, TimeStamp};
 
@@ -31,6 +31,24 @@ pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
         paths,
     }
     .try_into_resp()
+}
+
+fn x_label_formatter(timestamp: i64, utc_offset: UtcOffset) -> String {
+    match OffsetDateTime::from_unix_timestamp(timestamp) {
+        Ok(timestamp) => timestamp
+            .to_offset(utc_offset)
+            .format(&Rfc3339)
+            .unwrap_or_else(|e| {
+                error!("Failed to format datetime for x labels!\n{e:?}");
+
+                String::new()
+            }),
+        Err(e) => {
+            error!("Failed to parse datetime from unix timestamp for x labels!\n{e:?}");
+
+            String::new()
+        }
+    }
 }
 
 fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> Result<(), RespErr> {
@@ -57,13 +75,7 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
         .configure_mesh()
         .disable_x_mesh()
         .disable_y_mesh()
-        .x_label_formatter(&|timestamp| {
-            time::OffsetDateTime::from_unix_timestamp(*timestamp)
-                .unwrap()
-                .to_offset(utc_offset)
-                .format(&Rfc3339)
-                .unwrap()
-        })
+        .x_label_formatter(&|timestamp| x_label_formatter(*timestamp, utc_offset))
         .x_labels(5)
         .x_desc("Timestamp")
         .y_desc("Calls")
