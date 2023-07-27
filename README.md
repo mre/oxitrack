@@ -9,6 +9,8 @@ Visit the website and look for the image of Ferris (happy crab 🦀) on the bott
 Click on it to see a plot of the call history for that page.
 Each page on the website has its own call history.
 
+You can visit the dashboard: [oxitraffic.mo8it.com/dashboard](https://oxitraffic.mo8it.com/dashboard)
+
 Try out the following API endpoints (with `curl` for example):
 
 - `https://oxitraffic.mo8it.com/api/counts`
