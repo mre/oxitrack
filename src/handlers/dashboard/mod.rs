@@ -77,6 +77,16 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
         ))
         .ctx(Status::Internal)?;
 
+    chart
+        .draw_series(
+            history
+                .iter()
+                .copied()
+                .zip(1..=history.len())
+                .map(|coord| Circle::new(coord, 3, BLUE.filled())),
+        )
+        .ctx(Status::Internal)?;
+
     root.present().ctx(Status::Internal)?;
 
     Ok(())
