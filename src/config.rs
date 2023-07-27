@@ -4,17 +4,8 @@ use figment::{
     providers::{Env, Format, Yaml},
     Figment,
 };
-use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, InitErr, InitErrCtx};
+use oxi_axum_helpers::{ConfigBuilder, DBConfig, HMUtcOffset, InitErr, InitErrCtx};
 use serde::Deserialize;
-
-#[derive(Deserialize)]
-pub struct Database {
-    pub host: String,
-    pub port: u16,
-    pub username: String,
-    pub password: String,
-    pub database: String,
-}
 
 /// Configuration.
 #[derive(Deserialize)]
@@ -22,7 +13,7 @@ pub struct Config {
     /// The server socket address including port.
     #[serde(default = "default_socket_address")]
     pub socket_address: String,
-    pub db: Database,
+    pub db: DBConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
     pub response_filename: String,

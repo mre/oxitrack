@@ -1,13 +1,8 @@
 use std::ops::Deref;
 
-use oxi_axum_helpers::{InitErr, InitErrCtx};
-use sqlx::{
-    postgres::{PgConnectOptions, PgPoolOptions},
-    ConnectOptions, PgPool,
-};
+use oxi_axum_helpers::{DBConfig, InitErr, InitErrCtx};
+use sqlx::PgPool;
 use time::OffsetDateTime;
-
-use crate::config;
 
 pub struct Database {
     pool: PgPool,
@@ -22,21 +17,8 @@ impl Deref for Database {
 }
 
 impl Database {
-    pub async fn build(db_config: config::Database) -> Result<Self, InitErr> {
-        let pool = {
-            let options = PgConnectOptions::new_without_pgpass()
-                .host(&db_config.host)
-                .port(db_config.port)
-                .username(&db_config.username)
-                .password(&db_config.password)
-                .database(&db_config.database)
-                .disable_statement_logging();
-
-            PgPoolOptions::new()
-                .connect_with(options)
-                .await
-                .init_ctx("Failed to connect to the database!")?
-        };
+    pub async fn build(db_config: DBConfig) -> Result<Self, InitErr> {
+        let pool = db_config.try_into_pool().await?;
 
         sqlx::migrate!()
             .run(&pool)

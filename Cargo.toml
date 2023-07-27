@@ -13,7 +13,7 @@ axum = { version = "0.6.19", default-features = false, features = ["http1", "tok
 figment = { version = "0.10.10", features = ["yaml", "env"] }
 futures = "0.3.28"
 mime_guess = "2.0.4"
-oxi-axum-helpers = { version = "0.0.2", features = ["templ_resp", "static_handler"] }
+oxi-axum-helpers = { version = "0.0.3", features = ["templates", "static_handler", "db"] }
 plotters = { version = "0.3.5", default-features = false, features = ["svg_backend", "line_series"] }
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls"] }
 rust-embed = "6.8.1"

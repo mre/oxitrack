@@ -1026,9 +1026,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c599b4645dac4ae71fb38ff16c6535c887f90ba2c3199a1780bceaba30f953"
+checksum = "bb8cb61d539b0f402a72571c31a399d1e774cb1cfa02898a467cda7f64d04211"
 dependencies = [
  "askama",
  "axum",
@@ -1037,6 +1037,7 @@ dependencies = [
  "mime_guess",
  "rust-embed",
  "serde",
+ "sqlx",
  "time",
  "tokio",
  "tracing",
