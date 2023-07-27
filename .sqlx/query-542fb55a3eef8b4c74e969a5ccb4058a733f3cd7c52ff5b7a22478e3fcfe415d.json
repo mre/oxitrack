@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT path, COUNT(*) AS count FROM calls\n        JOIN paths ON paths.id = calls.path_id\n        GROUP BY path",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "path",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "542fb55a3eef8b4c74e969a5ccb4058a733f3cd7c52ff5b7a22478e3fcfe415d"
+}
