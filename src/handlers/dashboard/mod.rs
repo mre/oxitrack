@@ -59,7 +59,10 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
         .ctx(Status::Internal)
         .err_msg("Empty history of an existing path!")?;
 
-    let max = *history.last().ctx(Status::Internal)?;
+    let max = *history
+        .last()
+        .ctx(Status::Internal)
+        .err_msg("Last item does not exist although the first one exists!")?;
 
     let root = SVGBackend::with_string(svg, (1280, 700)).into_drawing_area();
     let mut chart = ChartBuilder::on(&root)
@@ -125,7 +128,7 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
     .err_msg("History query failed!")?;
 
     let mut svg = String::with_capacity(1024);
-    plot_history(&mut svg, history, state.utc_offset)?;
+    plot_history(&mut svg, history, state.utc_offset).err_msg("Failed to plot history!")?;
 
     templates::Plot {
         base: Base { title: path },
