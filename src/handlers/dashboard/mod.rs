@@ -8,7 +8,7 @@ use axum::{
 };
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
-use time::format_description::well_known::Rfc3339;
+use time::{format_description::well_known::Rfc3339, UtcOffset};
 use tracing::instrument;
 
 use crate::db::{Id, TimeStamp};
@@ -20,7 +20,7 @@ pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
     todo!()
 }
 
-fn plot_history(svg: &mut String, history: Vec<i64>) -> Result<(), RespErr> {
+fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> Result<(), RespErr> {
     use plotters::prelude::*;
 
     let min = *history
@@ -45,6 +45,7 @@ fn plot_history(svg: &mut String, history: Vec<i64>) -> Result<(), RespErr> {
         .x_label_formatter(&|timestamp| {
             time::OffsetDateTime::from_unix_timestamp(*timestamp)
                 .unwrap()
+                .to_offset(utc_offset)
                 .format(&Rfc3339)
                 .unwrap()
         })
@@ -87,7 +88,7 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
     .err_msg("History query failed!")?;
 
     let mut svg = String::with_capacity(1024);
-    plot_history(&mut svg, history)?;
+    plot_history(&mut svg, history, state.utc_offset)?;
 
     templates::Plot {
         base: Base { title: path },
