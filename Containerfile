@@ -1,4 +1,5 @@
 FROM docker.io/library/rust:latest AS builder
+ENV SQLX_OFFLINE=true
 RUN cargo install oxitraffic
 
 FROM docker.io/library/debian:stable-slim AS runtime
