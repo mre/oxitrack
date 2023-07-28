@@ -40,10 +40,13 @@ async fn handle_call(
 
     let path_id = match path_id {
         Some(Id { id }) => {
-            let new_call = state.anti_spam.lock().unwrap().insert((id, addr.ip()));
+            #[cfg(feature = "anti_spam")]
+            {
+                let new_call = state.anti_spam.lock().unwrap().insert((id, addr.ip()));
 
-            if !new_call {
-                return Ok(call_response(state));
+                if !new_call {
+                    return Ok(call_response(state));
+                }
             }
 
             id
@@ -68,6 +71,7 @@ async fn handle_call(
                 .err_msg("Failed to insert path!")?
                 .id;
 
+            #[cfg(feature = "anti_spam")]
             state.anti_spam.lock().unwrap().insert((id, addr.ip()));
 
             id
