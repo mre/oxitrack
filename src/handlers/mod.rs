@@ -21,7 +21,10 @@ use self::states::AppState;
 pub type AppStateT = State<Arc<AppState>>;
 
 fn call_response(state: Arc<AppState>) -> Response {
-    let headers = [(header::CONTENT_TYPE, &state.mime)];
+    let headers = [
+        (header::CONTENT_TYPE, state.mime.as_str()),
+        (header::CACHE_CONTROL, "private, max-age=86400"),
+    ];
     let body = Full::from(state.file_content);
 
     (headers, body).into_response()
