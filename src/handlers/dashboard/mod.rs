@@ -112,7 +112,7 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
         .fetch_one(&*state.db)
         .await
         .ctx(Status::NotFound)
-        .err_msg("Path not found!")?
+        .err_msg_lz(|| format!("Path {path} not found!"))?
         .id;
 
     let history = sqlx::query_as!(
@@ -125,10 +125,11 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
     .try_collect::<Vec<_>>()
     .await
     .ctx(Status::Internal)
-    .err_msg("History query failed!")?;
+    .err_msg_lz(|| format!("History query failed for path {path}!"))?;
 
     let mut svg = String::with_capacity(1024);
-    plot_history(&mut svg, history, state.utc_offset).err_msg("Failed to plot history!")?;
+    plot_history(&mut svg, history, state.utc_offset)
+        .err_msg_lz(|| format!("Failed to plot history for path {path}!"))?;
 
     templates::Plot {
         base: Base { title: path },

@@ -35,7 +35,7 @@ pub async fn register(
         .fetch_optional(&*state.db)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to run path query!")?;
+        .err_msg_lz(|| format!("Failed to run path query for path {path}!"))?;
 
     let path_id = match path_id {
         Some(Id { id }) => id,
@@ -43,20 +43,21 @@ pub async fn register(
             let status = reqwest::get(format!("{}/{path}", state.tracked_base_url))
                 .await
                 .ctx(Status::Internal)
-                .err_msg("Failed to look up the path on the tracked website!")?
+                .err_msg_lz(|| {
+                    format!("Failed to look up the path {path} on the tracked website!")
+                })?
                 .status();
 
             if status != StatusCode::OK {
-                return Err(
-                    RespErr::new(Status::NotFound).err_msg("Path not found on tracked website!")
-                );
+                return Err(RespErr::new(Status::NotFound)
+                    .err_msg(format!("Path {path} not found on tracked website!")));
             }
 
             sqlx::query_as!(Id, "INSERT INTO paths(path) VALUES ($1) RETURNING id", path)
                 .fetch_one(&*state.db)
                 .await
                 .ctx(Status::Internal)
-                .err_msg("Failed to insert path!")?
+                .err_msg_lz(|| format!("Failed to insert path {path}!"))?
                 .id
         }
     };
@@ -83,7 +84,7 @@ pub async fn post_sleep(
         .execute(&*state.db)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to insert call!")?;
+        .err_msg_lz(|| format!("Failed to insert call for path_id {path_id}!"))?;
 
     Ok(StatusCode::OK)
 }
