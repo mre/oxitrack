@@ -13,7 +13,7 @@ use crate::db::{self, Id, TimeStamp};
 
 use self::templates::Index;
 
-use super::{base_template::Base, AppStateT, PathQuery};
+use super::{base_template::Base, queries::PathQuery, AppStateT};
 
 #[instrument(skip_all)]
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
@@ -108,9 +108,9 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
 #[instrument(skip_all)]
 pub async fn plot(
     State(state): AppStateT,
-    Query(PathQuery { path }): Query<PathQuery>,
+    Query(path): Query<PathQuery>,
 ) -> Result<Response, RespErr> {
-    let path = path.trim_end_matches('/');
+    let path = path.trimmed();
 
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_one(&*state.db)

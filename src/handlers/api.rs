@@ -10,14 +10,14 @@ use tracing::instrument;
 
 use crate::db::{Id, TimeStamp};
 
-use super::{AppStateT, PathQuery};
+use super::{queries::PathQuery, AppStateT};
 
 #[instrument(skip_all)]
 pub async fn history(
     State(state): AppStateT,
-    Query(PathQuery { path }): Query<PathQuery>,
+    Query(path): Query<PathQuery>,
 ) -> Result<Json<Vec<String>>, RespErr> {
-    let path = path.trim_end_matches('/');
+    let path = path.trimmed();
 
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_one(&*state.db)

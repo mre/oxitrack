@@ -4,11 +4,7 @@
     <ul>
         {% for path in paths %}
             <li>
-                {% if path.is_empty() %}
-                    <a href="/dashboard/plot">INDEX</a>
-                {% else %}
-                    <a href="/dashboard/plot/{{ path }}">{{ path }}</a>
-                {% endif %}
+                <a href="/dashboard/plot{{ path }}">{{ path }}</a>
             </li>
         {% endfor %}
     </ul>

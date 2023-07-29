@@ -1,6 +1,7 @@
 pub mod api;
 mod base_template;
 pub mod dashboard;
+mod queries;
 pub mod states;
 
 use axum::{
@@ -9,27 +10,24 @@ use axum::{
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use reqwest::StatusCode;
-use serde::Deserialize;
 use std::sync::Arc;
 use tracing::instrument;
 
 use crate::db::Id;
 
-use self::states::{sleeping_hotel::SleepingHotelInd, AppState};
+use self::{
+    queries::PathQuery,
+    states::{sleeping_hotel::SleepingHotelInd, AppState},
+};
 
 pub type AppStateT = State<Arc<AppState>>;
-
-#[derive(Deserialize)]
-pub struct PathQuery {
-    pub path: String,
-}
 
 #[instrument(skip_all)]
 pub async fn register(
     State(state): AppStateT,
-    Query(PathQuery { path }): Query<PathQuery>,
+    Query(path): Query<PathQuery>,
 ) -> Result<Json<u16>, RespErr> {
-    let path = path.trim_end_matches('/');
+    let path = path.trimmed();
 
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_optional(&*state.db)
@@ -40,7 +38,7 @@ pub async fn register(
     let path_id = match path_id {
         Some(Id { id }) => id,
         None => {
-            let status = reqwest::get(format!("{}/{path}", state.tracked_base_url))
+            let status = reqwest::get(format!("{}{path}", state.tracked_base_url))
                 .await
                 .ctx(Status::Internal)
                 .err_msg_lz(|| {
