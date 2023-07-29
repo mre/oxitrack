@@ -39,7 +39,7 @@ TODO: Update README
 
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
-Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_base_url` (TRACKED_BASE_URL/PATH).
+Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_base_url`.
 If the status code is 200 (OK), the path is added to the database.
 Otherwise, the request is rejected.
 
@@ -47,7 +47,7 @@ Otherwise, the request is rejected.
 
 ### Data directory
 
-The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the YAML configuration file `config.yaml`.
+The binary expects the environment variable `DATA_DIR_OXITRAFFIC` to point to a directory that stores the YAML configuration file `config.yaml`.
 
 The log file `oxitraffic.log` will be also placed in that directory.
 
@@ -62,7 +62,7 @@ You can also host OxiTraffic directly with the binary that you can install with 
 cargo install oxitraffic
 ```
 
-Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
+Make sure to provide the environment variable `DATA_DIR_OXITRAFFIC` when using the binary directly.
 
 In both cases (container or binary), you need a PostgreSQL database.
 There are many guides in the internet that explain how to host one either in a container or directly on the host.

@@ -15,7 +15,7 @@ use handlers::states::AppState;
 
 use crate::config::Config;
 
-const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
+const DATA_DIR_ENV_VAR: &str = "DATA_DIR_OXITRAFFIC";
 
 #[derive(RustEmbed)]
 #[folder = "static/"]

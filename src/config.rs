@@ -9,6 +9,7 @@ use serde::Deserialize;
 
 /// Configuration.
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Config {
     /// The server socket address including port.
     #[serde(default = "default_socket_address")]
@@ -16,7 +17,6 @@ pub struct Config {
     pub db: DBConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
-    pub response_filename: String,
     pub tracked_base_url: String,
 }
 fn default_socket_address() -> String {
