@@ -4,37 +4,33 @@ pub mod dashboard;
 pub mod states;
 
 use axum::{
-    body::Full,
-    extract::{ConnectInfo, Path, State},
-    http::header,
-    response::{IntoResponse, Response},
+    extract::{Path, Query, State},
+    Json,
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use reqwest::StatusCode;
-use std::{net::SocketAddr, sync::Arc};
-use tracing::{info, instrument};
+use serde::Deserialize;
+use std::sync::Arc;
+use tracing::instrument;
 
 use crate::db::Id;
 
-use self::states::AppState;
+use self::states::{sleeping_hotel::SleepingHotelInd, AppState};
 
 pub type AppStateT = State<Arc<AppState>>;
 
-fn call_response(state: Arc<AppState>) -> Response {
-    let headers = [
-        (header::CONTENT_TYPE, state.mime.as_str()),
-        (header::CACHE_CONTROL, "private, max-age=86400"),
-    ];
-    let body = Full::from(state.file_content);
-
-    (headers, body).into_response()
+#[derive(Deserialize)]
+pub struct PathQuery {
+    pub path: String,
 }
 
-async fn handle_call(
-    state: Arc<AppState>,
-    addr: SocketAddr,
-    path: &str,
-) -> Result<Response, RespErr> {
+#[instrument(skip_all)]
+pub async fn register(
+    State(state): AppStateT,
+    Query(PathQuery { path }): Query<PathQuery>,
+) -> Result<Json<u16>, RespErr> {
+    let path = path.trim_end_matches('/');
+
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_optional(&*state.db)
         .await
@@ -42,18 +38,7 @@ async fn handle_call(
         .err_msg("Failed to run path query!")?;
 
     let path_id = match path_id {
-        Some(Id { id }) => {
-            #[cfg(feature = "anti_spam")]
-            {
-                let new_call = state.anti_spam.lock().unwrap().insert((id, addr.ip()));
-
-                if !new_call {
-                    return Ok(call_response(state));
-                }
-            }
-
-            id
-        }
+        Some(Id { id }) => id,
         None => {
             let status = reqwest::get(format!("{}/{path}", state.tracked_base_url))
                 .await
@@ -67,19 +52,32 @@ async fn handle_call(
                 );
             }
 
-            let id = sqlx::query_as!(Id, "INSERT INTO paths(path) VALUES ($1) RETURNING id", path)
+            sqlx::query_as!(Id, "INSERT INTO paths(path) VALUES ($1) RETURNING id", path)
                 .fetch_one(&*state.db)
                 .await
                 .ctx(Status::Internal)
                 .err_msg("Failed to insert path!")?
-                .id;
-
-            #[cfg(feature = "anti_spam")]
-            state.anti_spam.lock().unwrap().insert((id, addr.ip()));
-
-            id
+                .id
         }
     };
+
+    let registration_id = state.sleeping_hotel.lock().unwrap().reserve_bed(path_id);
+
+    Ok(Json(registration_id))
+}
+
+#[instrument(skip_all)]
+pub async fn post_sleep(
+    State(state): AppStateT,
+    Path(registration_id): Path<SleepingHotelInd>,
+) -> Result<StatusCode, RespErr> {
+    let path_id = state
+        .sleeping_hotel
+        .lock()
+        .unwrap()
+        .wake_up(registration_id)
+        .ctx(Status::BadRequest)
+        .user_msg("The registered ID is invalid or has expired!")?;
 
     sqlx::query!("INSERT INTO calls(path_id) VALUES ($1)", path_id)
         .execute(&*state.db)
@@ -87,30 +85,5 @@ async fn handle_call(
         .ctx(Status::Internal)
         .err_msg("Failed to insert call!")?;
 
-    Ok(call_response(state))
-}
-
-#[instrument(skip_all)]
-pub async fn call_index(
-    State(state): AppStateT,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-) -> Result<Response, RespErr> {
-    info!("Call: INDEX");
-
-    let path = "";
-
-    handle_call(state, addr, path).await
-}
-
-#[instrument(skip_all)]
-pub async fn call(
-    State(state): AppStateT,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Path(path): Path<String>,
-) -> Result<Response, RespErr> {
-    info!("Call: {path}");
-
-    let path = path.trim_end_matches('/');
-
-    handle_call(state, addr, path).await
+    Ok(StatusCode::OK)
 }

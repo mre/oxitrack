@@ -11,24 +11,19 @@ exclude = ["bacon.toml", "Containerfile", "compose.yaml"]
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
-axum-extra = "0.7.5"
-axum = { version = "0.6.19", default-features = false, features = ["http2", "tokio", "json"] }
+axum = { version = "0.6.19", default-features = false, features = ["http2", "tokio", "json", "query"] }
 figment = { version = "0.10.10", features = ["yaml", "env"] }
 futures = "0.3.28"
 mime_guess = "2.0.4"
-oxi-axum-helpers = { version = "0.0.4", features = ["templates", "static_handler", "db"] }
+oxi-axum-helpers = { version = "0.0.5", features = ["templates", "static_handler", "db"] }
 plotters = { version = "0.3.5", default-features = false, features = ["svg_backend", "line_series"] }
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls"] }
 rust-embed = "6.8.1"
-serde = { version = "1.0.177", features = ["derive"] }
+serde = { version = "1.0.178", features = ["derive"] }
 sqlx = { version = "0.7.1", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "time"] }
 time = { version = "0.3.23", features = ["formatting"] }
 tokio = { version = "1.29.1", default-features = false, features = ["fs"] }
 tracing = "0.1.37"
-
-[features]
-default = ["anti_spam"]
-anti_spam = []
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3

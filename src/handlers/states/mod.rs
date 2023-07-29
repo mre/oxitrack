@@ -1,9 +1,12 @@
-use std::{collections::HashSet, net::IpAddr, path::PathBuf, sync::Mutex};
+pub mod sleeping_hotel;
+
+use std::{path::PathBuf, sync::Mutex};
 
 use oxi_axum_helpers::{InitErr, InitErrCtx};
 use time::UtcOffset;
 
 use crate::{config::Config, db::Database};
+use sleeping_hotel::SleepingHotel;
 
 /// The application state.
 pub struct AppState {
@@ -11,8 +14,7 @@ pub struct AppState {
     pub file_content: &'static [u8],
     pub mime: String,
     pub tracked_base_url: String,
-    #[cfg(feature = "anti_spam")]
-    pub anti_spam: Mutex<HashSet<(i64, IpAddr)>>,
+    pub sleeping_hotel: Mutex<SleepingHotel<i64, 14, 60>>,
     pub utc_offset: UtcOffset,
 }
 
@@ -45,8 +47,7 @@ impl AppState {
             file_content,
             mime,
             tracked_base_url: config.tracked_base_url,
-            #[cfg(feature = "anti_spam")]
-            anti_spam: Mutex::new(HashSet::with_capacity(1024)),
+            sleeping_hotel: Mutex::new(SleepingHotel::default()),
             utc_offset,
         })
     }

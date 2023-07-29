@@ -1,7 +1,5 @@
-use std::sync::Arc;
-
 use axum::{
-    extract::{Path, State},
+    extract::{Query, State},
     Json,
 };
 use futures::{StreamExt, TryStreamExt};
@@ -12,9 +10,15 @@ use tracing::instrument;
 
 use crate::db::{Id, TimeStamp};
 
-use super::{states::AppState, AppStateT};
+use super::{AppStateT, PathQuery};
 
-async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<String>>, RespErr> {
+#[instrument(skip_all)]
+pub async fn history(
+    State(state): AppStateT,
+    Query(PathQuery { path }): Query<PathQuery>,
+) -> Result<Json<Vec<String>>, RespErr> {
+    let path = path.trim_end_matches('/');
+
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_one(&*state.db)
         .await
@@ -40,23 +44,6 @@ async fn handle_history(state: Arc<AppState>, path: &str) -> Result<Json<Vec<Str
     .try_collect()
     .await
     .map(Json)
-}
-
-#[instrument(skip_all)]
-pub async fn history_index(State(state): AppStateT) -> Result<Json<Vec<String>>, RespErr> {
-    let path = "";
-
-    handle_history(state, path).await
-}
-
-#[instrument(skip_all)]
-pub async fn history(
-    State(state): AppStateT,
-    Path(path): Path<String>,
-) -> Result<Json<Vec<String>>, RespErr> {
-    let path = path.trim_end_matches('/');
-
-    handle_history(state, path).await
 }
 
 #[derive(Serialize)]

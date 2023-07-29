@@ -6,7 +6,6 @@ use axum::{
     routing::{get, Router},
     Server,
 };
-use axum_extra::routing::RouterExt;
 use oxi_axum_helpers::{runner, static_handler, InitErr, InitErrCtx, PreTracer};
 use rust_embed::RustEmbed;
 use std::{net::SocketAddr, sync::Arc};
@@ -37,26 +36,24 @@ async fn init() -> Result<(), InitErr> {
     let app_state = Arc::new(AppState::build(data_dir, config, utc_offset).await?);
 
     let api_router = Router::new()
-        .route_with_tsr("/history", get(handlers::api::history_index))
-        .route("/history/*path", get(handlers::api::history))
+        .route("/history", get(handlers::api::history))
         .route("/counts", get(handlers::api::counts));
 
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index))
-        .route_with_tsr("/plot", get(handlers::dashboard::plot_index))
-        .route("/plot/*path", get(handlers::dashboard::plot));
+        .route("/plot", get(handlers::dashboard::plot));
 
     let router = Router::new()
         .route("/static/:file", get(static_handler::handler::<Static>))
-        .route_with_tsr("/call", get(handlers::call_index))
-        .route("/call/*path", get(handlers::call))
+        .route("/register", get(handlers::register))
+        .route("/post-sleep/:registration_id", get(handlers::post_sleep))
         .nest("/api", api_router)
         .nest("/dashboard", dashboard_router)
         .with_state(app_state);
 
     info!("Listening on {socket_address}");
     Server::bind(&socket_address)
-        .serve(router.into_make_service_with_connect_info::<SocketAddr>())
+        .serve(router.into_make_service())
         .await
         .init_ctx("Server error!")
 }
