@@ -23,9 +23,7 @@ struct Static;
 
 async fn init() -> Result<(), InitErr> {
     let PreTracer {
-        data_dir,
-        config,
-        utc_offset,
+        config, utc_offset, ..
     } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR);
 
     let socket_address = config
@@ -33,7 +31,7 @@ async fn init() -> Result<(), InitErr> {
         .parse::<SocketAddr>()
         .init_ctx("Failed to parse the socket address!")?;
 
-    let app_state = Arc::new(AppState::build(data_dir, config, utc_offset).await?);
+    let app_state = Arc::new(AppState::build(config, utc_offset).await?);
 
     let api_router = Router::new()
         .route("/history", get(handlers::api::history))

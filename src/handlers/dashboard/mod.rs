@@ -1,9 +1,7 @@
 mod templates;
 
-use std::sync::Arc;
-
 use axum::{
-    extract::{Path, State},
+    extract::{Query, State},
     response::Response,
 };
 use futures::TryStreamExt;
@@ -15,7 +13,7 @@ use crate::db::{self, Id, TimeStamp};
 
 use self::templates::Index;
 
-use super::{base_template::Base, states::AppState, AppStateT};
+use super::{base_template::Base, AppStateT, PathQuery};
 
 #[instrument(skip_all)]
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
@@ -107,7 +105,13 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
     Ok(())
 }
 
-async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespErr> {
+#[instrument(skip_all)]
+pub async fn plot(
+    State(state): AppStateT,
+    Query(PathQuery { path }): Query<PathQuery>,
+) -> Result<Response, RespErr> {
+    let path = path.trim_end_matches('/');
+
     let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
         .fetch_one(&*state.db)
         .await
@@ -136,18 +140,4 @@ async fn handle_plot(state: Arc<AppState>, path: &str) -> Result<Response, RespE
         svg,
     }
     .try_into_resp()
-}
-
-#[instrument(skip_all)]
-pub async fn plot_index(State(state): AppStateT) -> Result<Response, RespErr> {
-    let path = "";
-
-    handle_plot(state, path).await
-}
-
-#[instrument(skip_all)]
-pub async fn plot(State(state): AppStateT, Path(path): Path<String>) -> Result<Response, RespErr> {
-    let path = path.trim_end_matches('/');
-
-    handle_plot(state, path).await
 }

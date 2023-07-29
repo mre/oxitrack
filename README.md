@@ -1,3 +1,5 @@
+# THE README HAS CONFLICTS WITH THE MAIN BRANCH AND WILL BE UPDATED SOON
+
 # OxiTraffic
 
 Self-hosted, simple and privacy respecting website traffic tracker 🌐
@@ -14,11 +16,11 @@ You can visit the dashboard: [oxitraffic.mo8it.com/dashboard](https://oxitraffic
 Try out the following API endpoints (with `curl` for example):
 
 - `https://oxitraffic.mo8it.com/api/counts`
-- `https://oxitraffic.mo8it.com/api/history/blog`
+- `https://oxitraffic.mo8it.com/api/history?path=blog`
 
 ## Features
 
-- Protection against spam from the same IP ❌
+- Protection against spam ❌
 - Visualization of call history 📈
 - API for call history and count 🤖
 - Respects privacy (no personal data or IP is logged) 🥷🏼
@@ -33,22 +35,7 @@ Try out the following API endpoints (with `curl` for example):
 
 ## How it works
 
-You place a remote image on your website that points to your OxiTraffic instance like the following:
-
-```html
-<img src="https://oxitraffic.YOURDOMAIN.com/call{{ PATH }}" />
-```
-
-`{{ PATH }}` is the path of the page that is visited (`/blog` for example).
-
-When the image is being rendered, OxiTraffic receives a request, logs it as a call to that path and responses with the requested image.
-
-If the visitor of your page reloads the page, the image should be cached by the browser and a second request is not sent.
-
-Even if the user invalidates the browser cache and tries to send multiple requests, only one request is registered for each pair of IP and path.
-
-This spam protection works by hashing the incoming IP with the path and accepting that hash only once.
-The hashes are stored in the RAM, therefore OxiTraffic will accept one new request for each pair of IP and path after each restart.
+TODO: Update README
 
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
@@ -60,10 +47,7 @@ Otherwise, the request is rejected.
 
 ### Data directory
 
-The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores:
-
-1. The YAML configuration file `config.yaml`
-2. The response image
+The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the YAML configuration file `config.yaml`.
 
 The log file `oxitraffic.log` will be also placed in that directory.
 
@@ -89,7 +73,6 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 | Parameter          | Description                                                                                                                                  | Default      |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | socket_address     | Use `127.0.0.1:8080` for testing on `http://localhost:8080`. `0.0.0.0` is important for usage in a container, but you can pick another port. | "0.0.0.0:80" |
-| response_filename  | The filename of the response image                                                                                                           |              |
 | tracked_base_url   | The base URL of your tracked website                                                                                                         |              |
 | db.host            | PostgreSQL host                                                                                                                              |              |
 | db.port            | PostgreSQL port                                                                                                                              |              |
@@ -103,7 +86,6 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 ```yaml
 socket_address: 0.0.0.0:80
-response_filename: happy_ferris.svg
 tracked_base_url: https://mo8it.com
 
 db:
@@ -122,11 +104,12 @@ utc_offset:
 
 OxiTraffic has the following endpoints:
 
-- `/call/PATH`: For the remote image with call logging as explained above.
+- `/register?path=PATH`: TODO
+- `/post-sleep/REGISTRATION_ID`: TODO
 - `/dashboard`: A list of registered paths to plot their call history.
-- `/dashboard/plot/PATH`: Plot of the call history of a specific path.
+- `/dashboard/plot?path=PATH`: Plot of the call history of a specific path.
 - `/api/counts`: JSON with the call count for each registered path.
-- `/api/history/PATH`: JSON with the call datetimes for a specific path. You can use it to make your own analysis and plots.
+- `/api/history?path=PATH`: JSON with the call datetimes for a specific path. You can use it to make your own analysis and plots.
 
 ## Questions?
 
