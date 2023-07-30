@@ -1,7 +1,7 @@
 [package]
 name = "oxitraffic"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 authors = ["Mo Bitar <mo8it@proton.me>"]
 repository = "https://codeberg.org/mo8it/oxitraffic"
