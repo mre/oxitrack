@@ -7,7 +7,7 @@ use axum::{
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
 use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
-use tracing::{error, instrument};
+use tracing::error;
 
 use crate::db::{self, Id, TimeStamp};
 
@@ -15,7 +15,6 @@ use self::templates::Index;
 
 use super::{base_template::Base, queries::PathQuery, AppStateT};
 
-#[instrument(skip_all)]
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
     let paths = sqlx::query_as!(db::Path, "SELECT path FROM paths ORDER BY path")
         .map(|row| row.path)
@@ -105,7 +104,6 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
     Ok(())
 }
 
-#[instrument(skip_all)]
 pub async fn plot(
     State(state): AppStateT,
     Query(path): Query<PathQuery>,

@@ -17,7 +17,7 @@ pub struct Config {
     pub db: DBConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
-    pub tracked_base_url: String,
+    pub tracked_origin: String,
 }
 fn default_socket_address() -> String {
     "0.0.0.0:80".to_owned()

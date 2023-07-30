@@ -6,13 +6,11 @@ use futures::{StreamExt, TryStreamExt};
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use time::format_description::well_known::Rfc3339;
-use tracing::instrument;
 
 use crate::db::{Id, TimeStamp};
 
 use super::{queries::PathQuery, AppStateT};
 
-#[instrument(skip_all)]
 pub async fn history(
     State(state): AppStateT,
     Query(path): Query<PathQuery>,
@@ -52,7 +50,6 @@ pub struct Count {
     count: Option<i64>,
 }
 
-#[instrument(skip_all)]
 pub async fn counts(State(state): AppStateT) -> Result<Json<Vec<Count>>, RespErr> {
     sqlx::query_as!(
         Count,

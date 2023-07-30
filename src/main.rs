@@ -3,13 +3,19 @@ mod db;
 mod handlers;
 
 use axum::{
+    http::HeaderValue,
     routing::{get, Router},
     Server,
 };
 use oxi_axum_helpers::{runner, static_handler, InitErr, InitErrCtx, PreTracer};
 use rust_embed::RustEmbed;
 use std::{net::SocketAddr, sync::Arc};
-use tracing::info;
+use tower_http::{
+    compression::CompressionLayer,
+    cors::CorsLayer,
+    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer},
+};
+use tracing::{info, Level};
 
 use handlers::states::AppState;
 
@@ -31,22 +37,41 @@ async fn init() -> Result<(), InitErr> {
         .parse::<SocketAddr>()
         .init_ctx("Failed to parse the socket address!")?;
 
+    let allowed_origin = config
+        .tracked_origin
+        .parse::<HeaderValue>()
+        .init_ctx("Failed to parse the tracked origin!")?;
+
     let app_state = Arc::new(AppState::build(config, utc_offset).await?);
+
+    let compression_layer = CompressionLayer::new().gzip(true);
 
     let api_router = Router::new()
         .route("/history", get(handlers::api::history))
-        .route("/counts", get(handlers::api::counts));
+        .route("/counts", get(handlers::api::counts))
+        .route_layer(compression_layer.clone());
 
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index))
-        .route("/plot", get(handlers::dashboard::plot));
+        .route("/plot", get(handlers::dashboard::plot))
+        .route_layer(compression_layer);
 
     let router = Router::new()
-        .route("/static/:file", get(static_handler::handler::<Static>))
         .route("/register", get(handlers::register))
         .route("/post-sleep/:registration_id", get(handlers::post_sleep))
+        .layer(CorsLayer::new().allow_origin(allowed_origin))
+        .route("/static/:file", get(static_handler::handler::<Static>))
         .nest("/api", api_router)
         .nest("/dashboard", dashboard_router)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                .on_response(())
+                .on_body_chunk(())
+                .on_eos(())
+                .on_failure(()),
+        )
         .with_state(app_state);
 
     info!("Listening on {socket_address}");

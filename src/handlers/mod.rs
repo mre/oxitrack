@@ -11,7 +11,6 @@ use axum::{
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use reqwest::StatusCode;
 use std::sync::Arc;
-use tracing::instrument;
 
 use crate::db::Id;
 
@@ -22,7 +21,6 @@ use self::{
 
 pub type AppStateT = State<Arc<AppState>>;
 
-#[instrument(skip_all)]
 pub async fn register(
     State(state): AppStateT,
     Query(path): Query<PathQuery>,
@@ -38,7 +36,7 @@ pub async fn register(
     let path_id = match path_id {
         Some(Id { id }) => id,
         None => {
-            let status = reqwest::get(format!("{}{path}", state.tracked_base_url))
+            let status = reqwest::get(format!("{}{path}", state.tracked_origin))
                 .await
                 .ctx(Status::Internal)
                 .err_msg_lz(|| {
@@ -65,7 +63,6 @@ pub async fn register(
     Ok(Json(registration_id))
 }
 
-#[instrument(skip_all)]
 pub async fn post_sleep(
     State(state): AppStateT,
     Path(registration_id): Path<SleepingHotelInd>,

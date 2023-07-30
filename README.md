@@ -39,7 +39,7 @@ TODO: Update README
 
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
-Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_base_url`.
+Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_origin`.
 If the status code is 200 (OK), the path is added to the database.
 Otherwise, the request is rejected.
 
@@ -73,7 +73,7 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 | Parameter          | Description                                                                                                                                  | Default      |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | socket_address     | Use `127.0.0.1:8080` for testing on `http://localhost:8080`. `0.0.0.0` is important for usage in a container, but you can pick another port. | "0.0.0.0:80" |
-| tracked_base_url   | The base URL of your tracked website                                                                                                         |              |
+| tracked_origin     | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website                                               |              |
 | db.host            | PostgreSQL host                                                                                                                              |              |
 | db.port            | PostgreSQL port                                                                                                                              |              |
 | db.username        | PostgreSQL username                                                                                                                          |              |
@@ -86,7 +86,7 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 ```yaml
 socket_address: 0.0.0.0:80
-tracked_base_url: https://mo8it.com
+tracked_origin: https://mo8it.com
 
 db:
   host: oxitraffic-db

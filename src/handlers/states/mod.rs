@@ -11,7 +11,7 @@ use sleeping_hotel::SleepingHotel;
 /// The application state.
 pub struct AppState {
     pub db: Database,
-    pub tracked_base_url: String,
+    pub tracked_origin: String,
     pub sleeping_hotel: Mutex<SleepingHotel<i64, 14, 60>>,
     pub utc_offset: UtcOffset,
 }
@@ -22,7 +22,7 @@ impl AppState {
 
         Ok(Self {
             db,
-            tracked_base_url: config.tracked_base_url,
+            tracked_origin: config.tracked_origin,
             sleeping_hotel: Mutex::new(SleepingHotel::default()),
             utc_offset,
         })
