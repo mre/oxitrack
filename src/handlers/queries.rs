@@ -7,7 +7,13 @@ pub struct PathQuery {
 }
 
 impl PathQuery {
-    pub fn trimmed(&self) -> &str {
-        self.path.trim_end_matches('/')
+    pub fn normalized(&self) -> &str {
+        let path = self.path.trim_end_matches('/');
+
+        if path.is_empty() {
+            "/"
+        } else {
+            path
+        }
     }
 }
