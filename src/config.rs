@@ -18,6 +18,8 @@ pub struct Config {
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
     pub tracked_origin: String,
+    #[serde(default)]
+    pub tracked_origin_callback: Option<String>,
 }
 fn default_socket_address() -> String {
     "0.0.0.0:80".to_owned()

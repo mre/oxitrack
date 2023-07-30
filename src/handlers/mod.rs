@@ -36,15 +36,15 @@ pub async fn register(
     let path_id = match path_id {
         Some(Id { id }) => id,
         None => {
-            let status = reqwest::get(format!("{}{path}", state.tracked_origin))
+            let status = reqwest::get(state.tracked_url_from_path(path))
                 .await
-                .ctx(Status::Internal)
+                .ctx(Status::NotFound)
                 .err_msg_lz(|| {
                     format!("Failed to look up the path {path} on the tracked website!")
                 })?
                 .status();
 
-            if status != StatusCode::OK {
+            if !status.is_success() {
                 return Err(RespErr::new(Status::NotFound)
                     .err_msg(format!("Path {path} not found on tracked website!")));
             }
