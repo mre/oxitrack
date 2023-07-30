@@ -1,13 +1,13 @@
 [package]
 name = "oxitraffic"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
-version = "0.1.6"
-edition = "2021"
+version = "0.2.0"
 authors = ["Mo Bitar <mo8it@proton.me>"]
 repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
-exclude = ["bacon.toml", "Containerfile", "compose.yaml"]
+edition = "2021"
+exclude = ["bacon.toml", "Containerfile", "compose.yaml", "oxitraffic.js"]
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
