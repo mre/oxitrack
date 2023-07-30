@@ -20,9 +20,14 @@ pub struct Config {
     pub tracked_origin: String,
     #[serde(default)]
     pub tracked_origin_callback: Option<String>,
+    #[serde(default = "default_min_delay_secs")]
+    pub min_delay_secs: u64,
 }
 fn default_socket_address() -> String {
     "0.0.0.0:80".to_owned()
+}
+const fn default_min_delay_secs() -> u64 {
+    19
 }
 
 impl ConfigBuilder for Config {

@@ -8,24 +8,27 @@ pub struct Bed<T> {
     fell_asleep_at: Instant,
 }
 
-pub struct SleepingHotel<T, const MIN_SECS: u64, const MAX_SECS: u64> {
+pub struct SleepingHotel<T> {
     last_ind: SleepingHotelInd,
+    min_secs: u64,
     beds: Box<[Option<Bed<T>>; MAX_IND]>,
 }
 
-impl<T, const MIN_SECS: u64, const MAX_SECS: u64> Default for SleepingHotel<T, MIN_SECS, MAX_SECS> {
-    fn default() -> Self {
+impl<T> SleepingHotel<T> {
+    pub fn new(min_secs: u64) -> Self {
         let beds = (0..MAX_IND)
             .map(|_| None)
             .collect::<Vec<_>>()
             .try_into()
             .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
 
-        Self { last_ind: 0, beds }
+        Self {
+            last_ind: 0,
+            min_secs,
+            beds,
+        }
     }
-}
 
-impl<T, const MIN_SECS: u64, const MAX_SECS: u64> SleepingHotel<T, MIN_SECS, MAX_SECS> {
     pub fn reserve_bed(&mut self, sleeper: T) -> SleepingHotelInd {
         let registration = Bed {
             sleeper,
@@ -49,7 +52,7 @@ impl<T, const MIN_SECS: u64, const MAX_SECS: u64> SleepingHotel<T, MIN_SECS, MAX
         let bed = unsafe { self.beds.get_unchecked_mut(usize::from(bed_ind)) }.take()?;
 
         let elapsed = bed.fell_asleep_at.elapsed().as_secs();
-        let slept_well = elapsed <= MAX_SECS && elapsed >= MIN_SECS;
+        let slept_well = elapsed >= self.min_secs;
 
         slept_well.then_some(bed.sleeper)
     }

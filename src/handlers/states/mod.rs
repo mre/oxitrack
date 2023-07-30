@@ -12,7 +12,7 @@ use sleeping_hotel::SleepingHotel;
 pub struct AppState {
     pub db: Database,
     pub tracked_origin_callback: String,
-    pub sleeping_hotel: Mutex<SleepingHotel<i64, 14, 60>>,
+    pub sleeping_hotel: Mutex<SleepingHotel<i64>>,
     pub utc_offset: UtcOffset,
 }
 
@@ -23,6 +23,8 @@ impl AppState {
         let tracked_origin_callback = config
             .tracked_origin_callback
             .unwrap_or(config.tracked_origin);
+
+        let sleeping_hotel = SleepingHotel::new(config.min_delay_secs);
 
         let callback_connection_error = "Failed to connect to the tracked website using the confiugration option tracked_origin_callback/tracked_origin!";
         let callback_status = reqwest::get(&tracked_origin_callback)
@@ -36,7 +38,7 @@ impl AppState {
         Ok(Self {
             db,
             tracked_origin_callback,
-            sleeping_hotel: Mutex::new(SleepingHotel::default()),
+            sleeping_hotel: Mutex::new(sleeping_hotel),
             utc_offset,
         })
     }
