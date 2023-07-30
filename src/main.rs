@@ -7,7 +7,7 @@ use axum::{
     routing::{get, Router},
     Server,
 };
-use oxi_axum_helpers::{runner, static_handler, InitErr, InitErrCtx, PreTracer};
+use oxi_axum_helpers::{runner, shutdown_signal, static_handler, InitErr, InitErrCtx, PreTracer};
 use rust_embed::RustEmbed;
 use std::{net::SocketAddr, sync::Arc};
 use tower_http::{
@@ -77,6 +77,7 @@ async fn init() -> Result<(), InitErr> {
     info!("Listening on {socket_address}");
     Server::bind(&socket_address)
         .serve(router.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .init_ctx("Server error!")
 }
