@@ -2,8 +2,8 @@ use crate::handlers::base_template::Base;
 use askama::Template;
 
 #[derive(Template)]
-#[template(path = "dashboard/plot.html")]
-pub struct Plot<'a> {
+#[template(path = "dashboard/stats.html")]
+pub struct Stats<'a> {
     pub base: Base<'a>,
     pub svg: String,
 }

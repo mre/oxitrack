@@ -104,7 +104,7 @@ fn plot_history(svg: &mut String, history: Vec<i64>, utc_offset: UtcOffset) -> R
     Ok(())
 }
 
-pub async fn plot(
+pub async fn stats(
     State(state): AppStateT,
     Query(path): Query<PathQuery>,
 ) -> Result<Response, RespErr> {
@@ -131,9 +131,9 @@ pub async fn plot(
 
     let mut svg = String::with_capacity(1024);
     plot_history(&mut svg, history, state.utc_offset)
-        .err_msg_lz(|| format!("Failed to plot history for path {path}!"))?;
+        .err_msg_lz(|| format!("Failed to plot the call history for path {path}!"))?;
 
-    templates::Plot {
+    templates::Stats {
         base: Base { title: path },
         svg,
     }

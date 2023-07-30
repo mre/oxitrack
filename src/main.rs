@@ -53,7 +53,7 @@ async fn init() -> Result<(), InitErr> {
 
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index))
-        .route("/plot", get(handlers::dashboard::plot))
+        .route("/stats", get(handlers::dashboard::stats))
         .route_layer(compression_layer);
 
     let router = Router::new()
