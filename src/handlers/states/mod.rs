@@ -26,7 +26,7 @@ impl AppState {
 
         let sleeping_hotel = SleepingHotel::new(config.min_delay_secs);
 
-        let callback_connection_error = "Failed to connect to the tracked website using the confiugration option tracked_origin_callback/tracked_origin!";
+        let callback_connection_error = "Failed to connect to the tracked website using the configuration option tracked_origin_callback/tracked_origin!";
         let callback_status = reqwest::get(&tracked_origin_callback)
             .await
             .init_ctx(callback_connection_error)?
