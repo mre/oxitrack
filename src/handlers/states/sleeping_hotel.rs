@@ -19,7 +19,7 @@ impl<T, const MIN_SECS: u64, const MAX_SECS: u64> Default for SleepingHotel<T, M
             .map(|_| None)
             .collect::<Vec<_>>()
             .try_into()
-            .unwrap_or_else(|_| panic!("Convertion into Box<[_, N]> should not fail!"));
+            .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
 
         Self { last_ind: 0, beds }
     }
