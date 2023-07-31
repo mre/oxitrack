@@ -7,7 +7,19 @@ repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
 edition = "2021"
-exclude = ["bacon.toml", "Containerfile", "compose.yaml", "oxitraffic.js"]
+exclude = [
+  "bacon.toml",
+  "CHANGELOG.md",
+  "cliff.toml",
+  "compose.yaml",
+  "Containerfile",
+  ".ignore",
+  "input.css",
+  "justfile",
+  "oxitraffic.js",
+  "package.json",
+  "tailwind.config.js",
+]
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
