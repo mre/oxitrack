@@ -1,3 +1,5 @@
 /Cargo.lock
-/LICENSE.txt
+CHANGELOG.md
 *.css
+/LICENSE.txt
+/.sqlx/
