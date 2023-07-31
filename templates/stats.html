@@ -1,3 +1,26 @@
 {% extends "base.html" %}
 
-{% block content %}<div class="flex justify-center">{{ svg|safe }}</div>{% endblock %}
+{% block content %}
+    <div class="flex flex-wrap gap-y-2 justify-center">
+        {{ svg|safe }}
+
+        <table class="border-separate border-spacing-3">
+            <tr>
+                <td>Number of visits</td>
+                <td>{{ n_visits }}</td>
+            </tr>
+            <tr>
+                <td>Visits per day</td>
+                <td>{{ visits_per_day }}</td>
+            </tr>
+            <tr>
+                <td>First visit</td>
+                <td>{{ first_visit }}</td>
+            </tr>
+            <tr>
+                <td>Last visit</td>
+                <td>{{ last_visit }}</td>
+            </tr>
+        </table>
+    </div>
+{% endblock %}
