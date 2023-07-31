@@ -47,7 +47,7 @@ Otherwise, the request is rejected.
 
 ### Data directory
 
-The binary expects the environment variable `DATA_DIR_OXITRAFFIC` to point to a directory that stores the YAML configuration file `config.yaml`.
+The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the YAML configuration file `config.yaml`.
 
 The log file `oxitraffic.log` will be also placed in that directory.
 
@@ -62,7 +62,7 @@ You can also host OxiTraffic directly with the binary that you can install with 
 cargo install oxitraffic
 ```
 
-Make sure to provide the environment variable `DATA_DIR_OXITRAFFIC` when using the binary directly.
+Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
 
 In both cases (container or binary), you need a PostgreSQL database.
 There are many guides in the internet that explain how to host one either in a container or directly on the host.

@@ -4,7 +4,7 @@ tailwind:
 	{{tailwind_bin}} -mw -i input.css -o static/main.css
 
 run:
-	DATA_DIR_OXITRAFFIC=dev cargo r
+	OXITRAFFIC_DATA_DIR=dev cargo r
 
 publish:
 	cargo sqlx prepare
