@@ -143,10 +143,9 @@ pub async fn stats(
 
     let n_visits = history.len();
 
-    let first_visit = *history
-        .first()
-        .ctx(Status::Internal)
-        .err_msg("Empty history of an existing path!")?;
+    let first_visit = *history.first().ctx(Status::NotFound).user_msg_lz(|| {
+        format!("The requested path {path} does not have any counted visit yet.")
+    })?;
 
     let last_visit = *history
         .last()
