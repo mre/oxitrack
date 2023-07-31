@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <p>Registered paths:</p>
     <ul>
         {% for path in paths %}
             <li>
-                <a href="/dashboard/stats?path={{ path }}">{{ path }}</a>
+                <a href="/stats?path={{ path }}">{{ path }}</a>
             </li>
         {% endfor %}
     </ul>

@@ -1,13 +1,25 @@
 [package]
 name = "oxitraffic"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Mo Bitar <mo8it@proton.me>"]
 repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
 edition = "2021"
-exclude = ["bacon.toml", "Containerfile", "compose.yaml", "oxitraffic.js"]
+exclude = [
+  "bacon.toml",
+  "CHANGELOG.md",
+  "cliff.toml",
+  "compose.yaml",
+  "Containerfile",
+  ".ignore",
+  "input.css",
+  "justfile",
+  "oxitraffic.js",
+  "package.json",
+  "tailwind.config.js",
+]
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
@@ -18,9 +30,9 @@ oxi-axum-helpers = { version = "0.0.7", features = ["templates", "static_handler
 plotters = { version = "0.3.5", default-features = false, features = ["svg_backend", "line_series"] }
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls"] }
 rust-embed = "6.8.1"
-serde = { version = "1.0.178", features = ["derive"] }
+serde = { version = "1.0.180", features = ["derive"] }
 sqlx = { version = "0.7.1", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "time"] }
-time = { version = "0.3.23", features = ["formatting"] }
+time = { version = "0.3.24", features = ["formatting"] }
 tower-http = { version = "0.4.3", default-features = false, features = ["cors", "trace", "compression-gzip"] }
 tracing = "0.1.37"
 

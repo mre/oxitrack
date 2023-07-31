@@ -21,7 +21,7 @@ use handlers::states::AppState;
 
 use crate::config::Config;
 
-const DATA_DIR_ENV_VAR: &str = "DATA_DIR_OXITRAFFIC";
+const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
 
 #[derive(RustEmbed)]
 #[folder = "static/"]
@@ -46,6 +46,11 @@ async fn init() -> Result<(), InitErr> {
 
     let compression_layer = CompressionLayer::new().gzip(true);
 
+    let counting_router = Router::new()
+        .route("/register", get(handlers::register))
+        .route("/post-sleep/:registration_id", get(handlers::post_sleep))
+        .layer(CorsLayer::new().allow_origin(allowed_origin));
+
     let api_router = Router::new()
         .route("/history", get(handlers::api::history))
         .route("/counts", get(handlers::api::counts))
@@ -57,12 +62,10 @@ async fn init() -> Result<(), InitErr> {
         .route_layer(compression_layer);
 
     let router = Router::new()
-        .route("/register", get(handlers::register))
-        .route("/post-sleep/:registration_id", get(handlers::post_sleep))
-        .layer(CorsLayer::new().allow_origin(allowed_origin))
         .route("/static/:file", get(static_handler::handler::<Static>))
+        .merge(counting_router)
         .nest("/api", api_router)
-        .nest("/dashboard", dashboard_router)
+        .merge(dashboard_router)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

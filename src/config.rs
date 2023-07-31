@@ -35,7 +35,11 @@ impl ConfigBuilder for Config {
         let config_file_path = data_dir.join("config.yaml");
 
         Figment::new()
-            .merge(Env::prefixed("OXITRAFFIC_").split("__"))
+            .merge(
+                Env::prefixed("OXITRAFFIC_")
+                    .split("__")
+                    .ignore(&["data_dir"]),
+            )
             .join(Yaml::file(config_file_path))
             .extract()
             .init_ctx("Failed to parse the configuration!")

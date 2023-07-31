@@ -22,8 +22,8 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 ## Demonstration
 
 My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
-You can visit the [OxiTraffic dashboard](https://oxitraffic.mo8it.com/dashboard) to see the call history of each page on the website.
-Here is an [example](https://oxitraffic.mo8it.com/dashboard/stats?path=/blog/rust-vs-julia) for a specific blog post.
+You can visit the OxiTraffic [dashboard](https://oxitraffic.mo8it.com) to see the call history of each page on the website.
+Here is an [example](https://oxitraffic.mo8it.com/stats?path=/blog/rust-vs-julia) for a specific blog post.
 
 Try out the following API endpoints (with `curl` for example):
 
@@ -47,7 +47,7 @@ Otherwise, the request is rejected.
 
 ### Data directory
 
-The binary expects the environment variable `DATA_DIR_OXITRAFFIC` to point to a directory that stores the YAML configuration file `config.yaml`.
+The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the YAML configuration file `config.yaml`.
 
 The log file `oxitraffic.log` will be also placed in that directory.
 
@@ -62,7 +62,7 @@ You can also host OxiTraffic directly with the binary that you can install with 
 cargo install oxitraffic
 ```
 
-Make sure to provide the environment variable `DATA_DIR_OXITRAFFIC` when using the binary directly.
+Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
 
 In both cases (container or binary), you need a PostgreSQL database.
 There are many guides in the internet that explain how to host one either in a container or directly on the host.
@@ -115,8 +115,8 @@ OxiTraffic has the following endpoints:
 
 - `/register?path=PATH`: Register to receive a `REGISTRATION_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting.
 - `/post-sleep/REGISTRATION_ID`: Use the registration ID after the minimum delay `min_delay_secs` for the visit to be counted.
-- `/dashboard`: A list of registered paths to see their call history.
-- `/dashboard/stats?path=PATH`: Statistics of the call history of a specific path.
+- `/`: A list of registered paths to see their call history.
+- `/stats?path=PATH`: Statistics of the call history of a specific path.
 - `/api/counts`: JSON with the call count for each registered path.
 - `/api/history?path=PATH`: JSON with the call datetimes for a specific path. You can use it to make your own analysis and plots.
 

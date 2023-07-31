@@ -16,7 +16,7 @@
     @apply text-lg;
   }
   a {
-    @apply text-blue-600 underline;
+    @apply text-blue-600 underline hover:decoration-blue-400 transition duration-300;
   }
   ul {
     @apply mt-2 mb-3 ml-1 list-disc list-inside marker:text-sky-600;
