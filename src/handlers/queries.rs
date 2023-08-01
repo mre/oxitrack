@@ -17,3 +17,27 @@ impl PathQuery {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::PathQuery;
+
+    #[test]
+    fn test_path_normalization() {
+        for (before, after) in [
+            ("/blog", "/blog"),
+            ("", "/"),
+            ("/blog/", "/blog"),
+            ("/", "/"),
+            ("//", "/"),
+            ("/nested/path", "/nested/path"),
+            ("/nested/path///", "/nested/path"),
+        ] {
+            let path = PathQuery {
+                path: before.to_owned(),
+            };
+
+            assert_eq!(path.normalized(), after);
+        }
+    }
+}
