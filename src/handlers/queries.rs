@@ -23,7 +23,7 @@ mod tests {
     use super::PathQuery;
 
     #[test]
-    fn test_path_normalization() {
+    fn path_normalization() {
         for (before, after) in [
             ("/blog", "/blog"),
             ("", "/"),

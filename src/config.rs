@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[test]
-    fn test_minimal_config() {
+    fn minimal_config() {
         test_config(
             r#"
                 tracked_origin: https://mo8it.com
@@ -87,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn test_full_config() {
+    fn full_config() {
         test_config(
             r#"
                 socket_address: 0.0.0.0:80

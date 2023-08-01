@@ -94,7 +94,7 @@ mod tests {
     use super::Static;
 
     #[test]
-    fn test_static_files() {
+    fn static_files() {
         Static::get("main.css").unwrap();
     }
 }
