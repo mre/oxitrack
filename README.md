@@ -11,7 +11,7 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 - Self-hosted 🕊️
 - Visualization of call history 📈
 - API for visits history and count 💻️
-- Low memory usage (about 8 MB) 🏅
+- Low memory usage (about 12 MB) 🏅
 - First class container support 📦️
 - Asynchronous and multithreaded 🔀
 - Informative tracing (logging) to stdout and to a log file 📜
