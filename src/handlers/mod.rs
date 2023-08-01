@@ -49,12 +49,39 @@ pub async fn register(
                     .err_msg(format!("Path {path} not found on tracked website!")));
             }
 
-            sqlx::query_as!(Id, "INSERT INTO paths(path) VALUES ($1) RETURNING id", path)
-                .fetch_one(&*state.db)
-                .await
-                .ctx(Status::Internal)
-                .err_msg_lz(|| format!("Failed to insert path {path}!"))?
-                .id
+            // There is a possible race condition here.
+            // If two requests to the same new path try to insert it at the same time,
+            // then only one insertion will be succussful.
+            // If the insertion fails because of the constraint, we will try to select.
+            let inserted_id = sqlx::query_as!(
+                Id,
+                "INSERT INTO paths(path) VALUES ($1)
+                ON CONFLICT ON CONSTRAINT unique_path DO NOTHING
+                RETURNING id",
+                path
+            )
+            .fetch_optional(&*state.db)
+            .await
+            .ctx(Status::Internal)
+            .err_msg_lz(|| format!("Failed to insert path {path}!"))?;
+
+            match inserted_id {
+                Some(id) => id.id,
+                None => {
+                    // Other request did insert the path first.
+                    sqlx::query_as!(
+                        Id,
+                        "SELECT id FROM paths
+                        WHERE path = $1",
+                        path
+                    )
+                    .fetch_one(&*state.db)
+                    .await
+                    .ctx(Status::Internal)
+                    .err_msg_lz(|| format!("Failed to insert path {path}!"))?
+                    .id
+                }
+            }
         }
     };
 
