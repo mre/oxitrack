@@ -27,11 +27,16 @@ pub async fn register(
 ) -> Result<Json<u16>, RespErr> {
     let path = path.normalized();
 
-    let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
-        .fetch_optional(&*state.db)
-        .await
-        .ctx(Status::Internal)
-        .err_msg_lz(|| format!("Failed to run path query for path {path}!"))?;
+    let path_id = sqlx::query_as!(
+        Id,
+        "SELECT id FROM paths
+        WHERE path = $1",
+        path
+    )
+    .fetch_optional(&*state.db)
+    .await
+    .ctx(Status::Internal)
+    .err_msg_lz(|| format!("Failed to run path query for path {path}!"))?;
 
     let path_id = match path_id {
         Some(Id { id }) => id,

@@ -16,16 +16,23 @@ pub async fn history(
 ) -> Result<Json<Vec<String>>, RespErr> {
     let path = path.normalized();
 
-    let path_id = sqlx::query_as!(Id, "SELECT id FROM paths WHERE path = $1", path)
-        .fetch_one(&*state.db)
-        .await
-        .ctx(Status::NotFound)
-        .err_msg_lz(|| format!("Path {path} not found!"))?
-        .id;
+    let path_id = sqlx::query_as!(
+        Id,
+        "SELECT id FROM paths
+        WHERE path = $1",
+        path
+    )
+    .fetch_one(&*state.db)
+    .await
+    .ctx(Status::NotFound)
+    .err_msg_lz(|| format!("Path {path} not found!"))?
+    .id;
 
     sqlx::query_as!(
         TimeStamp,
-        "SELECT timestamp FROM visits WHERE path_id = $1 ORDER BY timestamp",
+        "SELECT timestamp FROM visits
+        WHERE path_id = $1
+        ORDER BY timestamp",
         path_id,
     )
     .fetch(&*state.db)
