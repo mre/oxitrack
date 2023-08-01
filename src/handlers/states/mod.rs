@@ -23,7 +23,7 @@ impl AppState {
 
         let tracked_origin_callback = config
             .tracked_origin_callback
-            .unwrap_or(config.tracked_origin.clone());
+            .unwrap_or_else(|| config.tracked_origin.clone());
 
         let sleeping_hotel = SleepingHotel::new(config.min_delay_secs);
 
