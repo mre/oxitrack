@@ -75,7 +75,7 @@ pub async fn post_sleep(
         .ctx(Status::BadRequest)
         .user_msg("The registered ID is invalid or has expired!")?;
 
-    sqlx::query!("INSERT INTO calls(path_id) VALUES ($1)", path_id)
+    sqlx::query!("INSERT INTO visits(path_id) VALUES ($1)", path_id)
         .execute(&*state.db)
         .await
         .ctx(Status::Internal)

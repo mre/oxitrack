@@ -76,7 +76,7 @@ fn plot_history(
             .x_label_formatter(&|timestamp| x_label_formatter(*timestamp, utc_offset))
             .x_labels(4)
             .x_desc("Timestamp")
-            .y_desc("Calls")
+            .y_desc("Visits")
             .draw()
             .ctx(Status::Internal)?;
 
@@ -131,7 +131,7 @@ pub async fn stats(
 
     let history = sqlx::query_as!(
         TimeStamp,
-        "SELECT timestamp FROM calls WHERE path_id = $1 ORDER BY timestamp",
+        "SELECT timestamp FROM visits WHERE path_id = $1 ORDER BY timestamp",
         path_id,
     )
     .fetch(&*state.db)

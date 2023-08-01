@@ -26,7 +26,7 @@ pub async fn history(
 
     sqlx::query_as!(
         TimeStamp,
-        "SELECT timestamp FROM calls WHERE path_id = $1 ORDER BY timestamp",
+        "SELECT timestamp FROM visits WHERE path_id = $1 ORDER BY timestamp",
         path_id,
     )
     .fetch(&*state.db)
