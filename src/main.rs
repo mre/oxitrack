@@ -54,12 +54,12 @@ async fn init() -> Result<(), InitErr> {
     let api_router = Router::new()
         .route("/history", get(handlers::api::history))
         .route("/counts", get(handlers::api::counts))
-        .route_layer(compression_layer.clone());
+        .layer(compression_layer.clone());
 
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index))
         .route("/stats", get(handlers::dashboard::stats))
-        .route_layer(compression_layer);
+        .layer(compression_layer);
 
     let router = Router::new()
         .route("/static/:file", get(static_handler::handler::<Static>))
