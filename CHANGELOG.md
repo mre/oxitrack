@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2023-08-01
+
+### Features
+
+- Add a link to the tracked website to the dashboard
+- Improve history plot for smartphones
+- Add page link to stats
+- Less x padding on large screens
+
 ## [0.3.1] - 2023-08-01
 
 ### Bug Fixes
