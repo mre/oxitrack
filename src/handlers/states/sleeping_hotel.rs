@@ -1,6 +1,7 @@
 use std::time::Instant;
 
 pub type SleepingHotelInd = u16;
+// +1 because the minimum index is 0 which has to be counted too.
 const MAX_N_BEDS: usize = SleepingHotelInd::MAX as usize + 1;
 
 pub struct Bed<T> {
