@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="flex flex-wrap gap-y-2 justify-center">
+    <p class="text-center">
+        Page: <a href="{{ tracked_origin }}{{ path }}">{{ tracked_origin }}{{ path }}</a>
+    </p>
+
+    <div class="flex flex-wrap gap-y-2 justify-center mt-6">
         {{ svg|safe }}
 
-        <table class="border-separate border-spacing-3">
+        <table class="border-separate border-spacing-4">
             <tr>
                 <td>Number of visits</td>
                 <td>{{ n_visits }}</td>

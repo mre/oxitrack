@@ -169,6 +169,8 @@ pub async fn stats(
 
     templates::Stats {
         base: Base { title: path },
+        tracked_origin: &state.tracked_origin,
+        path,
         svg,
         n_visits,
         visits_per_day,

@@ -13,6 +13,8 @@ pub struct Index<'a> {
 #[template(path = "stats.html")]
 pub struct Stats<'a> {
     pub base: Base<'a>,
+    pub tracked_origin: &'a str,
+    pub path: &'a str,
     pub svg: String,
     pub n_visits: usize,
     pub visits_per_day: f64,
