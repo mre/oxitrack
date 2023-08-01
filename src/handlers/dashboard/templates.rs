@@ -2,6 +2,14 @@ use crate::{db::Count, handlers::base_template::Base};
 use askama::Template;
 
 #[derive(Template)]
+#[template(path = "index.html")]
+pub struct Index<'a> {
+    pub base: Base<'a>,
+    pub tracked_origin: &'a str,
+    pub counts: Vec<Count>,
+}
+
+#[derive(Template)]
 #[template(path = "stats.html")]
 pub struct Stats<'a> {
     pub base: Base<'a>,
@@ -10,11 +18,4 @@ pub struct Stats<'a> {
     pub visits_per_day: f64,
     pub first_visit: String,
     pub last_visit: String,
-}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-pub struct Index<'a> {
-    pub base: Base<'a>,
-    pub counts: Vec<Count>,
 }

@@ -1,7 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <p>Format: Registered path (number of visits)</p>
+    Tracked website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
+
+    <h2>Registered pages</h2>
+    <p class="text-sm">Format: path (number of visits)</p>
     <ul>
         {% for path_count in counts %}
             <li>

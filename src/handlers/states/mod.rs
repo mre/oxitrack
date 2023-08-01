@@ -11,6 +11,7 @@ use sleeping_hotel::SleepingHotel;
 /// The application state.
 pub struct AppState {
     pub db: Database,
+    pub tracked_origin: String,
     pub tracked_origin_callback: String,
     pub sleeping_hotel: Mutex<SleepingHotel<i64>>,
     pub utc_offset: UtcOffset,
@@ -22,7 +23,7 @@ impl AppState {
 
         let tracked_origin_callback = config
             .tracked_origin_callback
-            .unwrap_or(config.tracked_origin);
+            .unwrap_or(config.tracked_origin.clone());
 
         let sleeping_hotel = SleepingHotel::new(config.min_delay_secs);
 
@@ -38,6 +39,7 @@ impl AppState {
         Ok(Self {
             db,
             tracked_origin_callback,
+            tracked_origin: config.tracked_origin,
             sleeping_hotel: Mutex::new(sleeping_hotel),
             utc_offset,
         })

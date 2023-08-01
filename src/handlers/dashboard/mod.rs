@@ -30,6 +30,7 @@ pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
 
     Index {
         base: Base { title: "Dashboard" },
+        tracked_origin: &state.tracked_origin,
         counts,
     }
     .try_into_resp()
