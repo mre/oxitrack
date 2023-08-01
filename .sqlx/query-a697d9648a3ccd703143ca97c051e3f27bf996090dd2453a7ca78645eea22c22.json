@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT timestamp FROM calls WHERE path_id = $1 ORDER BY timestamp",
+  "query": "SELECT timestamp FROM visits WHERE path_id = $1 ORDER BY timestamp",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       false
     ]
   },
-  "hash": "d6f245c6dcc71f63a1c96d8889e539db6f48b67195cee198eb786fef84808cf6"
+  "hash": "a697d9648a3ccd703143ca97c051e3f27bf996090dd2453a7ca78645eea22c22"
 }

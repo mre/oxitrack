@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT path, COUNT(*) AS count FROM calls\n        JOIN paths ON paths.id = calls.path_id\n        GROUP BY path",
+  "query": "SELECT path, COUNT(*) AS \"count!\" FROM visits\n        INNER JOIN paths ON paths.id = visits.path_id\n        GROUP BY path",
   "describe": {
     "columns": [
       {
@@ -10,7 +10,7 @@
       },
       {
         "ordinal": 1,
-        "name": "count",
+        "name": "count!",
         "type_info": "Int8"
       }
     ],
@@ -22,5 +22,5 @@
       null
     ]
   },
-  "hash": "542fb55a3eef8b4c74e969a5ccb4058a733f3cd7c52ff5b7a22478e3fcfe415d"
+  "hash": "3ed0ce34f48ef4e7fbb724ad2ff603c1b18e70b14a31a62e9db46be49924d4ef"
 }

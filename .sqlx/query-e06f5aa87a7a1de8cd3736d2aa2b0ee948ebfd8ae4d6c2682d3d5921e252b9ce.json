@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT path, COUNT(*) AS \"count!\" FROM paths\n        INNER JOIN visits ON paths.id = visits.path_id\n        GROUP BY path\n        ORDER BY path",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "path",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "e06f5aa87a7a1de8cd3736d2aa2b0ee948ebfd8ae4d6c2682d3d5921e252b9ce"
+}
