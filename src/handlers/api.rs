@@ -4,10 +4,9 @@ use axum::{
 };
 use futures::{StreamExt, TryStreamExt};
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
-use serde::Serialize;
 use time::format_description::well_known::Rfc3339;
 
-use crate::db::{Id, TimeStamp};
+use crate::db::{Count, Id, TimeStamp};
 
 use super::{queries::PathQuery, AppStateT};
 
@@ -44,18 +43,12 @@ pub async fn history(
     .map(Json)
 }
 
-#[derive(Serialize)]
-pub struct Count {
-    path: String,
-    count: Option<i64>,
-}
-
 pub async fn counts(State(state): AppStateT) -> Result<Json<Vec<Count>>, RespErr> {
     sqlx::query_as!(
         Count,
-        "SELECT path, COUNT(*) AS count FROM calls
-        JOIN paths ON paths.id = calls.path_id
-        GROUP BY path"
+        r#"SELECT path, COUNT(*) AS "count!" FROM visits
+        JOIN paths ON paths.id = visits.path_id
+        GROUP BY path"#
     )
     .fetch_all(&*state.db)
     .await

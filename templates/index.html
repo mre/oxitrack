@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <p>Registered paths:</p>
+    <p>Format: Registered path (number of visits)</p>
     <ul>
-        {% for path in paths %}
+        {% for path_count in counts %}
             <li>
-                <a href="/stats?path={{ path }}">{{ path }}</a>
+                <a href="/stats?path={{ path_count.path }}">{{ path_count.path }}</a> ({{ path_count.count }})
             </li>
         {% endfor %}
     </ul>

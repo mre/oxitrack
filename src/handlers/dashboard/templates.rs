@@ -1,4 +1,4 @@
-use crate::handlers::base_template::Base;
+use crate::{db::Count, handlers::base_template::Base};
 use askama::Template;
 
 #[derive(Template)]
@@ -16,5 +16,5 @@ pub struct Stats<'a> {
 #[template(path = "index.html")]
 pub struct Index<'a> {
     pub base: Base<'a>,
-    pub paths: Vec<String>,
+    pub counts: Vec<Count>,
 }

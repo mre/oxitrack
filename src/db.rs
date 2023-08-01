@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use oxi_axum_helpers::{DBConfig, InitErr, InitErrCtx};
+use serde::Serialize;
 use sqlx::PgPool;
 use time::OffsetDateTime;
 
@@ -37,6 +38,8 @@ pub struct TimeStamp {
     pub timestamp: OffsetDateTime,
 }
 
-pub struct Path {
+#[derive(Serialize)]
+pub struct Count {
     pub path: String,
+    pub count: i64,
 }

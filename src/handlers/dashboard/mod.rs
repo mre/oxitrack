@@ -16,16 +16,22 @@ use self::templates::Index;
 use super::{base_template::Base, queries::PathQuery, AppStateT};
 
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
-    let paths = sqlx::query_as!(db::Path, "SELECT path FROM paths ORDER BY path")
-        .map(|row| row.path)
-        .fetch_all(&*state.db)
-        .await
-        .ctx(Status::Internal)
-        .err_msg("Paths query failed!")?;
+    let counts = sqlx::query_as!(
+        db::Count,
+        r#"SELECT path, COUNT(*) AS "count!" FROM paths
+        JOIN visits ON paths.id = visits.path_id
+        GROUP BY path
+        HAVING COUNT(*) > 0
+        ORDER BY path"#
+    )
+    .fetch_all(&*state.db)
+    .await
+    .ctx(Status::Internal)
+    .err_msg("Paths query failed!")?;
 
     Index {
         base: Base { title: "Dashboard" },
-        paths,
+        counts,
     }
     .try_into_resp()
 }
@@ -143,9 +149,10 @@ pub async fn stats(
 
     let n_visits = history.len();
 
-    let first_visit = *history.first().ctx(Status::NotFound).user_msg_lz(|| {
-        format!("The requested path {path} does not have any counted visit yet.")
-    })?;
+    let first_visit = *history
+        .first()
+        .ctx(Status::NotFound)
+        .user_msg_lz(|| format!("The requested path {path} has no counted visits yet."))?;
 
     let last_visit = *history
         .last()
