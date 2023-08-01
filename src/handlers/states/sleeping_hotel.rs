@@ -59,3 +59,56 @@ impl<T> SleepingHotel<T> {
         slept_well.then_some(bed.sleeper)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{SleepingHotel, SleepingHotelInd};
+
+    #[test]
+    fn ids() {
+        let mut hotel = SleepingHotel::<i64>::new(0);
+
+        assert_eq!(hotel.reserve_bed(42), 0);
+        assert_eq!(hotel.reserve_bed(42), 1);
+
+        hotel.last_ind = SleepingHotelInd::MAX;
+
+        assert_eq!(hotel.reserve_bed(42), SleepingHotelInd::MAX);
+        assert_eq!(hotel.reserve_bed(42), 0);
+    }
+
+    #[test]
+    fn sleeping_hotel_no_delay() {
+        let mut hotel = SleepingHotel::<i64>::new(0);
+
+        let sleeper = 42;
+        let id = hotel.reserve_bed(sleeper);
+
+        assert_eq!(hotel.wake_up(id), Some(sleeper));
+        assert_eq!(hotel.wake_up(id), None);
+    }
+
+    #[test]
+    fn sleeping_hotel_pre_min_delay() {
+        let mut hotel = SleepingHotel::<i64>::new(19);
+
+        let sleeper = 42;
+        let id = hotel.reserve_bed(sleeper);
+
+        assert_eq!(hotel.wake_up(id), None);
+    }
+
+    #[test]
+    fn sleeping_hotel_post_min_delay() {
+        let min_delay = 1;
+        let mut hotel = SleepingHotel::<i64>::new(min_delay);
+
+        let sleeper = 42;
+        let id = hotel.reserve_bed(sleeper);
+
+        std::thread::sleep(std::time::Duration::new(min_delay, 1));
+
+        assert_eq!(hotel.wake_up(id), Some(sleeper));
+        assert_eq!(hotel.wake_up(id), None);
+    }
+}
