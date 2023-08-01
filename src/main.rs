@@ -88,3 +88,13 @@ async fn init() -> Result<(), InitErr> {
 fn main() {
     runner::run(init);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Static;
+
+    #[test]
+    fn static_files() {
+        Static::get("main.css").unwrap();
+    }
+}

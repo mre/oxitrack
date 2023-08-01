@@ -418,9 +418,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4547e226f4c9ab860571e070a9034192b3175580ecea38da34fcdb53a018c9a5"
 dependencies = [
  "atomic",
+ "parking_lot",
  "pear",
  "serde",
  "serde_yaml",
+ "tempfile",
  "uncased",
  "version_check",
 ]
@@ -1043,9 +1045,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.7"
+version = "0.0.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7578719503cd51b29c3a3ddecfbabf2e413f9f8bd3e8bc1a6e974de5dbf6600"
+checksum = "0df87e29fc57886ebccbf9888273c5e975b0458db1d4171d5c4068873279d58a"
 dependencies = [
  "askama",
  "axum",
@@ -1063,7 +1065,7 @@ dependencies = [
 
 [[package]]
 name = "oxitraffic"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "askama",
  "axum",

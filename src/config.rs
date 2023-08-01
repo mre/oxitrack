@@ -49,3 +49,65 @@ impl ConfigBuilder for Config {
         &self.utc_offset
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Config;
+    use crate::DATA_DIR_ENV_VAR;
+    use figment::Jail;
+    use oxi_axum_helpers::ConfigBuilder;
+    use std::path::Path;
+
+    fn test_config(config_file_content: &str) {
+        Jail::expect_with(|jail| {
+            jail.set_env(DATA_DIR_ENV_VAR, ".");
+
+            jail.create_file("config.yaml", config_file_content)?;
+
+            Config::build(Path::new(".")).unwrap();
+
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn minimal_config() {
+        test_config(
+            r#"
+                tracked_origin: https://mo8it.com
+
+                db:
+                  host: DATABASE_HOST
+                  port: 5432
+                  username: postgres
+                  password: CHANGE_ME
+                  database: postgres
+            "#,
+        )
+    }
+
+    #[test]
+    fn full_config() {
+        test_config(
+            r#"
+                socket_address: 0.0.0.0:80
+
+                tracked_origin: https://mo8it.com
+                tracked_origin_callback: http://mo8it_com
+
+                min_delay_secs: 20
+
+                db:
+                  host: DATABASE_HOST
+                  port: 5432
+                  username: postgres
+                  password: CHANGE_ME
+                  database: postgres
+
+                utc_offset:
+                  hours: 2
+                  minutes: 0
+            "#,
+        )
+    }
+}
