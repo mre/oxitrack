@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2023-08-01
+
+### Bug Fixes
+
+- Empty history is not an internal error
+- Make `path` in the `paths` table unique
+- Prevent showing paths in the dashboard with no counted visits
+- Handle a possible race condition on path insertion
+
+### Features
+
+- Rename table `calls` to `visits` since we don't count each "call" anymore, only visits with a minimum delay
+- Round visits per day to two digits
+- Update deps
+
 ## [0.3] - 2023-07-31
 
 ### Bug Fixes
