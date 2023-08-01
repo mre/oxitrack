@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2023-08-01
+
+### Bug Fixes
+
+- Fix memory bug in unsafe code :/
+
+### Testing
+
+- Add config tests
+- Add static files test
+- Add path normalization test
+- Add tests to sleeping hotel
+
 ## [0.3.2] - 2023-08-01
 
 ### Features
