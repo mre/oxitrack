@@ -15,6 +15,7 @@ pub struct SleepingHotel<T> {
 }
 
 impl<T> SleepingHotel<T> {
+    #[must_use]
     pub fn new(min_secs: u64) -> Self {
         let beds = (0..MAX_N_BEDS)
             .map(|_| None)
@@ -29,6 +30,7 @@ impl<T> SleepingHotel<T> {
         }
     }
 
+    #[must_use]
     pub fn reserve_bed(&mut self, sleeper: T) -> SleepingHotelInd {
         let registration = Bed {
             sleeper,
@@ -46,6 +48,7 @@ impl<T> SleepingHotel<T> {
 
     /// Returns the sleeper if it was found in the bed and did sleep well.
     /// Tired sleepers are kicked out.
+    #[must_use]
     pub fn wake_up(&mut self, bed_ind: SleepingHotelInd) -> Option<T> {
         // Safety: See `reserve_bed`.
         let bed = unsafe { self.beds.get_unchecked_mut(usize::from(bed_ind)) }.take()?;
