@@ -19,9 +19,8 @@ pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
     let counts = sqlx::query_as!(
         db::Count,
         r#"SELECT path, COUNT(*) AS "count!" FROM paths
-        JOIN visits ON paths.id = visits.path_id
+        INNER JOIN visits ON paths.id = visits.path_id
         GROUP BY path
-        HAVING COUNT(*) > 0
         ORDER BY path"#
     )
     .fetch_all(&*state.db)

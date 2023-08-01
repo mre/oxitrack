@@ -47,7 +47,7 @@ pub async fn counts(State(state): AppStateT) -> Result<Json<Vec<Count>>, RespErr
     sqlx::query_as!(
         Count,
         r#"SELECT path, COUNT(*) AS "count!" FROM visits
-        JOIN paths ON paths.id = visits.path_id
+        INNER JOIN paths ON paths.id = visits.path_id
         GROUP BY path"#
     )
     .fetch_all(&*state.db)
