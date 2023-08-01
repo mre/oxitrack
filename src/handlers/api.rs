@@ -44,15 +44,5 @@ pub async fn history(
 }
 
 pub async fn counts(State(state): AppStateT) -> Result<Json<Vec<Count>>, RespErr> {
-    sqlx::query_as!(
-        Count,
-        r#"SELECT path, COUNT(*) AS "count!" FROM visits
-        INNER JOIN paths ON paths.id = visits.path_id
-        GROUP BY path"#
-    )
-    .fetch_all(&*state.db)
-    .await
-    .ctx(Status::Internal)
-    .err_msg("Counts query failed!")
-    .map(Json)
+    Count::query_all(&state.db).await.map(Json)
 }

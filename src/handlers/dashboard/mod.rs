@@ -9,24 +9,14 @@ use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
 use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
-use crate::db::{self, Id, TimeStamp};
+use crate::db::{Count, Id, TimeStamp};
 
 use self::templates::Index;
 
 use super::{base_template::Base, queries::PathQuery, AppStateT};
 
 pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
-    let counts = sqlx::query_as!(
-        db::Count,
-        r#"SELECT path, COUNT(*) AS "count!" FROM paths
-        INNER JOIN visits ON paths.id = visits.path_id
-        GROUP BY path
-        ORDER BY path"#
-    )
-    .fetch_all(&*state.db)
-    .await
-    .ctx(Status::Internal)
-    .err_msg("Paths query failed!")?;
+    let counts = Count::query_all(&state.db).await?;
 
     Index {
         base: Base { title: "Dashboard" },

@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxi_axum_helpers::{DBConfig, InitErr, InitErrCtx};
+use oxi_axum_helpers::{DBConfig, InitErr, InitErrCtx, RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use time::OffsetDateTime;
@@ -42,4 +42,20 @@ pub struct TimeStamp {
 pub struct Count {
     pub path: String,
     pub count: i64,
+}
+
+impl Count {
+    pub async fn query_all(pool: &PgPool) -> Result<Vec<Self>, RespErr> {
+        sqlx::query_as!(
+            Self,
+            r#"SELECT path, COUNT(*) AS "count!" FROM paths
+            INNER JOIN visits ON visits.path_id = paths.id
+            GROUP BY path
+            ORDER BY path"#
+        )
+        .fetch_all(pool)
+        .await
+        .ctx(Status::Internal)
+        .err_msg("Counts query failed!")
+    }
 }
