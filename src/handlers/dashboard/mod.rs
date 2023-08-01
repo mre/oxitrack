@@ -65,13 +65,13 @@ fn plot_history(
     {
         use plotters::prelude::*;
 
-        let root = SVGBackend::with_string(&mut svg, (900, 650)).into_drawing_area();
+        let root = SVGBackend::with_string(&mut svg, (600, 600)).into_drawing_area();
         let mut chart = ChartBuilder::on(&root)
             .margin_left(14)
             .margin_right(14)
             .margin_top(8)
-            .x_label_area_size(32)
-            .y_label_area_size(32)
+            .x_label_area_size(35)
+            .y_label_area_size(35)
             .build_cartesian_2d(min..max, 1..history.len())
             .ctx(Status::Internal)?;
 
@@ -99,7 +99,7 @@ fn plot_history(
                     .iter()
                     .copied()
                     .zip(1..=history.len())
-                    .map(|coord| Circle::new(coord, 3, BLUE.filled())),
+                    .map(|coord| Circle::new(coord, 2, BLUE.filled())),
             )
             .ctx(Status::Internal)?;
 
