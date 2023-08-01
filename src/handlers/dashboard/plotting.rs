@@ -21,7 +21,7 @@ fn x_label_formatter(timestamp: i64, utc_offset: UtcOffset) -> String {
 }
 
 pub fn plot_history(
-    history: Vec<i64>,
+    history: &[i64],
     min: i64,
     max: i64,
     utc_offset: UtcOffset,

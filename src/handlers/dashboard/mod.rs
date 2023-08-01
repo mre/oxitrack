@@ -88,7 +88,7 @@ pub async fn stats(
     let days_since_first_visit = 1 + (now - first_visit) / secs_per_day;
     let visits_per_day = n_visits as f64 / days_since_first_visit as f64;
 
-    let svg = plotting::plot_history(history, first_visit, last_visit, state.utc_offset)
+    let svg = plotting::plot_history(&history, first_visit, last_visit, state.utc_offset)
         .err_msg_lz(|| format!("Failed to plot the call history for path {path}!"))?;
 
     templates::Stats {
