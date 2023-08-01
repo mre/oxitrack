@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 pub type SleepingHotelInd = u16;
-const MAX_IND: usize = SleepingHotelInd::MAX as usize;
+const MAX_N_BEDS: usize = SleepingHotelInd::MAX as usize + 1;
 
 pub struct Bed<T> {
     sleeper: T,
@@ -11,12 +11,12 @@ pub struct Bed<T> {
 pub struct SleepingHotel<T> {
     last_ind: SleepingHotelInd,
     min_secs: u64,
-    beds: Box<[Option<Bed<T>>; MAX_IND]>,
+    beds: Box<[Option<Bed<T>>; MAX_N_BEDS]>,
 }
 
 impl<T> SleepingHotel<T> {
     pub fn new(min_secs: u64) -> Self {
-        let beds = (0..MAX_IND)
+        let beds = (0..MAX_N_BEDS)
             .map(|_| None)
             .collect::<Vec<_>>()
             .try_into()
@@ -37,9 +37,8 @@ impl<T> SleepingHotel<T> {
 
         let ind = self.last_ind;
 
-        // Safety: Valid index since `beds` has length Ind::MAX.
+        // Safety: Valid index since `beds` has length `SleepingHotelInd::MAX + 1` with `SleepingHotelInd::MIN = 0`.
         *unsafe { self.beds.get_unchecked_mut(usize::from(ind)) } = Some(registration);
-
         self.last_ind = self.last_ind.wrapping_add(1);
 
         ind
@@ -48,7 +47,7 @@ impl<T> SleepingHotel<T> {
     /// Returns the sleeper if it was found in the bed and did sleep well.
     /// Tired sleepers are kicked out.
     pub fn wake_up(&mut self, bed_ind: SleepingHotelInd) -> Option<T> {
-        // Safety: Valid index since `beds` has length Ind::MAX.
+        // Safety: See `reserve_bed`.
         let bed = unsafe { self.beds.get_unchecked_mut(usize::from(bed_ind)) }.take()?;
 
         let elapsed = bed.fell_asleep_at.elapsed().as_secs();
