@@ -59,7 +59,7 @@ The container expects the data directory to be mounted as a **volume** at `/volu
 You can also host OxiTraffic directly with the binary that you can install with Cargo:
 
 ```fish
-cargo install oxitraffic
+cargo install oxitraffic --locked
 ```
 
 Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
