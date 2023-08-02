@@ -53,7 +53,7 @@ impl ConfigBuilder for Config {
 #[cfg(test)]
 mod tests {
     use super::Config;
-    use crate::DATA_DIR_ENV_VAR;
+    use crate::app::DATA_DIR_ENV_VAR;
     use figment::Jail;
     use oxi_axum_helpers::ConfigBuilder;
     use std::path::Path;
