@@ -70,19 +70,19 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 ### Configuration
 
-| Parameter                 | Description                                                                                                                                                                                                                                                                             | Default          |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `socket_address`          | Use `127.0.0.1:8080` for testing on `http://localhost:8080`. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                            | `"0.0.0.0:80"`   |
-| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [Javascript snippet](oxitraffic.js) to OxiTraffic. |                  |
-| `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                           | `tracked_origin` |
-| `min_delay_secs`          | Minimum delay between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts.  | 19               |
-| `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                         |                  |
-| `db.port`                 | PostgreSQL port                                                                                                                                                                                                                                                                         |                  |
-| `db.username`             | PostgreSQL username                                                                                                                                                                                                                                                                     |                  |
-| `db.password`             | PostgreSQL password                                                                                                                                                                                                                                                                     |                  |
-| `db.database`             | PostgreSQL database                                                                                                                                                                                                                                                                     |                  |
-| `utc_offset.hours`        | The hours of your UTC offset                                                                                                                                                                                                                                                            | 0                |
-| `utc_offset.minutes`      | The minutes of your UTC offset                                                                                                                                                                                                                                                          | 0                |
+| Parameter                 | Description                                                                                                                                                                                                                                                                                       | Default          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `socket_address`          | Use `127.0.0.1:8080` for local testing. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                                                           | `"0.0.0.0:80"`   |
+| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [Javascript snippet](oxitraffic.js) to OxiTraffic.           |                  |
+| `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                                     | `tracked_origin` |
+| `min_delay_secs`          | Minimum delay in seconds between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts. | 19               |
+| `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                                   |                  |
+| `db.port`                 | PostgreSQL port                                                                                                                                                                                                                                                                                   |                  |
+| `db.username`             | PostgreSQL username                                                                                                                                                                                                                                                                               |                  |
+| `db.password`             | PostgreSQL password                                                                                                                                                                                                                                                                               |                  |
+| `db.database`             | PostgreSQL database                                                                                                                                                                                                                                                                               |                  |
+| `utc_offset.hours`        | The hours of your UTC offset                                                                                                                                                                                                                                                                      | 0                |
+| `utc_offset.minutes`      | The minutes of your UTC offset                                                                                                                                                                                                                                                                    | 0                |
 
 #### Example configuration
 
@@ -97,7 +97,7 @@ tracked_origin: https://mo8it.com
 tracked_origin_callback: http://website
 
 db:
-  host: DATABASE_HOST
+  host: 127.0.0.1
   port: 5432
   username: postgres
   password: CHANGE_ME
@@ -109,7 +109,7 @@ utc_offset:
   minutes: 0
 ```
 
-## Usage
+## Endpoints
 
 OxiTraffic has the following endpoints:
 

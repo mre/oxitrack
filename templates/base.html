@@ -6,7 +6,7 @@
 
         <title>{{- base.title -}}</title>
 
-        <link href="/static/main.css" rel="stylesheet" />
+        <link href='/static/main.css?v={{ env!("GIT_HASH") }}' rel="stylesheet" />
     </head>
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-3 2xl:container">
@@ -21,9 +21,11 @@
         </main>
 
         <footer class="py-2 mt-auto text-sm text-center bg-gray-100 rounded-full">
-            <a href="https://codeberg.org/mo8it/oxitraffic"
-               target="_blank"
-               rel="noreferrer">Source Code</a>
+            <p>
+                v{{ env!("CARGO_PKG_VERSION") }} - <a href="https://codeberg.org/mo8it/oxitraffic"
+    target="_blank"
+    rel="noreferrer">Source Code</a>
+            </p>
         </footer>
     </body>
 </html>
