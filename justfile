@@ -7,8 +7,9 @@ run:
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
 publish:
-	typos
+	cargo test
 	cargo sqlx prepare --check
+	typos
 	{{tailwind_cmd}}
 	git-cliff -o CHANGELOG.md
 	git push origin main
