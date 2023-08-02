@@ -6,7 +6,8 @@
 
         <title>{{- base.title -}}</title>
 
-        <link href='/static/main.css?v={{ env!("GIT_HASH") }}' rel="stylesheet" />
+        <link href='/static/main.css?v={{ env!("CARGO_PKG_VERSION") }}'
+              rel="stylesheet" />
     </head>
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-3 2xl:container">
