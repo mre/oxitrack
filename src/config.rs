@@ -77,7 +77,7 @@ mod tests {
                 tracked_origin: https://mo8it.com
 
                 db:
-                  host: DATABASE_HOST
+                  host: 127.0.0.1
                   port: 5432
                   username: postgres
                   password: CHANGE_ME
@@ -98,7 +98,7 @@ mod tests {
                 min_delay_secs: 20
 
                 db:
-                  host: DATABASE_HOST
+                  host: 127.0.0.1
                   port: 5432
                   username: postgres
                   password: CHANGE_ME
