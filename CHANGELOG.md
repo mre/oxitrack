@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.3.4] - 2023-08-02
 
+### Bug Fixes
+
+- Use crate version instead of git hash to be able to publish the crate :/
+
 ### Features
 
 - Add git hash to the CSS file request to prevent outdated cache
