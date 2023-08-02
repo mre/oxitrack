@@ -6,7 +6,7 @@
 
         <title>{{- base.title -}}</title>
 
-        <link href="/static/main.css" rel="stylesheet" />
+        <link href="/static/main.css?v={{ base.git_hash }}" rel="stylesheet" />
     </head>
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-3 2xl:container">

@@ -19,7 +19,7 @@ pub async fn index(State(state): AppStateT) -> Result<Response, RespErr> {
     let counts = Count::query_all(&state.db).await?;
 
     Index {
-        base: Base { title: "Dashboard" },
+        base: Base::new("Dashboard"),
         tracked_origin: &state.tracked_origin,
         counts,
     }
@@ -92,7 +92,7 @@ pub async fn stats(
         .err_msg_lz(|| format!("Failed to plot the call history for path {path}!"))?;
 
     templates::Stats {
-        base: Base { title: path },
+        base: Base::new(path),
         tracked_origin: &state.tracked_origin,
         path,
         svg,
