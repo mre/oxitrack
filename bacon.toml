@@ -10,3 +10,18 @@ command = [
   "always",
 ]
 need_stdout = false
+
+[jobs.test]
+command = [
+  "cargo",
+  "test",
+  "--color",
+  "always",
+  "--",
+  "--color",
+  "always",
+]
+need_stdout = true
+
+[keybindings]
+t = "job:test"
