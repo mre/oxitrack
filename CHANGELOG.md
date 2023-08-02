@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2023-08-02
+
+### Features
+
+- Add git hash to the CSS file request to prevent outdated cache
+- Add OxiTraffic version to the footer
+
+### Testing
+
+- Add simple request tests
+
 ## [0.3.3] - 2023-08-01
 
 ### Bug Fixes
