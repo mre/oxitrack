@@ -32,10 +32,18 @@ Try out the following API endpoints (with `curl` for example):
 
 ## How it works
 
-You add a Javascript snippet like [`oxitraffic.js`](oxitraffic.js) which calls `/register?path=PATH` to receive a registration ID.
+You add the Javascript snippet [`oxitraffic.js`](oxitraffic.js) as a script to your website (with `type="module"`):
+
+```html
+<script type="module">
+  // Snippet
+</script>
+```
+
+It calls `/register?path=PATH` to receive a registration ID.
 `PATH` is the path of the page you are on.
 
-This ID can be used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/REGISTRATION_ID` which leads to counting that visit.
+This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/REGISTRATION_ID` which leads to counting that visit.
 
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
