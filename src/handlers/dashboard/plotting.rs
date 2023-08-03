@@ -46,7 +46,7 @@ pub fn plot_history(
             .disable_x_mesh()
             .disable_y_mesh()
             .x_label_formatter(&|timestamp| x_label_formatter(*timestamp, utc_offset))
-            .x_labels(4)
+            .x_labels(2)
             .x_desc("Timestamp")
             .y_desc("Visits")
             .draw()
