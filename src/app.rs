@@ -26,10 +26,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
         config, utc_offset, ..
     } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR);
 
-    let socket_address = config
-        .socket_address
-        .parse::<SocketAddr>()
-        .init_ctx("Failed to parse the socket address!")?;
+    let socket_address = config.socket_address;
 
     let allowed_origin = config
         .tracked_origin

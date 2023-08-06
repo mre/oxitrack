@@ -1,4 +1,7 @@
-use std::path::Path;
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    path::Path,
+};
 
 use figment::{
     providers::{Env, Format, Yaml},
@@ -13,7 +16,7 @@ use serde::Deserialize;
 pub struct Config {
     /// The server socket address including port.
     #[serde(default = "default_socket_address")]
-    pub socket_address: String,
+    pub socket_address: SocketAddr,
     pub db: DBConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
@@ -23,8 +26,9 @@ pub struct Config {
     #[serde(default = "default_min_delay_secs")]
     pub min_delay_secs: u64,
 }
-fn default_socket_address() -> String {
-    "0.0.0.0:80".to_owned()
+fn default_socket_address() -> SocketAddr {
+    // 0.0.0.0:80
+    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 80))
 }
 const fn default_min_delay_secs() -> u64 {
     19
