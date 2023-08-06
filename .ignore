@@ -1,5 +1,4 @@
 /Cargo.lock
-CHANGELOG.md
-*.css
 /LICENSE.txt
 /.sqlx/
+/static/

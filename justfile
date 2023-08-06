@@ -11,6 +11,5 @@ publish:
 	cargo sqlx prepare --check
 	typos
 	{{tailwind_cmd}}
-	git-cliff -o CHANGELOG.md
 	git push origin main
 	cargo publish
