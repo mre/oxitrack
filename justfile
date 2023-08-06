@@ -7,9 +7,10 @@ run:
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
 publish:
+	cargo outdated --exit-code 1
+	typos
 	cargo test
 	cargo sqlx prepare --check
-	typos
 	{{tailwind_cmd}}
 	git push origin main
 	cargo publish
