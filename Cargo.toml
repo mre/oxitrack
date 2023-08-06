@@ -23,16 +23,16 @@ exclude = [
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
-axum = { version = "0.6.19", default-features = false, features = ["http2", "tokio", "json", "query"] }
+axum = { version = "0.6.20", default-features = false, features = ["http2", "tokio", "json", "query"] }
 figment = { version = "0.10.10", features = ["yaml", "env", "test"] }
 futures = "0.3.28"
 oxi-axum-helpers = { version = "0.0.8", features = ["templates", "static_handler", "db"] }
 plotters = { version = "0.3.5", default-features = false, features = ["svg_backend", "line_series"] }
 reqwest = { version = "0.11.18", default-features = false, features = ["rustls-tls"] }
 rust-embed = "6.8.1"
-serde = { version = "1.0.180", features = ["derive"] }
 sqlx = { version = "0.7.1", default-features = false, features = ["runtime-tokio-rustls", "postgres", "macros", "migrate", "time"] }
-time = { version = "0.3.24", features = ["formatting"] }
+serde = { version = "1.0.182", features = ["derive"] }
+time = { version = "0.3.25", features = ["formatting"] }
 tower-http = { version = "0.4.3", default-features = false, features = ["cors", "trace", "compression-gzip"] }
 tracing = "0.1.37"
 
@@ -41,7 +41,7 @@ hyper = { version = "0.14.27", default-features = false }
 mime = "0.3.17"
 tokio = { version = "1.29.1", default-features = false, features = ["rt", "macros"] }
 tower = { version = "0.4.13", default-features = false }
-typed-builder = "0.15.1"
+typed-builder = "0.15.2"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
