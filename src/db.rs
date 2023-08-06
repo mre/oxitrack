@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use oxi_axum_helpers::{DBConfig, InitErr, InitErrCtx, RespErr, RespErrCtx, RespErrExt, Status};
+use oxi_axum_helpers::{InitErr, InitErrCtx, PgConfig, RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use time::OffsetDateTime;
@@ -18,7 +18,7 @@ impl Deref for Database {
 }
 
 impl Database {
-    pub async fn build(db_config: DBConfig) -> Result<Self, InitErr> {
+    pub async fn build(db_config: PgConfig) -> Result<Self, InitErr> {
         let pool = db_config.try_into_pool().await?;
 
         sqlx::migrate!()

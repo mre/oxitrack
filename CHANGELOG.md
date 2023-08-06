@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5 (unreleased)
+
+### Features
+
+- Update oxi-axum-helpers
+
 ## 0.3.4
 
 ### Features

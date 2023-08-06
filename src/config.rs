@@ -7,7 +7,7 @@ use figment::{
     providers::{Env, Format, Yaml},
     Figment,
 };
-use oxi_axum_helpers::{ConfigBuilder, DBConfig, HMUtcOffset, InitErr, InitErrCtx};
+use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, InitErr, InitErrCtx, PgConfig};
 use serde::Deserialize;
 
 /// Configuration.
@@ -17,7 +17,7 @@ pub struct Config {
     /// The server socket address including port.
     #[serde(default = "default_socket_address")]
     pub socket_address: SocketAddr,
-    pub db: DBConfig,
+    pub db: PgConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
     pub tracked_origin: String,
