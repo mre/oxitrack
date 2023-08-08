@@ -22,7 +22,7 @@ exclude = [
 
 [dependencies]
 askama = { version = "0.12.0", default-features = false }
-axum = { version = "0.6.20", default-features = false, features = ["http2", "tokio", "json", "query"] }
+axum = { version = "0.6.20", default-features = false, features = ["http1", "tokio", "json", "query"] }
 figment = { version = "0.10.10", features = ["yaml", "env", "test"] }
 futures = "0.3.28"
 oxi-axum-helpers = { version = "0.0.9", features = ["postgres", "templates", "static_handler"] }
