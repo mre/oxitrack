@@ -1,8 +1,7 @@
 pub mod sleeping_hotel;
 
-use std::sync::Mutex;
-
 use oxi_axum_helpers::{InitErr, InitErrCtx};
+use std::sync::Mutex;
 use time::UtcOffset;
 
 use crate::{config::Config, db::Database};

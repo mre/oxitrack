@@ -1,8 +1,7 @@
-use std::{net::SocketAddr, sync::Arc};
-
 use axum::{http::HeaderValue, routing::get, Router};
 use oxi_axum_helpers::{static_handler, InitErr, InitErrCtx, PreTracer};
 use rust_embed::RustEmbed;
+use std::{net::SocketAddr, sync::Arc};
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,

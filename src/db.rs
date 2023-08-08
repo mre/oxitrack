@@ -1,8 +1,7 @@
-use std::ops::Deref;
-
 use oxi_axum_helpers::{InitErr, InitErrCtx, PgConfig, RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
+use std::ops::Deref;
 use time::OffsetDateTime;
 
 pub struct Database {
