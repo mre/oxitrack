@@ -23,7 +23,7 @@ struct Static;
 pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
     let PreTracer {
         config, utc_offset, ..
-    } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR);
+    } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR, "oxitraffic");
 
     let socket_address = config.socket_address;
 
