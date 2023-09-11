@@ -37,18 +37,21 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
     let compression_layer = CompressionLayer::new().gzip(true);
 
     let counting_router = Router::new()
-        .route("/register", get(handlers::register))
-        .route("/post-sleep/:registration_id", get(handlers::post_sleep))
+        .route("/register", get(handlers::register::get))
+        .route(
+            "/post-sleep/:registration_id",
+            get(handlers::post_sleep::get),
+        )
         .layer(CorsLayer::new().allow_origin(allowed_origin));
 
     let api_router = Router::new()
-        .route("/history", get(handlers::api::history))
-        .route("/counts", get(handlers::api::counts))
+        .route("/history", get(handlers::api::history::get))
+        .route("/counts", get(handlers::api::counts::get))
         .layer(compression_layer.clone());
 
     let dashboard_router = Router::new()
-        .route("/", get(handlers::dashboard::index))
-        .route("/stats", get(handlers::dashboard::stats))
+        .route("/", get(handlers::dashboard::index::get))
+        .route("/stats", get(handlers::dashboard::stats::get))
         .layer(compression_layer);
 
     let app = Router::new()
