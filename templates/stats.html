@@ -38,9 +38,39 @@
     <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
 
     <script type="module">
+        function datetime(timestamp_in_secs) {
+            return new Date(1000 * timestamp_in_secs).toLocaleString('de-DE');
+        }
+
         async function render_chart() {
             const data = {{ history }}.map(function(element, index) { return {x: element, y: index + 1}; });
             const n_visits = data.length;
+
+            const zoom_options = {
+                zoom: {
+                    wheel: {
+                        enabled: true
+                    },
+                    pinch: {
+                        enabled: true
+                    }
+                },
+                pan: {
+                    enabled: true
+                },
+                limits: {
+                    x: {
+                        min: 'original',
+                        max: 'original',
+                        minRange: 60
+                    },
+                    y: {
+                        min: 'original',
+                        max: 'original',
+                        minRange: 10
+                    }
+                }
+            };
 
             new Chart(
                 document.getElementById('chart'), {
@@ -63,35 +93,11 @@
                                 callbacks: {
                                     title: () => '',
                                     beforeLabel: function(context) {
-                                        return new Date(1000 * context.raw.x).toLocaleString(undefined, { hour12: false });
+                                        return datetime(context.raw.x);
                                     }
                                 }
                             },
-                            zoom: {
-                                zoom: {
-                                    wheel: {
-                                        enabled: true
-                                    },
-                                    pinch: {
-                                        enabled: true
-                                    }
-                                },
-                                pan: {
-                                    enabled: true
-                                },
-                                limits: {
-                                    x: {
-                                        min: 'original',
-                                        max: 'original',
-                                        minRange: 60
-                                    },
-                                    y: {
-                                        min: 'original',
-                                        max: 'original',
-                                        minRange: 10
-                                    }
-                                }
-                            }
+                            zoom: zoom_options
                         },
                         scales: {
                             x: {
@@ -103,7 +109,11 @@
                                 min: {{ min_chart_timestamp }},
                                 max: {{ max_chart_timestamp }},
                                 ticks: {
-                                    display: false
+                                    callback: function(value, index, ticks) {
+                                        return datetime(value);
+                                    },
+                                    sampleSize: 8,
+                                    minRotation: 15
                                 }
                             },
                             y: {
