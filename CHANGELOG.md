@@ -1,6 +1,14 @@
 # Changelog
 
+## 0.3.8
+
+### Fixes
+
+- Remove zoom and pan from the line chart because of scrolling issues on touch screens (see [this issue](https://github.com/chartjs/chartjs-plugin-zoom/issues/766)).
+
 ## 0.3.7
+
+### Features
 
 - Add bar chart of visits per day.
 - Small improvements of the stats page like wider charts.
