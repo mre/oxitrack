@@ -102,8 +102,6 @@ mod tests {
             "main.css",
             "chart.umd.js",
             "chartjs-adapter-date-fns.bundle.min.js",
-            "hammer.min.js",
-            "chartjs-plugin-zoom.min.js",
         ] {
             Static::get(file).unwrap();
         }
