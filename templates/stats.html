@@ -113,14 +113,15 @@
                         },
                         scales: {
                             x: {
+                                type: 'category',
                                 title: {
                                     display: true,
                                     text: 'Time'
                                 },
                                 ticks: {
                                     minRotation: 50,
-                                    maxRotation: 50,
-                                },
+                                    maxRotation: 50
+                                }
                             },
                             y: {
                                 type: 'linear',
@@ -182,7 +183,6 @@
                                 min: {{ min_chart_timestamp }},
                                 max: {{ max_chart_timestamp }},
                                 ticks: {
-                                    sampleSize: 100,
                                     minRotation: 50,
                                     maxRotation: 50,
                                     includeBounds: false
