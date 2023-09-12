@@ -44,7 +44,6 @@
 
         async function render_chart() {
             const data = {{ history }}.map(function(element, index) { return {x: element, y: index + 1}; });
-            const n_visits = data.length;
 
             const zoom_options = {
                 zoom: {
@@ -69,6 +68,9 @@
                         max: 'original',
                         minRange: 10
                     }
+                },
+                animation: {
+                    duration: 0
                 }
             };
 
@@ -99,6 +101,15 @@
                             },
                             zoom: zoom_options
                         },
+                        elements: {
+                            point: {
+                                radius: 2,
+                                hitRadius: 2
+                            },
+                            line: {
+                                borderWidth: 1
+                            }
+                        },
                         scales: {
                             x: {
                                 type: 'linear',
@@ -113,7 +124,8 @@
                                         return datetime(value);
                                     },
                                     sampleSize: 8,
-                                    minRotation: 15
+                                    minRotation: 20,
+                                    minRotation: 20
                                 }
                             },
                             y: {
@@ -123,9 +135,11 @@
                                     text: 'Visits'
                                 },
                                 min: 0,
-                                max: n_visits + 1,
+                                max: {{ n_visits }} + 2,
                                 ticks: {
                                     stepSize: 1,
+                                    minRotation: 0,
+                                    maxRotation: 0
                                 }
                             }
                         },

@@ -1,12 +1,16 @@
 # Changelog
 
-## 0.3.5 (unreleased)
-
-- Use `chartjs`
+## 0.3.6
 
 ### Features
 
-- Update oxi-axum-helpers
+- Small chart optimizations
+
+## 0.3.5
+
+### Features
+
+- Use `chartjs`
 
 ## 0.3.4
 
