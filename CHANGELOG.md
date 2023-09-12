@@ -2,6 +2,11 @@
 
 ## 0.3.8
 
+### Features
+
+- Adjust padding on the stats page.
+- Longer bar chart animation.
+
 ### Fixes
 
 - Remove zoom and pan from the line chart because of scrolling issues on touch screens (see [this issue](https://github.com/chartjs/chartjs-plugin-zoom/issues/766)).
