@@ -11,7 +11,7 @@ use crate::{
     handlers::{base_template::Base, queries::PathQuery, AppStateT},
 };
 
-use super::{plotting, templates};
+use super::templates;
 
 fn formatted_datetime_from_timestamp(
     timestamp: i64,
@@ -60,33 +60,39 @@ pub async fn get(
 
     let n_visits = history.len();
 
-    let first_visit = *history
+    let min_timestamp = *history
         .first()
         .ctx(Status::NotFound)
         .user_msg_lz(|| format!("The requested path {path} has no counted visits yet."))?;
-
-    let last_visit = *history
+    let max_timestamp = *history
         .last()
         .ctx(Status::Internal)
         .err_msg("Last item does not exist although the first one exists!")?;
 
+    let x_axis_padding = ((max_timestamp - min_timestamp) as f64 * 0.01) as i64;
+    let min_chart_timestamp = min_timestamp - x_axis_padding;
+    let max_chart_timestamp = max_timestamp + x_axis_padding;
+
     let now = time::OffsetDateTime::now_utc().unix_timestamp();
     let secs_per_day = 86_400;
-    let days_since_first_visit = 1 + (now - first_visit) / secs_per_day;
+    let days_since_first_visit = 1 + (now - min_timestamp) / secs_per_day;
     let visits_per_day = n_visits as f64 / days_since_first_visit as f64;
 
-    let svg = plotting::plot_history(&history, first_visit, last_visit, state.utc_offset)
-        .err_msg_lz(|| format!("Failed to plot the call history for path {path}!"))?;
+    let history = serde_json::to_string(&history)
+        .ctx(Status::Internal)
+        .err_msg("Failed to convert history to JSON string!")?;
 
     templates::Stats {
         base: Base::new(path),
         tracked_origin: &state.tracked_origin,
         path,
-        svg,
+        history,
+        min_chart_timestamp,
+        max_chart_timestamp,
         n_visits,
         visits_per_day,
-        first_visit: formatted_datetime_from_timestamp(first_visit, state.utc_offset)?,
-        last_visit: formatted_datetime_from_timestamp(last_visit, state.utc_offset)?,
+        first_visit: formatted_datetime_from_timestamp(min_timestamp, state.utc_offset)?,
+        last_visit: formatted_datetime_from_timestamp(max_timestamp, state.utc_offset)?,
     }
     .try_into_resp()
 }

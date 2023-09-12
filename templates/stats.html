@@ -6,7 +6,9 @@
     </p>
 
     <div class="flex flex-wrap gap-y-2 justify-center mt-6">
-        {{ svg|safe }}
+        <div class="w-full max-w-screen-md h-[70vh] relative">
+            <canvas id="chart"></canvas>
+        </div>
 
         <table class="border-separate border-spacing-4">
             <tr>
@@ -27,4 +29,101 @@
             </tr>
         </table>
     </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src='/static/chart.umd.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+
+    <script src='/static/hammer.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+    <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+
+    <script type="module">
+        async function render_chart() {
+            const data = {{ history }}.map(function(element, index) { return {x: element, y: index + 1}; });
+            const n_visits = data.length;
+
+            new Chart(
+                document.getElementById('chart'), {
+                    type: 'line',
+                    data: {
+                        datasets: [{
+                            label: 'Visits',
+                            data: data
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        animation: false,
+                        parsing: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    title: () => '',
+                                    beforeLabel: function(context) {
+                                        return new Date(1000 * context.raw.x).toLocaleString(undefined, { hour12: false });
+                                    }
+                                }
+                            },
+                            zoom: {
+                                zoom: {
+                                    wheel: {
+                                        enabled: true
+                                    },
+                                    pinch: {
+                                        enabled: true
+                                    }
+                                },
+                                pan: {
+                                    enabled: true
+                                },
+                                limits: {
+                                    x: {
+                                        min: 'original',
+                                        max: 'original',
+                                        minRange: 60
+                                    },
+                                    y: {
+                                        min: 'original',
+                                        max: 'original',
+                                        minRange: 10
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                min: {{ min_chart_timestamp }},
+                                max: {{ max_chart_timestamp }},
+                                ticks: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                title: {
+                                    display: true,
+                                    text: 'Visits'
+                                },
+                                min: 0,
+                                max: n_visits + 1,
+                                ticks: {
+                                    stepSize: 1,
+                                }
+                            }
+                        },
+                    }
+                }
+            );
+        }
+
+        render_chart();
+    </script>
 {% endblock %}

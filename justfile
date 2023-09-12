@@ -1,5 +1,13 @@
 tailwind_cmd := "npx tailwindcss -m -i input.css -o static/main.css"
 
+npm-up:
+	npm update
+	cp node_modules/chart.js/dist/chart.umd.js static
+	# Required by the zoom plugin
+	cp node_modules/hammerjs/hammer.min.js static
+	cp node_modules/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js static
+	{{tailwind_cmd}}
+
 tailwind:
 	{{tailwind_cmd}} -w
 
