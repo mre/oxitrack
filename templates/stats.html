@@ -25,16 +25,12 @@
     <div class="relative w-full h-[50vh] md:h-[70vh]">
         <canvas id="line_chart"></canvas>
     </div>
-    <p class="hidden text-sm sm:inline">Hold the SHIFT key to pan and zoom with the mouse.</p>
 {% endblock %}
 
 {% block scripts %}
     <script src='/static/chart.umd.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
     <script src='/static/chartjs-adapter-date-fns.bundle.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-
-    <script src='/static/hammer.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
     <script type="module">
         async function render_bar_chart(history) {
@@ -135,34 +131,6 @@
         async function render_line_chart(history) {
             const data = history.map(function(element, index) { return {x: element, y: index + 1}; });
 
-            const zoom_options = {
-                zoom: {
-                    wheel: {
-                        enabled: true,
-                        modifierKey: 'shift'
-                    }
-                },
-                pan: {
-                    enabled: true,
-                    modifierKey: 'shift'
-                },
-                limits: {
-                    x: {
-                        min: 'original',
-                        max: 'original',
-                        minRange: 180
-                    },
-                    y: {
-                        min: 'original',
-                        max: 'original',
-                        minRange: 20
-                    }
-                },
-                animation: {
-                    duration: 0
-                }
-            };
-
             new Chart(
                 document.getElementById('line_chart'), {
                     type: 'line',
@@ -179,8 +147,7 @@
                         plugins: {
                             legend: {
                                 display: false
-                            },
-                            zoom: zoom_options
+                            }
                         },
                         elements: {
                             point: {

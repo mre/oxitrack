@@ -4,8 +4,6 @@ npm-up:
 	npm update
 	cp node_modules/chart.js/dist/chart.umd.js static
 	cp node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js static
-	cp node_modules/hammerjs/hammer.min.js static
-	cp node_modules/chartjs-plugin-zoom/dist/chartjs-plugin-zoom.min.js static
 	{{tailwind_cmd}}
 
 tailwind:
