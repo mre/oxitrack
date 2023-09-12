@@ -11,6 +11,8 @@ npm-up:
 tailwind:
 	{{tailwind_cmd}} -w
 
+alias r := run
+
 run:
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
