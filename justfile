@@ -20,5 +20,5 @@ publish:
 	cargo test
 	cargo sqlx prepare --check
 	{{tailwind_cmd}}
-	git push origin main
 	cargo publish
+	git push origin main
