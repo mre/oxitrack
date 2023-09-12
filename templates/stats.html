@@ -18,9 +18,14 @@
         </tr>
     </table>
 
-    <div class="relative p-2 w-full h-[50vh] md:h-[70vh]">
-        <canvas id="chart"></canvas>
+    <div class="relative w-full h-[50vh] md:h-[70vh]">
+        <canvas id="bar_chart"></canvas>
     </div>
+
+    <div class="relative w-full h-[50vh] md:h-[70vh]">
+        <canvas id="line_chart"></canvas>
+    </div>
+    <p class="hidden text-sm sm:inline">Hold the SHIFT key to pan and zoom with the mouse.</p>
 {% endblock %}
 
 {% block scripts %}
@@ -32,18 +37,114 @@
     <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
     <script type="module">
-        async function render_chart() {
-            const history = {{ history }};
+        async function render_bar_chart(history) {
+            const data = [];
+
+            const now = new Date();
+            const now_day = now.getDate();
+            const now_month = now.getMonth();
+            const now_year = now.getFullYear();
+
+            var iter_date = new Date(history[0]);
+            var iter_day = iter_date.getDate();
+            var iter_month = iter_date.getMonth();
+            var iter_year = iter_date.getFullYear();
+            var count = 1;
+
+            for (const timestamp of history) {
+                const date = new Date(timestamp);
+                const day = date.getDate();
+                const month = date.getMonth();
+                const year = date.getFullYear();
+
+                if (day == iter_day && month == iter_month && year == iter_year) {
+                    count += 1;
+                } else {
+                    do {
+                        data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+
+                        iter_date.setDate(iter_day + 1);
+                        iter_day = iter_date.getDate();
+                        iter_month = iter_date.getMonth();
+                        iter_year = iter_date.getFullYear();
+                        count = 0;
+                    } while (day != iter_day || month != iter_month || year != iter_year);
+
+                    count = 1;
+                }
+            }
+
+            while (now_day != iter_day || now_month != iter_month || now_year != iter_year) {
+                data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+
+                iter_date.setDate(iter_day + 1);
+                iter_day = iter_date.getDate();
+                iter_month = iter_date.getMonth();
+                iter_year = iter_date.getFullYear();
+                count = 0;
+            }
+
+            data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+
+            new Chart(
+                document.getElementById('bar_chart'), {
+                    type: 'bar',
+                    data: {
+                        datasets: [{
+                            label: 'Visits',
+                            data: data
+                        }]
+                    },
+                    options: {
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Time'
+                                },
+                                ticks: {
+                                    minRotation: 50,
+                                    maxRotation: 50,
+                                },
+                            },
+                            y: {
+                                type: 'linear',
+                                title: {
+                                    display: true,
+                                    text: 'Visits'
+                                },
+                                min: 0,
+                                ticks: {
+                                    stepSize: 1,
+                                    minRotation: 0,
+                                    maxRotation: 0
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+        }
+
+        async function render_line_chart(history) {
             const data = history.map(function(element, index) { return {x: element, y: index + 1}; });
 
             const zoom_options = {
                 zoom: {
                     wheel: {
-                        enabled: true
+                        enabled: true,
+                        modifierKey: 'shift'
                     }
                 },
                 pan: {
-                    enabled: true
+                    enabled: true,
+                    modifierKey: 'shift'
                 },
                 limits: {
                     x: {
@@ -63,7 +164,7 @@
             };
 
             new Chart(
-                document.getElementById('chart'), {
+                document.getElementById('line_chart'), {
                     type: 'line',
                     data: {
                         datasets: [{
@@ -120,12 +221,23 @@
                                     maxRotation: 0
                                 }
                             }
-                        },
+                        }
                     }
                 }
             );
         }
 
-        render_chart();
+        async function render_charts() {
+            const history = {{ history }};
+
+            if (history.length == 0) {
+                return;
+            }
+
+            render_bar_chart(history);
+            render_line_chart(history);
+        }
+
+        render_charts();
     </script>
 {% endblock %}
