@@ -42,5 +42,8 @@ tokio = { version = "1.32.0", default-features = false, features = ["rt", "macro
 tower = { version = "0.4.13", default-features = false }
 typed-builder = "0.16.0"
 
+[build-dependencies]
+time = { version = "0.3.28" }
+
 [profile.dev.package.sqlx-macros]
 opt-level = 3
