@@ -46,6 +46,7 @@
             var iter_month = iter_date.getMonth();
             var iter_year = iter_date.getFullYear();
             var count = 1;
+            var max_count = count;
 
             for (const timestamp of history) {
                 const date = new Date(timestamp);
@@ -58,6 +59,9 @@
                 } else {
                     do {
                         data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+                        if (count > max_count) {
+                            max_count = count;
+                        }
 
                         iter_date.setDate(iter_day + 1);
                         iter_day = iter_date.getDate();
@@ -72,6 +76,9 @@
 
             while (now_day != iter_day || now_month != iter_month || now_year != iter_year) {
                 data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+                if (count > max_count) {
+                    max_count = count;
+                }
 
                 iter_date.setDate(iter_day + 1);
                 iter_day = iter_date.getDate();
@@ -81,6 +88,9 @@
             }
 
             data.push({x: `${iter_day}.${iter_month}.${iter_year}`, y: count});
+            if (count > max_count) {
+                max_count = count;
+            }
 
             new Chart(
                 document.getElementById('bar_chart'), {
@@ -116,6 +126,7 @@
                                     text: 'Visits'
                                 },
                                 min: 0,
+                                max: max_count,
                                 ticks: {
                                     stepSize: 1,
                                     minRotation: 0,
