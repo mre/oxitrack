@@ -98,7 +98,15 @@ mod tests {
 
     #[test]
     fn static_files() {
-        Static::get("main.css").unwrap();
+        for file in [
+            "main.css",
+            "chart.umd.js",
+            "chartjs-adapter-date-fns.bundle.min.js",
+            "hammer.min.js",
+            "chartjs-plugin-zoom.min.js",
+        ] {
+            Static::get(file).unwrap();
+        }
     }
 
     fn requests() -> [Req; 13] {

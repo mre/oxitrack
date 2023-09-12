@@ -20,6 +20,4 @@ pub struct Stats<'a> {
     pub max_chart_timestamp: i64,
     pub n_visits: usize,
     pub visits_per_day: f64,
-    pub first_visit: String,
-    pub last_visit: String,
 }

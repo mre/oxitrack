@@ -4,7 +4,6 @@ use axum::{
 };
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
-use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
 use crate::{
     db::{Id, TimeStamp},
@@ -13,18 +12,9 @@ use crate::{
 
 use super::templates;
 
-fn formatted_datetime_from_timestamp(
-    timestamp: i64,
-    utc_offset: UtcOffset,
-) -> Result<String, RespErr> {
-    OffsetDateTime::from_unix_timestamp(timestamp)
-        .ctx(Status::Internal)
-        .err_msg("Failed to parse datetime from unix timestamp!")?
-        .to_offset(utc_offset)
-        .format(&Rfc3339)
-        .ctx(Status::Internal)
-        .err_msg("Failed to format datetime!")
-}
+// Milliseconds per day.
+const MS_PER_DAY: i64 = 86_400_000;
+const MS_PER_DAY_F: f64 = MS_PER_DAY as f64;
 
 pub async fn get(
     State(state): AppStateT,
@@ -44,6 +34,7 @@ pub async fn get(
     .err_msg_lz(|| format!("Path {path} not found!"))?
     .id;
 
+    // Converted to ms timestamp.
     let history = sqlx::query_as!(
         TimeStamp,
         "SELECT timestamp FROM visits
@@ -52,7 +43,7 @@ pub async fn get(
         path_id,
     )
     .fetch(&*state.db)
-    .map_ok(|row| row.timestamp.unix_timestamp())
+    .map_ok(|row| 1000 * row.timestamp.unix_timestamp())
     .try_collect::<Vec<_>>()
     .await
     .ctx(Status::Internal)
@@ -73,10 +64,13 @@ pub async fn get(
     let min_chart_timestamp = min_timestamp - x_axis_padding;
     let max_chart_timestamp = max_timestamp + x_axis_padding;
 
-    let now = time::OffsetDateTime::now_utc().unix_timestamp();
-    let secs_per_day = 86_400;
-    let days_since_first_visit = 1 + (now - min_timestamp) / secs_per_day;
-    let visits_per_day = n_visits as f64 / days_since_first_visit as f64;
+    let now_ms = 1000 * time::OffsetDateTime::now_utc().unix_timestamp();
+    let ms_since_first_visit = now_ms - min_timestamp;
+    let visits_per_day = if ms_since_first_visit > MS_PER_DAY {
+        n_visits as f64 * MS_PER_DAY_F / ms_since_first_visit as f64
+    } else {
+        n_visits as f64
+    };
 
     let history = serde_json::to_string(&history)
         .ctx(Status::Internal)
@@ -91,8 +85,6 @@ pub async fn get(
         max_chart_timestamp,
         n_visits,
         visits_per_day,
-        first_visit: formatted_datetime_from_timestamp(min_timestamp, state.utc_offset)?,
-        last_visit: formatted_datetime_from_timestamp(max_timestamp, state.utc_offset)?,
     }
     .try_into_resp()
 }
