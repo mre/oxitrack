@@ -24,12 +24,12 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src='/static/chart.umd.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+    <script src='/static/chart.umd.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
-    <script src='/static/chartjs-adapter-date-fns.bundle.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+    <script src='/static/chartjs-adapter-date-fns.bundle.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
-    <script src='/static/hammer.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
-    <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("CARGO_PKG_VERSION") }}'></script>
+    <script src='/static/hammer.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
+    <script src='/static/chartjs-plugin-zoom.min.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 
     <script type="module">
         async function render_chart() {
