@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.7
+
+- Add bar chart of visits per day.
+- Small improvements of the stats page like wider charts.
+
 ## 0.3.6
 
 ### Features
