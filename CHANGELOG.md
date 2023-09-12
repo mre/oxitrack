@@ -2,6 +2,8 @@
 
 ## 0.3.5 (unreleased)
 
+- Use `chartjs`
+
 ### Features
 
 - Update oxi-axum-helpers
