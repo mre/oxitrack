@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.9
+
+### Features
+
+- Replace axis labels with a title to save space on small screens.
+- Improve chart rendering performance by disabling parsing.
+
 ## 0.3.8
 
 ### Features
