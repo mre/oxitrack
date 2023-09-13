@@ -9,7 +9,7 @@ use crate::{
 use super::templates::Index;
 
 pub async fn get(State(state): AppStateT) -> Result<Response, RespErr> {
-    let counts = Count::query_all(&state.db).await?;
+    let counts = Count::query_all_sorted(&state.db).await?;
 
     Index {
         base: Base::new("Dashboard"),

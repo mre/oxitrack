@@ -44,13 +44,13 @@ pub struct Count {
 }
 
 impl Count {
-    pub async fn query_all(pool: &PgPool) -> Result<Vec<Self>, RespErr> {
+    pub async fn query_all_sorted(pool: &PgPool) -> Result<Vec<Self>, RespErr> {
         sqlx::query_as!(
             Self,
             r#"SELECT path, COUNT(*) AS "count!" FROM paths
             INNER JOIN visits ON visits.path_id = paths.id
             GROUP BY path
-            ORDER BY path"#
+            ORDER BY "count!" DESC"#
         )
         .fetch_all(pool)
         .await
