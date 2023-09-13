@@ -41,15 +41,17 @@
             const now_month = now.getMonth();
             const now_year = now.getFullYear();
 
-            var iter_date = new Date(history[0]);
-            var iter_day = iter_date.getDate();
-            var iter_month = iter_date.getMonth();
-            var iter_year = iter_date.getFullYear();
-            var count = 1;
-            var max_count = count;
+            let iter_date = new Date(history[0]);
+            let iter_day = iter_date.getDate();
+            let iter_month = iter_date.getMonth();
+            let iter_year = iter_date.getFullYear();
+            let count = 1;
+            let max_count = count;
 
-            for (const timestamp of history) {
-                const date = new Date(timestamp);
+            const history_len = history.length;
+            // Skip first element.
+            for (let i = 1; i < history_len; i++) {
+                const date = new Date(history[i]);
                 const day = date.getDate();
                 const month = date.getMonth();
                 const year = date.getFullYear();

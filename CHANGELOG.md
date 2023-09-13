@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.11
+
+### Fixes
+
+- Fix counting first timestamp twice in the bar chart.
+
 ## 0.3.10
 
 ### Fixes
