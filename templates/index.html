@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-    Tracked website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
-
-    <h3>Registered pages</h3>
+    <h4 class="mb-4">
+        Website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
+    </h4>
 
     <table class="w-full md:w-fit">
         <tr class="border-b-4">
             <th class="pr-5 text-left">Page</th>
             <th class="pr-5 text-left">Visits</th>
-            <th class="text-right">Percentage</th>
+            <th class="text-right">%</th>
         </tr>
 
         {% for (path_count, perc) in counts_rows %}
-            <tr class="border-b-8 border-transparent">
+            <tr class="border-b-[12px] border-transparent">
                 <td class="pr-5">
                     <a href="/stats?path={{ path_count.path }}">{{ path_count.path }}</a>
                 </td>
