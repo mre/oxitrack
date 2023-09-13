@@ -1,11 +1,16 @@
 # Changelog
 
+## 0.3.10
+
+### Fixes
+
+- Fix bar chart on small screens.
+
 ## 0.3.9
 
 ### Features
 
 - Replace axis labels with a title to save space on small screens.
-- Improve chart rendering performance by disabling parsing.
 - Rank pages on their number of visits and show their percentage of total site visits.
 
 ### Fixes
