@@ -1,12 +1,14 @@
-use crate::{db::Count, handlers::base_template::Base};
+use crate::handlers::base_template::Base;
 use askama::Template;
+
+use super::index::CountsRows;
 
 #[derive(Template)]
 #[template(path = "index.html")]
 pub struct Index<'a> {
     pub base: Base<'a>,
     pub tracked_origin: &'a str,
-    pub counts: Vec<Count>,
+    pub counts_rows: CountsRows,
 }
 
 #[derive(Template)]
