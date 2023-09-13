@@ -7,6 +7,10 @@
 - Replace axis labels with a title to save space on small screens.
 - Improve chart rendering performance by disabling parsing.
 
+### Fixes
+
+- Reduce the height of charts since we no longer have only one chart.
+
 ## 0.3.8
 
 ### Features
