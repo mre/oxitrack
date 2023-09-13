@@ -55,14 +55,6 @@ pub async fn get(
         .first()
         .ctx(Status::NotFound)
         .user_msg_lz(|| format!("The requested path {path} has no counted visits yet."))?;
-    let max_timestamp = *history
-        .last()
-        .ctx(Status::Internal)
-        .err_msg("Last item does not exist although the first one exists!")?;
-
-    let x_axis_padding = ((max_timestamp - min_timestamp) as f64 * 0.01) as i64;
-    let min_chart_timestamp = min_timestamp - x_axis_padding;
-    let max_chart_timestamp = max_timestamp + x_axis_padding;
 
     let now_ms = 1000 * time::OffsetDateTime::now_utc().unix_timestamp();
     let ms_since_first_visit = now_ms - min_timestamp;
@@ -71,6 +63,10 @@ pub async fn get(
     } else {
         n_visits as f64
     };
+
+    let x_axis_padding = (ms_since_first_visit as f64 * 0.004) as i64;
+    let min_chart_timestamp = min_timestamp - x_axis_padding;
+    let max_chart_timestamp = now_ms + x_axis_padding;
 
     let history = serde_json::to_string(&history)
         .ctx(Status::Internal)
