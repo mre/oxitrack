@@ -109,6 +109,10 @@
                             duration: 2000
                         },
                         plugins: {
+                            title: {
+                                display: true,
+                                text: 'visits/day'
+                            },
                             legend: {
                                 display: false
                             }
@@ -116,21 +120,14 @@
                         scales: {
                             x: {
                                 type: 'category',
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
                                 ticks: {
                                     minRotation: 50,
-                                    maxRotation: 50
+                                    maxRotation: 50,
+                                    includeBounds: false
                                 }
                             },
                             y: {
                                 type: 'linear',
-                                title: {
-                                    display: true,
-                                    text: 'Visits'
-                                },
                                 min: 0,
                                 max: max_count,
                                 ticks: {
@@ -153,7 +150,7 @@
                     type: 'line',
                     data: {
                         datasets: [{
-                            label: 'Visits',
+                            label: 'Visit',
                             data: data
                         }]
                     },
@@ -162,6 +159,10 @@
                         animation: false,
                         parsing: false,
                         plugins: {
+                            title: {
+                                display: true,
+                                text: 'visits over time'
+                            },
                             legend: {
                                 display: false
                             }
@@ -178,10 +179,6 @@
                         scales: {
                             x: {
                                 type: 'time',
-                                title: {
-                                    display: true,
-                                    text: 'Time'
-                                },
                                 min: {{ min_chart_timestamp }},
                                 max: {{ max_chart_timestamp }},
                                 ticks: {
@@ -192,10 +189,6 @@
                             },
                             y: {
                                 type: 'linear',
-                                title: {
-                                    display: true,
-                                    text: 'Visits'
-                                },
                                 min: 0,
                                 max: {{ n_visits + 2 }},
                                 ticks: {
