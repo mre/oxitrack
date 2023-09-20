@@ -1,7 +1,7 @@
 use axum::{http::HeaderValue, routing::get, Router};
 use oxi_axum_helpers::{static_handler, InitErr, InitErrCtx, PreTracer};
 use rust_embed::RustEmbed;
-use std::{net::SocketAddr, sync::Arc};
+use std::net::SocketAddr;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
@@ -32,7 +32,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
         .parse::<HeaderValue>()
         .init_ctx("Failed to parse the tracked origin!")?;
 
-    let app_state = Arc::new(AppState::build(config, utc_offset).await?);
+    let app_state = Box::leak(Box::new(AppState::build(config, utc_offset).await?));
 
     let compression_layer = CompressionLayer::new().gzip(true);
 

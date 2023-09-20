@@ -7,8 +7,7 @@ pub mod register;
 pub mod states;
 
 use axum::extract::State;
-use std::sync::Arc;
 
 use states::AppState;
 
-pub type AppStateT = State<Arc<AppState>>;
+pub type AppStateT = State<&'static AppState>;
