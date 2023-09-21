@@ -1,0 +1,2 @@
+ALTER TABLE visits
+ALTER path_id DROP DEFAULT;
