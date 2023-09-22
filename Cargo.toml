@@ -47,3 +47,6 @@ time = { version = "0.3.28" }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
+
+[profile.dev.package.askama_derive]
+opt-level = 3
