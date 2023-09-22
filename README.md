@@ -32,15 +32,15 @@ Try out the following API endpoints (with `curl` for example):
 
 ## How it works
 
-You add the Javascript snippet [`oxitraffic.js`](oxitraffic.js) as a script to your website (with `type="module"`):
+You add the following script tag to your website after replacing `OXITRAFFIC_BASE_URL` with the base URL of your OxiTraffic instance:
 
 ```html
-<script type="module">
-  // Snippet
-</script>
+<script type="module" src="https://OXITRAFFIC_BASE_URL/count.js"></script>
 ```
 
-It calls `/register?path=PATH` to receive a registration ID.
+It runs the tiny script [count.js](templates/count.js).
+
+The script calls `/register?path=PATH` to receive a registration ID.
 `PATH` is the path of the page you are on.
 
 This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/REGISTRATION_ID` which leads to counting that visit.
@@ -81,7 +81,7 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 | Parameter                 | Description                                                                                                                                                                                                                                                                                       | Default          |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | `socket_address`          | Use `127.0.0.1:8080` for local testing. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                                                           | `"0.0.0.0:80"`   |
-| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [Javascript snippet](oxitraffic.js) to OxiTraffic.           |                  |
+| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [`count.js`](templates/count.js) script to OxiTraffic.       |                  |
 | `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                                     | `tracked_origin` |
 | `min_delay_secs`          | Minimum delay in seconds between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts. | 19               |
 | `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                                   |                  |
