@@ -44,6 +44,10 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
         )
         .layer(CorsLayer::new().allow_origin(allowed_origin));
 
+    let count_js_router = Router::new()
+        .route("/count.js", get(handlers::count_js::get))
+        .layer(compression_layer.clone());
+
     let api_router = Router::new()
         .route("/history", get(handlers::api::history::get))
         .route("/counts", get(handlers::api::counts::get))
@@ -57,6 +61,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
     let app = Router::new()
         .route("/static/:file", get(static_handler::handler::<Static>))
         .merge(counting_router)
+        .merge(count_js_router)
         .nest("/api", api_router)
         .merge(dashboard_router)
         .layer(
@@ -78,7 +83,7 @@ mod tests {
     use super::{app, Static, DATA_DIR_ENV_VAR};
     use axum::{
         body::Body,
-        http::{self, Request, StatusCode},
+        http::{header, Request, StatusCode},
     };
     use figment::Jail;
     use mime::Mime;
@@ -170,6 +175,8 @@ mod tests {
             jail.create_file(
                 "config.yaml",
                 r#"
+                    socket_address: 127.0.0.1:8080
+                    base_url: http://127.0.0.1:8080
                     tracked_origin: https://mo8it.com
 
                     min_delay_secs: 0
@@ -203,7 +210,7 @@ mod tests {
                             assert_eq!(
                                 response
                                     .headers()
-                                    .get(http::header::CONTENT_TYPE)
+                                    .get(header::CONTENT_TYPE)
                                     .unwrap()
                                     .to_str()
                                     .unwrap(),

@@ -1,11 +1,19 @@
 pub mod sleeping_hotel;
 
+use askama::Template;
 use oxi_axum_helpers::{InitErr, InitErrCtx};
 use std::sync::Mutex;
 use time::UtcOffset;
 
 use crate::{config::Config, db::Database};
 use sleeping_hotel::SleepingHotel;
+
+#[derive(Template)]
+#[template(path = "count.js", escape = "none")]
+pub struct CountJs<'a> {
+    pub base_url: &'a str,
+    pub sleep_secs: u64,
+}
 
 /// The application state.
 pub struct AppState {
@@ -14,6 +22,7 @@ pub struct AppState {
     pub tracked_origin_callback: String,
     pub sleeping_hotel: Mutex<SleepingHotel<i64>>,
     pub utc_offset: UtcOffset,
+    pub count_js: &'static str,
 }
 
 impl AppState {
@@ -35,12 +44,21 @@ impl AppState {
             return InitErr::new(callback_connection_error);
         }
 
+        let count_js = CountJs {
+            base_url: &config.base_url,
+            sleep_secs: config.min_delay_secs + 1,
+        }
+        .render()
+        .init_ctx("Failed to build the couter.js script!")?
+        .leak();
+
         Ok(Self {
             db,
             tracked_origin_callback,
             tracked_origin: config.tracked_origin,
             sleeping_hotel: Mutex::new(sleeping_hotel),
             utc_offset,
+            count_js,
         })
     }
 

@@ -17,14 +17,15 @@ pub struct Config {
     /// The server socket address including port.
     #[serde(default = "default_socket_address")]
     pub socket_address: SocketAddr,
-    pub db: PgConfig,
-    #[serde(default)]
-    pub utc_offset: HMUtcOffset,
+    pub base_url: String,
     pub tracked_origin: String,
     #[serde(default)]
     pub tracked_origin_callback: Option<String>,
     #[serde(default = "default_min_delay_secs")]
     pub min_delay_secs: u64,
+    pub db: PgConfig,
+    #[serde(default)]
+    pub utc_offset: HMUtcOffset,
 }
 fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
@@ -78,6 +79,7 @@ mod tests {
     fn minimal_config() {
         test_config(
             r#"
+                base_url: https://oxitraffic.mo8it.com
                 tracked_origin: https://mo8it.com
 
                 db:
@@ -94,8 +96,8 @@ mod tests {
     fn full_config() {
         test_config(
             r#"
-                socket_address: 0.0.0.0:80
-
+                socket_address: 127.0.0.1:8080
+                base_url: http://127.0.0.1:8080
                 tracked_origin: https://mo8it.com
                 tracked_origin_callback: http://mo8it_com
 
