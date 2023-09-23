@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.3.11
+## 0.4.0 (unreleased)
+
+### Breaking
+
+- A new configuration value `base_url` has to be added to the `config.yaml` file. You have to set it to the base URL of your OxiTraffic instance.
+- Replace the snippet `oxitraffic.js` with the [`count.js`](templates/count.js) script. You just have to add this script tag to your website now (after replacing `OXITRAFFIC_BASE_URL` with the base URL of your OxiTraffic instance):
+  ```html
+  <script type="module" src="https://OXITRAFFIC_BASE_URL/count.js"></script>
+  ```
+
+### Features
+
+- Improve the quality of the frontend code by using TypeScript :)
 
 ### Fixes
 
