@@ -1,24 +1,32 @@
 tailwind_cmd := "npx tailwindcss -m -i input.css -o static/main.css"
 
-npm-up:
-	npm update
-	cp node_modules/chart.js/dist/chart.umd.js static
-	cp node_modules/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js static
-	{{tailwind_cmd}}
-
-tailwind:
-	{{tailwind_cmd}} -w
-
 alias r := run
 
+# Run the binary
 run:
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
+# Run tailwindcss in watch mode
+tailwind:
+	{{tailwind_cmd}} -w
+
+# Run rspack in development and watch mode
+rspack:
+	npx rspack --mode development --watch
+
+# Initialize the project for development or compilation from source
+init:
+	npm install
+	{{tailwind_cmd}}
+	npx rspack
+
+# Publish on crates.io
 publish:
 	npm outdated
 	cargo outdated --exit-code 1
 	typos
 	{{tailwind_cmd}}
+	npx rspack
 	cargo sqlx prepare --check
 	cargo test
 	cargo publish
