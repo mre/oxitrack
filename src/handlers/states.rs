@@ -49,7 +49,7 @@ impl AppState {
             sleep_secs: config.min_delay_secs + 1,
         }
         .render()
-        .init_ctx("Failed to build the couter.js script!")?
+        .init_ctx("Failed to build the count.js script!")?
         .leak();
 
         Ok(Self {
