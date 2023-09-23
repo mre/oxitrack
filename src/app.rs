@@ -103,11 +103,7 @@ mod tests {
 
     #[test]
     fn static_files() {
-        for file in [
-            "main.css",
-            "chart.umd.js",
-            "chartjs-adapter-date-fns.bundle.min.js",
-        ] {
+        for file in ["main.css", "stats.js", "stats.js.map"] {
             Static::get(file).unwrap();
         }
     }
