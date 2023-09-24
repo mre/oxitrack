@@ -5,13 +5,13 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use super::AppStateT;
+use crate::states::AppState;
 
 static CONTENT_TYPE: HeaderValue = HeaderValue::from_static("text/javascript");
 static CACHE_CONTROL: HeaderValue =
     HeaderValue::from_static("public, max-age=86400, must-revalidate");
 
-pub async fn get(State(state): AppStateT) -> Response {
+pub async fn get(State(state): AppState) -> Response {
     let mut res = Full::from(state.count_js).into_response();
 
     res.headers_mut().extend([

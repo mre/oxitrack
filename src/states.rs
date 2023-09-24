@@ -1,6 +1,7 @@
 pub mod sleeping_hotel;
 
 use askama::Template;
+use axum::extract::State;
 use oxi_axum_helpers::{InitErr, InitErrCtx};
 use std::sync::Mutex;
 use time::UtcOffset;
@@ -16,7 +17,7 @@ pub struct CountJs<'a> {
 }
 
 /// The application state.
-pub struct AppState {
+pub struct InnerAppState {
     pub db: Database,
     pub tracked_origin: String,
     pub tracked_origin_callback: String,
@@ -25,7 +26,7 @@ pub struct AppState {
     pub count_js: &'static str,
 }
 
-impl AppState {
+impl InnerAppState {
     pub async fn build(config: Config, utc_offset: UtcOffset) -> Result<Self, InitErr> {
         let db = Database::build(config.db).await?;
 
@@ -70,3 +71,5 @@ impl AppState {
         url
     }
 }
+
+pub type AppState = State<&'static InnerAppState>;

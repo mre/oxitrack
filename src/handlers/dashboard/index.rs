@@ -2,10 +2,7 @@ use axum::{extract::State, response::Response};
 use oxi_axum_helpers::{RespErr, TryIntoTemplResp};
 use std::slice::Iter;
 
-use crate::{
-    db::Count,
-    handlers::{base_template::Base, AppStateT},
-};
+use crate::{db::Count, handlers::base_template::Base, states::AppState};
 
 use super::templates::Index;
 
@@ -41,7 +38,7 @@ impl<'a> IntoIterator for &'a CountsRows {
     }
 }
 
-pub async fn get(State(state): AppStateT) -> Result<Response, RespErr> {
+pub async fn get(State(state): AppState) -> Result<Response, RespErr> {
     let counts = Count::query_all_sorted(&state.db).await?;
     let total_n_visits = counts.iter().map(|c| c.count).sum::<i64>();
     let mult_factor = 100.0 / total_n_visits as f64;

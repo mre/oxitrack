@@ -8,11 +8,12 @@ use time::format_description::well_known::Rfc3339;
 
 use crate::{
     db::{Id, TimeStamp},
-    handlers::{queries::PathQuery, AppStateT},
+    handlers::queries::PathQuery,
+    states::AppState,
 };
 
 pub async fn get(
-    State(state): AppStateT,
+    State(state): AppState,
     Query(path): Query<PathQuery>,
 ) -> Result<Json<Vec<String>>, RespErr> {
     let path = path.normalized();

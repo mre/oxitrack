@@ -1078,6 +1078,7 @@ name = "oxitraffic"
 version = "0.3.10"
 dependencies = [
  "askama",
+ "async-trait",
  "axum",
  "figment",
  "futures",
@@ -1095,6 +1096,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "typed-builder",
+ "url",
 ]
 
 [[package]]

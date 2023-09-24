@@ -4,12 +4,12 @@ use axum::{
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 
-use crate::db::Id;
+use crate::{db::Id, states::AppState};
 
-use super::{queries::PathQuery, AppStateT};
+use super::queries::PathQuery;
 
 pub async fn get(
-    State(state): AppStateT,
+    State(state): AppState,
     Query(path): Query<PathQuery>,
 ) -> Result<Json<u16>, RespErr> {
     let path = path.normalized();

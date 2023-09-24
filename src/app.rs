@@ -9,10 +9,7 @@ use tower_http::{
 };
 use tracing::Level;
 
-use crate::{
-    config::Config,
-    handlers::{self, states::AppState},
-};
+use crate::{config::Config, handlers, states::InnerAppState};
 
 pub const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
 
@@ -32,7 +29,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
         .parse::<HeaderValue>()
         .init_ctx("Failed to parse the tracked origin!")?;
 
-    let app_state = Box::leak(Box::new(AppState::build(config, utc_offset).await?));
+    let app_state = Box::leak(Box::new(InnerAppState::build(config, utc_offset).await?));
 
     let compression_layer = CompressionLayer::new().gzip(true);
 

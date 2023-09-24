@@ -7,7 +7,8 @@ use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp
 
 use crate::{
     db::{Id, TimeStamp},
-    handlers::{base_template::Base, queries::PathQuery, AppStateT},
+    handlers::{base_template::Base, queries::PathQuery},
+    states::AppState,
 };
 
 use super::templates;
@@ -17,7 +18,7 @@ const MS_PER_DAY: i64 = 86_400_000;
 const MS_PER_DAY_F: f64 = MS_PER_DAY as f64;
 
 pub async fn get(
-    State(state): AppStateT,
+    State(state): AppState,
     Query(path): Query<PathQuery>,
 ) -> Result<Response, RespErr> {
     let path = path.normalized();
