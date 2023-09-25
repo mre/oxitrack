@@ -4,7 +4,7 @@ use std::{
 };
 
 use figment::{
-    providers::{Env, Format, Yaml},
+    providers::{Env, Format, Toml},
     Figment,
 };
 use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, InitErr, InitErrCtx, PgConfig};
@@ -37,7 +37,7 @@ const fn default_min_delay_secs() -> u64 {
 
 impl ConfigBuilder for Config {
     fn build(data_dir: &Path) -> Result<Self, InitErr> {
-        let config_file_path = data_dir.join("config.yaml");
+        let config_file_path = data_dir.join("config.toml");
 
         Figment::new()
             .merge(
@@ -45,7 +45,7 @@ impl ConfigBuilder for Config {
                     .split("__")
                     .ignore(&["data_dir"]),
             )
-            .join(Yaml::file(config_file_path))
+            .join(Toml::file(config_file_path))
             .extract()
             .init_ctx("Failed to parse the configuration!")
     }
@@ -67,7 +67,7 @@ mod tests {
         Jail::expect_with(|jail| {
             jail.set_env(DATA_DIR_ENV_VAR, ".");
 
-            jail.create_file("config.yaml", config_file_content)?;
+            jail.create_file("config.toml", config_file_content)?;
 
             Config::build(Path::new(".")).unwrap();
 
@@ -79,15 +79,15 @@ mod tests {
     fn minimal_config() {
         test_config(
             r#"
-                base_url: https://oxitraffic.mo8it.com
-                tracked_origin: https://mo8it.com
+            base_url = "https://oxitraffic.mo8it.com"
+            tracked_origin = "https://mo8it.com"
 
-                db:
-                  host: 127.0.0.1
-                  port: 5432
-                  username: postgres
-                  password: CHANGE_ME
-                  database: postgres
+            [db]
+            host = "127.0.0.1"
+            port = 5432
+            username = "postgres"
+            password = "CHANGE_ME"
+            database = "postgres"
             "#,
         )
     }
@@ -96,23 +96,23 @@ mod tests {
     fn full_config() {
         test_config(
             r#"
-                socket_address: 127.0.0.1:8080
-                base_url: http://127.0.0.1:8080
-                tracked_origin: https://mo8it.com
-                tracked_origin_callback: http://mo8it_com
+            socket_address = "127.0.0.1:8080"
+            base_url = "http://127.0.0.1:8080"
+            tracked_origin = "https://mo8it.com"
+            tracked_origin_callback = "http://mo8it_com"
 
-                min_delay_secs: 20
+            min_delay_secs = 20
 
-                db:
-                  host: 127.0.0.1
-                  port: 5432
-                  username: postgres
-                  password: CHANGE_ME
-                  database: postgres
+            [db]
+            host = "127.0.0.1"
+            port = 5432
+            username = "postgres"
+            password = "CHANGE_ME"
+            database = "postgres"
 
-                utc_offset:
-                  hours: 2
-                  minutes: 0
+            [utc_offset]
+            hours = 2
+            minutes = 0
             "#,
         )
     }

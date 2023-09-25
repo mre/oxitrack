@@ -166,20 +166,20 @@ mod tests {
             jail.set_env(DATA_DIR_ENV_VAR, ".");
 
             jail.create_file(
-                "config.yaml",
+                "config.toml",
                 r#"
-                    socket_address: 127.0.0.1:8080
-                    base_url: http://127.0.0.1:8080
-                    tracked_origin: https://mo8it.com
+                socket_address = "127.0.0.1:8080"
+                base_url = "http://127.0.0.1:8080"
+                tracked_origin = "https://mo8it.com"
 
-                    min_delay_secs: 0
+                min_delay_secs = 0
 
-                    db:
-                      host: 127.0.0.1
-                      port: 5432
-                      username: postgres
-                      password: CHANGE_ME
-                      database: postgres
+                [db]
+                host = "127.0.0.1"
+                port = 5432
+                username = "postgres"
+                password = "CHANGE_ME"
+                database = "postgres"
                 "#,
             )?;
 

@@ -15,7 +15,6 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 - First class container support 📦️
 - Asynchronous and multithreaded 🔀
 - Informative tracing (logging) to stdout and to a log file 📜
-- YAML configuration 🛠️
 - Free & open source (AGPLv3) 🆓
 - Written in Rust (**oxi**dized) 🦀
 
@@ -55,7 +54,7 @@ Otherwise, the request is rejected.
 
 ### Data directory
 
-The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the YAML configuration file `config.yaml`.
+The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the TOML configuration file `config.toml`.
 
 The log file `oxitraffic.log` will be also placed in that directory.
 
@@ -95,27 +94,30 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 #### Example configuration
 
-```yaml
-# Can be omitted because this is the default.
-socket_address: 0.0.0.0:80
+This is an example of the configuration file `config.toml`:
 
-tracked_origin: https://mo8it.com
+```toml
+# Can be omitted because this is the default value.
+socket_address = "0.0.0.0:80"
 
+base_url = "https://oxitraffic.your_domain.com"
+
+tracked_origin = "https://your_domain.com"
 # In case both OxiTraffic and your website are in a local network and `website` can be resolved to the local IP address of the your website.
-# Omit this option to use `tracked_origin` instead.
-tracked_origin_callback: http://website
+# Omit this option to use the value of `tracked_origin` instead.
+tracked_origin_callback = "http://website"
 
-db:
-  host: 127.0.0.1
-  port: 5432
-  username: postgres
-  password: CHANGE_ME
-  database: postgres
+[db]
+host = "127.0.0.1"
+port = 5432
+username = "postgres"
+password = "CHANGE_ME"
+database = "postgres"
 
-utc_offset:
-  hours: 2
-  # Can be omitted because 0 is the default.
-  minutes: 0
+[utc_offset]
+hours = 2
+# Can be omitted because 0 is the default.
+minutes = 0
 ```
 
 ## Endpoints
