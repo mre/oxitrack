@@ -6,15 +6,20 @@ use axum::{
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use url::Url;
 
+use crate::states::InnerAppState;
+
 const MAX_HEADER_VALUE: usize = 255;
 
 pub struct ReferrerDomain(pub Option<String>);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for ReferrerDomain {
+impl FromRequestParts<&'static InnerAppState> for ReferrerDomain {
     type Rejection = RespErr;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(
+        parts: &mut Parts,
+        state: &&'static InnerAppState,
+    ) -> Result<Self, Self::Rejection> {
         let Some(value) = parts.headers.get(REFERER) else {
             return Ok(Self(None));
         };
@@ -29,6 +34,11 @@ impl<S> FromRequestParts<S> for ReferrerDomain {
             .to_str()
             .ctx(Status::BadRequest)
             .user_msg("The header value is not a valid string!")?;
+
+        if referrer.starts_with(&state.tracked_origin) {
+            // Don't count the tracked domain as a referrer domain.
+            return Ok(Self(None));
+        }
 
         let url = Url::parse(referrer)
             .ctx(Status::BadRequest)
