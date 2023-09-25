@@ -29,5 +29,5 @@ publish:
 	npx rspack
 	cargo sqlx prepare --check
 	cargo test
-	cargo publish
+	cargo publish --allow-dirty
 	git push origin main
