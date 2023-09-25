@@ -1,10 +1,9 @@
+use askama::Template;
 use axum::{extract::State, response::Response};
 use oxi_axum_helpers::{RespErr, TryIntoTemplResp};
 use std::slice::Iter;
 
 use crate::{db::Count, handlers::base_template::Base, states::AppState};
-
-use super::templates::Index;
 
 pub struct CountsRows {
     counts: Vec<Count>,
@@ -36,6 +35,14 @@ impl<'a> IntoIterator for &'a CountsRows {
             mult_factor: self.mult_factor,
         }
     }
+}
+
+#[derive(Template)]
+#[template(path = "index.html")]
+struct Index<'a> {
+    pub base: Base<'a>,
+    pub tracked_origin: &'a str,
+    pub counts_rows: CountsRows,
 }
 
 pub async fn get(State(state): AppState) -> Result<Response, RespErr> {

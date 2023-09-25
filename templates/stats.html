@@ -10,11 +10,11 @@
         </tr>
         <tr>
             <td>#visits</td>
-            <td>{{ n_visits }}</td>
+            <td>{{ visits.len }}</td>
         </tr>
         <tr>
             <td>visits/day</td>
-            <td>{{ "{:.2}"|format(visits_per_day) }}</td>
+            <td>{{ "{:.2}"|format(visits.per_day) }}</td>
         </tr>
     </table>
 
@@ -25,9 +25,25 @@
     <div class="relative mb-12 w-full h-[50vh] md:h-[50vh]">
         <canvas id="line_chart"></canvas>
     </div>
+
+    <table class="w-full md:w-fit">
+        <tr class="border-b-4">
+            <th class="pr-5 text-left">Referrer</th>
+            <th class="pr-5 text-left">Visits</th>
+        </tr>
+
+        {% for referrer in referrers %}
+            <tr class="border-b-[12px] border-transparent">
+                <td class="pr-5">
+                    <a href="https://{{ referrer.domain }}">{{ referrer.domain }}</a>
+                </td>
+                <td class="pr-5">{{ referrer.count }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock %}
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_charts({{ history }}, {{ min_chart_timestamp }}, {{ max_chart_timestamp }});</script>
+    <script>oxitraffic.stats.render_charts({{ visits.timestamps_json }}, {{ visits.min_chart_timestamp }}, {{ visits.max_chart_timestamp }});</script>
 {% endblock %}
