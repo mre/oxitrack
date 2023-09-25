@@ -1,4 +1,4 @@
-export async function count(referrer) {
+async function count() {
   // Prevent running on testing instances like localhost
   if (window.location.protocol !== "https:") {
     return;
@@ -11,8 +11,19 @@ export async function count(referrer) {
   // Sleep the required amount before being able to call `/post-sleep`
   await new Promise(r => setTimeout(r, 1000 * parseInt("{{ sleep_secs }}")));
 
+  // Prepare query parameters
+  let query_params = "";
+  if (document.referrer.length > 0) {
+    try {
+      const referrer = new URL(document.referrer).origin;
+      query_params = "?referrer=" + referrer;
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   // Call `/post-sleep` for the visit to be counted
-  await fetch("{{ base_url }}/post-sleep/" + registration_id, {
-    referrer: referrer
-  });
+  await fetch("{{ base_url }}/post-sleep/" + registration_id + query_params);
 }
+
+count();

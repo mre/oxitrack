@@ -1,18 +1,37 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use serde::Deserialize;
+use url::Url;
 
 use crate::{
     db::Id,
-    extractors::referrer_domain::ReferrerDomain,
     states::{sleeping_hotel::SleepingHotelInd, AppState},
 };
 
+#[derive(Deserialize)]
+pub struct Params {
+    referrer: Option<String>,
+}
+
+impl Params {
+    fn referrer(&self, tracked_origin: &str) -> Option<Url> {
+        let referrer = self.referrer.as_ref()?;
+
+        if referrer.starts_with(tracked_origin) {
+            // Don't count the tracked domain as a referrer domain.
+            return None;
+        }
+
+        Url::parse(referrer).ok()
+    }
+}
+
 pub async fn get(
     State(state): AppState,
-    ReferrerDomain(referrer_domain): ReferrerDomain,
+    Query(params): Query<Params>,
     Path(registration_id): Path<SleepingHotelInd>,
 ) -> Result<StatusCode, RespErr> {
     let path_id = state
@@ -22,6 +41,9 @@ pub async fn get(
         .wake_up(registration_id)
         .ctx(Status::BadRequest)
         .user_msg("The registered ID is invalid or has expired!")?;
+
+    let referrer = params.referrer(&state.tracked_origin);
+    let referrer_domain = referrer.as_ref().and_then(|r| r.domain());
 
     if let Some(referrer_domain) = referrer_domain {
         let mut tx = state
