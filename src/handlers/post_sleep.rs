@@ -11,22 +11,38 @@ use crate::{
     states::{sleeping_hotel::SleepingHotelInd, AppState},
 };
 
+const MAX_DOMAIN_LEN: usize = 255;
+
 #[derive(Deserialize)]
 pub struct Params {
-    referrer: Option<String>,
+    referrer_origin: Option<String>,
 }
 
 impl Params {
-    fn referrer(&self, tracked_origin: &str) -> Option<Url> {
-        let referrer = self.referrer.as_ref()?;
+    fn referrer_origin(&self, tracked_origin: &str) -> Option<Url> {
+        let referrer_origin = self.referrer_origin.as_ref()?;
 
-        if referrer.starts_with(tracked_origin) {
+        if referrer_origin.starts_with(tracked_origin) {
             // Don't count the tracked domain as a referrer domain.
             return None;
         }
 
-        Url::parse(referrer).ok()
+        Url::parse(referrer_origin).ok()
     }
+}
+
+fn referrer_domain(url: &Url) -> Option<&str> {
+    if url.scheme() != "https" {
+        return None;
+    }
+
+    let domain = url.domain()?;
+
+    if domain.len() > MAX_DOMAIN_LEN || !domain.contains('.') {
+        return None;
+    }
+
+    Some(domain)
 }
 
 pub async fn get(
@@ -42,8 +58,8 @@ pub async fn get(
         .ctx(Status::BadRequest)
         .user_msg("The registered ID is invalid or has expired!")?;
 
-    let referrer = params.referrer(&state.tracked_origin);
-    let referrer_domain = referrer.as_ref().and_then(|r| r.domain());
+    let referrer_origin = params.referrer_origin(&state.tracked_origin);
+    let referrer_domain = referrer_origin.as_ref().and_then(referrer_domain);
 
     if let Some(referrer_domain) = referrer_domain {
         let mut tx = state
