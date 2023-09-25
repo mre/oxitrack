@@ -1,4 +1,4 @@
-async function count() {
+export async function count() {
   // Prevent running on testing instances like localhost
   if (window.location.protocol !== "https:") {
     return;
@@ -16,5 +16,3 @@ async function count() {
     referrer: document.referrer
   });
 }
-
-count();
