@@ -1,13 +1,6 @@
 # Changelog
 
-## 0.4.1
-
-### Fixes
-
-- Fix cross origin access for the `count.js` script.
-- Don't count the tracked domain as a referrer domain!
-
-## 0.4.0
+## 0.4.0 - 0.4.5
 
 ### Breaking
 
