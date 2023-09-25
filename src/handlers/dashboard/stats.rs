@@ -126,6 +126,7 @@ pub async fn get(
     .err_msg_lz(|| format!("Path {path} not found!"))?
     .id;
 
+    // Run queries concurrently.
     let visits_handler = tokio::spawn(Visits::build(&state.db, path_id));
 
     let referrers = Referrer::all(&state.db, path_id).await?;
