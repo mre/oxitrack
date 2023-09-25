@@ -10,9 +10,9 @@ run:
 tailwind:
 	{{tailwind_cmd}} -w
 
-# Run rspack in development and watch mode
+# Run rspack in watch mode
 rspack:
-	npx rspack --mode development --watch
+	npx rspack --watch
 
 # Initialize the project for development or compilation from source
 init:
