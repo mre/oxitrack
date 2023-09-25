@@ -4,7 +4,8 @@
 
 ### Breaking
 
-- A new configuration value `base_url` has to be added to the `config.yaml` file. You have to set it to the base URL of your OxiTraffic instance.
+- **The configuration format changed from YAML to [TOML](https://toml.io)**. YAML is better than TOML for deep nestings and lists. But these are not used in the configuration and TOML is simpler and less error prone. For the migration, rename your `config.yaml` file to `config.toml` and adjust the content with inspiration from the configuration example in the [`README`](README).
+- A new configuration value `base_url` has to be added to the `config.toml` file. You have to set it to the base URL of your OxiTraffic instance.
 - Replace the snippet `oxitraffic.js` with the [`count.js`](templates/count.js) script. You just have to add this script tag to your website now (after replacing `OXITRAFFIC_BASE_URL` with the base URL of your OxiTraffic instance):
   ```html
   <script type="module" src="https://OXITRAFFIC_BASE_URL/count.js"></script>
@@ -12,6 +13,7 @@
 
 ### Features
 
+- Show referrer domains on the stats page.
 - Improve the quality of the frontend code by using TypeScript :)
 
 ### Fixes
