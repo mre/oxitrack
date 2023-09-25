@@ -1,4 +1,4 @@
-export async function count() {
+export async function count(referrer) {
   // Prevent running on testing instances like localhost
   if (window.location.protocol !== "https:") {
     return;
@@ -13,6 +13,6 @@ export async function count() {
 
   // Call `/post-sleep` for the visit to be counted
   await fetch("{{ base_url }}/post-sleep/" + registration_id, {
-    referrer: document.referrer
+    referrer: referrer
   });
 }
