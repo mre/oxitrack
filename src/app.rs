@@ -32,6 +32,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
     let app_state = Box::leak(Box::new(InnerAppState::build(config, utc_offset).await?));
 
     let compression_layer = CompressionLayer::new().gzip(true);
+    let cors_layer = CorsLayer::new().allow_origin(allowed_origin);
 
     let counting_router = Router::new()
         .route("/register", get(handlers::register::get))
@@ -39,11 +40,12 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
             "/post-sleep/:registration_id",
             get(handlers::post_sleep::get),
         )
-        .layer(CorsLayer::new().allow_origin(allowed_origin));
+        .layer(cors_layer.clone());
 
     let count_js_router = Router::new()
         .route("/count.js", get(handlers::count_js::get))
-        .layer(compression_layer.clone());
+        .layer(compression_layer.clone())
+        .layer(cors_layer);
 
     let api_router = Router::new()
         .route("/history", get(handlers::api::history::get))
