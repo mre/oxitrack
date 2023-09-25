@@ -133,7 +133,7 @@ pub async fn get(
     let visits = visits_handler
         .await
         .ctx(Status::Internal)
-        .err_msg("Visits task paniced!")??;
+        .err_msg("Visits task panicked!")??;
 
     Stats {
         base: Base::new(path),
