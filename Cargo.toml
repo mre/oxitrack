@@ -32,7 +32,7 @@ rust-embed = "8.0.0"
 serde_json = "1.0.107"
 serde = { version = "1.0.188", features = ["derive"] }
 sqlx = { version = "0.7.1", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "macros", "migrate", "time"] }
-time = { version = "0.3.28", features = ["formatting"] }
+time = { version = "0.3.29", features = ["formatting"] }
 tokio = { version = "1.32.0", default-features = false, features = ["rt", "macros"] }
 tower-http = { version = "0.4.4", default-features = false, features = ["cors", "trace", "compression-gzip"] }
 tracing = "0.1.37"
@@ -45,7 +45,7 @@ tower = { version = "0.4.13", default-features = false }
 typed-builder = "0.16.2"
 
 [build-dependencies]
-time = { version = "0.3.28" }
+time = { version = "0.3.29" }
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
