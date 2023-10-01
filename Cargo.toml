@@ -19,7 +19,7 @@ include = [
 ]
 
 [dependencies]
-askama = { version = "0.12.0", default-features = false }
+askama = { version = "0.12.1", default-features = false }
 async-trait = "0.1.73"
 axum = { version = "0.6.20", default-features = false, features = ["http1", "tokio", "json", "query"] }
 figment = { version = "0.10.10", features = ["toml", "env", "test"] }
