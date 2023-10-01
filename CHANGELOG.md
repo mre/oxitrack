@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.6
+
+### Fixes
+
+- Encode the sent referrer origin in the query parameters.
+
 ## 0.4.0 - 0.4.5
 
 ### Breaking

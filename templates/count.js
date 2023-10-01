@@ -17,7 +17,7 @@ async function count() {
     try {
       const referrer = new URL(document.referrer);
       if (referrer.protocol === "https:" && referrer.origin !== window.location.origin) {
-        query_params = "?referrer_origin=" + referrer.origin;
+        query_params = "?referrer_origin=" + encodeURIComponent(referrer.origin);
       }
     } catch (e) {
       console.log(e);
