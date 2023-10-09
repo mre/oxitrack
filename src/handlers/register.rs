@@ -23,7 +23,7 @@ pub async fn get(
     .fetch_optional(&*state.db)
     .await
     .ctx(Status::Internal)
-    .err_msg_lz(|| format!("Failed to run path query for path {path}!"))?;
+    .err_msg(|| format!("Failed to run path query for path {path}!"))?;
 
     let path_id = if let Some(Id { id }) = path_id {
         id
@@ -31,7 +31,7 @@ pub async fn get(
         let status = reqwest::get(state.tracked_url_from_path(path))
             .await
             .ctx(Status::NotFound)
-            .err_msg_lz(|| format!("Failed to look up the path {path} on the tracked website!"))?
+            .err_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
             .status();
 
         if !status.is_success() {
@@ -53,7 +53,7 @@ pub async fn get(
         .fetch_optional(&*state.db)
         .await
         .ctx(Status::Internal)
-        .err_msg_lz(|| format!("Failed to insert path {path}!"))?;
+        .err_msg(|| format!("Failed to insert path {path}!"))?;
 
         if let Some(Id { id }) = inserted_id {
             id
@@ -68,7 +68,7 @@ pub async fn get(
             .fetch_one(&*state.db)
             .await
             .ctx(Status::Internal)
-            .err_msg_lz(|| format!("Failed to insert path {path}!"))?
+            .err_msg(|| format!("Failed to insert path {path}!"))?
             .id
         }
     };

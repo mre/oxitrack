@@ -107,7 +107,7 @@ pub async fn get(
         .execute(&mut *tx)
         .await
         .ctx(Status::Internal)
-        .err_msg_lz(|| format!("Failed to insert a visit for path_id {path_id}!"))?;
+        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?;
 
         tx.commit()
             .await
@@ -118,7 +118,7 @@ pub async fn get(
             .execute(&*state.db)
             .await
             .ctx(Status::Internal)
-            .err_msg_lz(|| format!("Failed to insert call for path_id {path_id}!"))?;
+            .err_msg(|| format!("Failed to insert call for path_id {path_id}!"))?;
     }
 
     Ok(StatusCode::OK)

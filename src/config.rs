@@ -3,11 +3,12 @@ use std::{
     path::Path,
 };
 
+use anyhow::{Context, Result};
 use figment::{
     providers::{Env, Format, Toml},
     Figment,
 };
-use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, InitErr, InitErrCtx, PgConfig};
+use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, PgConfig};
 use serde::Deserialize;
 
 /// Configuration.
@@ -36,7 +37,7 @@ const fn default_min_delay_secs() -> u64 {
 }
 
 impl ConfigBuilder for Config {
-    fn build(data_dir: &Path) -> Result<Self, InitErr> {
+    fn build(data_dir: &Path) -> Result<Self> {
         let config_file_path = data_dir.join("config.toml");
 
         Figment::new()
@@ -47,7 +48,7 @@ impl ConfigBuilder for Config {
             )
             .join(Toml::file(config_file_path))
             .extract()
-            .init_ctx("Failed to parse the configuration!")
+            .context("Failed to parse the configuration!")
     }
 
     fn hm_utc_offset(&self) -> &HMUtcOffset {

@@ -123,7 +123,7 @@ pub async fn get(
     .fetch_one(&*state.db)
     .await
     .ctx(Status::NotFound)
-    .err_msg_lz(|| format!("Path {path} not found!"))?
+    .err_msg(|| format!("Path {path} not found!"))?
     .id;
 
     // Run queries concurrently.

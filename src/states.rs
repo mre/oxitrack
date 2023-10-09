@@ -1,8 +1,8 @@
 pub mod sleeping_hotel;
 
+use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
-use oxi_axum_helpers::{InitErr, InitErrCtx};
 use std::sync::Mutex;
 use time::UtcOffset;
 
@@ -27,7 +27,7 @@ pub struct InnerAppState {
 }
 
 impl InnerAppState {
-    pub async fn build(config: Config, utc_offset: UtcOffset) -> Result<Self, InitErr> {
+    pub async fn build(config: Config, utc_offset: UtcOffset) -> Result<Self> {
         let db = Database::build(config.db).await?;
 
         let tracked_origin_callback = config
@@ -39,10 +39,10 @@ impl InnerAppState {
         let callback_connection_error = "Failed to connect to the tracked website using the configuration option tracked_origin_callback/tracked_origin!";
         let callback_status = reqwest::get(&tracked_origin_callback)
             .await
-            .init_ctx(callback_connection_error)?
+            .context(callback_connection_error)?
             .status();
         if !callback_status.is_success() {
-            return InitErr::new(callback_connection_error);
+            bail!(callback_connection_error);
         }
 
         let count_js = CountJs {
@@ -50,7 +50,7 @@ impl InnerAppState {
             sleep_secs: config.min_delay_secs + 1,
         }
         .render()
-        .init_ctx("Failed to build the count.js script!")?
+        .context("Failed to build the count.js script!")?
         .leak();
 
         Ok(Self {

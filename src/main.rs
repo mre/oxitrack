@@ -4,13 +4,14 @@ mod db;
 mod handlers;
 mod states;
 
+use anyhow::{Context, Result};
 use axum::Server;
-use oxi_axum_helpers::{runner, shutdown_signal, InitErr, InitErrCtx};
+use oxi_axum_helpers::{runner, shutdown_signal};
 use tracing::info;
 
 use app::app;
 
-async fn init() -> Result<(), InitErr> {
+async fn init() -> Result<()> {
     let (app, socket_address) = app().await?;
 
     info!("Listening on {socket_address}");
@@ -18,7 +19,7 @@ async fn init() -> Result<(), InitErr> {
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .init_ctx("Server error!")
+        .context("Server error!")
 }
 
 fn main() {

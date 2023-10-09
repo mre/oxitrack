@@ -27,7 +27,7 @@ pub async fn get(
     .fetch_one(&*state.db)
     .await
     .ctx(Status::NotFound)
-    .err_msg_lz(|| format!("Path {path} not found!"))?
+    .err_msg(|| format!("Path {path} not found!"))?
     .id;
 
     sqlx::query_as!(
@@ -40,7 +40,7 @@ pub async fn get(
     .fetch(&*state.db)
     .map(|row| {
         row.ctx(Status::Internal)
-            .err_msg_lz(|| format!("History query failed for path {path}!"))?
+            .err_msg(|| format!("History query failed for path {path}!"))?
             .timestamp
             .to_offset(state.utc_offset)
             .format(&Rfc3339)

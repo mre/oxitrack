@@ -1,5 +1,6 @@
+use anyhow::{Context, Result};
 use axum::{http::HeaderValue, routing::get, Router};
-use oxi_axum_helpers::{static_handler, InitErr, InitErrCtx, PreTracer};
+use oxi_axum_helpers::{static_handler, PreTracer};
 use rust_embed::RustEmbed;
 use std::net::SocketAddr;
 use tower_http::{
@@ -17,7 +18,7 @@ pub const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
 #[folder = "static/"]
 struct Static;
 
-pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
+pub async fn app() -> Result<(Router, SocketAddr)> {
     let PreTracer {
         config, utc_offset, ..
     } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR, "oxitraffic");
@@ -27,7 +28,7 @@ pub async fn app() -> Result<(Router, SocketAddr), InitErr> {
     let allowed_origin = config
         .tracked_origin
         .parse::<HeaderValue>()
-        .init_ctx("Failed to parse the tracked origin!")?;
+        .context("Failed to parse the tracked origin!")?;
 
     let app_state = Box::leak(Box::new(InnerAppState::build(config, utc_offset).await?));
 
