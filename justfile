@@ -29,6 +29,6 @@ publish:
 	npx rspack
 	cargo sqlx prepare --check
 	cargo test
-	gzip -k --best static/{main.css,stats.js{,.map}}
+	gzip --keep --force --best static/{main.css,stats.js{,.map}}
 	cargo publish --allow-dirty
 	git push origin main
