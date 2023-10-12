@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.7
+
+### Features
+
+- Improve the performance of serving static files.
+- Compress static files.
+- Reduce crate and binary size.
+
 ## 0.4.6
 
 ### Fixes
