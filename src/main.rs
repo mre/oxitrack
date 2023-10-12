@@ -6,7 +6,7 @@ mod states;
 
 use anyhow::{Context, Result};
 use axum::Server;
-use oxi_axum_helpers::{runner, shutdown_signal};
+use oxi_axum_helpers::{run, shutdown_signal};
 use tracing::info;
 
 use app::app;
@@ -23,5 +23,5 @@ async fn init() -> Result<()> {
 }
 
 fn main() {
-    runner::run(init);
+    run(init);
 }

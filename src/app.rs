@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
-use axum::{http::HeaderValue, routing::get, Router};
-use oxi_axum_helpers::{static_handler, PreTracer};
-use rust_embed::RustEmbed;
+use axum::{http::header::HeaderValue, routing::get, Router};
+use oxi_axum_helpers::{static_router, PreTracer};
 use std::net::SocketAddr;
 use tower_http::{
     compression::CompressionLayer,
@@ -13,10 +12,6 @@ use tracing::Level;
 use crate::{config::Config, handlers, states::InnerAppState};
 
 pub const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
-
-#[derive(RustEmbed)]
-#[folder = "static/"]
-struct Static;
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
     let PreTracer {
@@ -58,8 +53,15 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .route("/stats", get(handlers::dashboard::stats::get))
         .layer(compression_layer);
 
+    let static_router = static_router!(
+        "../static",
+        ("main.css", "text/css"),
+        ("stats.js", "application/javascript"),
+        ("stats.js.map", "application/json"),
+    );
+
     let app = Router::new()
-        .route("/static/:file", get(static_handler::handler::<Static>))
+        .merge(static_router)
         .merge(counting_router)
         .merge(count_js_router)
         .nest("/api", api_router)
@@ -80,7 +82,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{app, Static, DATA_DIR_ENV_VAR};
+    use super::{app, DATA_DIR_ENV_VAR};
     use axum::{
         body::Body,
         http::{header, Request, StatusCode},
@@ -99,13 +101,6 @@ mod tests {
         status: StatusCode,
         #[builder(default, setter(strip_option))]
         output: Option<&'static str>,
-    }
-
-    #[test]
-    fn static_files() {
-        for file in ["main.css", "stats.js", "stats.js.map"] {
-            Static::get(file).unwrap();
-        }
     }
 
     fn requests() -> [Req; 13] {
