@@ -1,13 +1,12 @@
-pub mod sleeping_hotel;
+pub mod visitor_state;
 
 use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
-use std::sync::Mutex;
 use time::UtcOffset;
 
 use crate::{config::Config, db::Database};
-use sleeping_hotel::SleepingHotel;
+use visitor_state::VisitorStateStore;
 
 #[derive(Template)]
 #[template(path = "count.js", escape = "none")]
@@ -21,7 +20,7 @@ pub struct InnerAppState {
     pub db: Database,
     pub tracked_origin: String,
     pub tracked_origin_callback: String,
-    pub sleeping_hotel: Mutex<SleepingHotel<i64>>,
+    pub visitor_states: VisitorStateStore,
     pub utc_offset: UtcOffset,
     pub count_js: &'static str,
 }
@@ -34,7 +33,7 @@ impl InnerAppState {
             .tracked_origin_callback
             .unwrap_or_else(|| config.tracked_origin.clone());
 
-        let sleeping_hotel = SleepingHotel::new(config.min_delay_secs);
+        let visitor_states = VisitorStateStore::new(config.min_delay_secs);
 
         let callback_connection_error = "Failed to connect to the tracked website using the configuration option tracked_origin_callback/tracked_origin!";
         let callback_status = reqwest::get(&tracked_origin_callback)
@@ -57,7 +56,7 @@ impl InnerAppState {
             db,
             tracked_origin_callback,
             tracked_origin: config.tracked_origin,
-            sleeping_hotel: Mutex::new(sleeping_hotel),
+            visitor_states,
             utc_offset,
             count_js,
         })

@@ -39,10 +39,10 @@ You add the following script tag to your website after replacing `OXITRAFFIC_BAS
 
 It runs the tiny script [`count.js`](templates/count.js).
 
-The script calls `/register?path=PATH` to receive a registration ID.
+The script calls `/register?path=PATH` to receive a visitor ID.
 `PATH` is the path of the page you are on.
 
-This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/REGISTRATION_ID` which leads to counting that visit.
+This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/VISITOR_ID` which leads to counting that visit.
 
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
@@ -124,8 +124,9 @@ minutes = 0
 
 OxiTraffic has the following endpoints:
 
-- `/register?path=PATH`: Register to receive a `REGISTRATION_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting.
-- `/post-sleep/REGISTRATION_ID`: Use the registration ID after the minimum delay `min_delay_secs` for the visit to be counted.
+- `/register?path=PATH`: Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting.
+- `/post-sleep/VISITOR_ID`: Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.
+- `/page-left/VISITOR_ID`: Use the visitor ID on leaving the page to record the total spent time.
 - `/`: A list of registered paths to see their call history.
 - `/stats?path=PATH`: Statistics of the call history of a specific path.
 - `/api/counts`: JSON with the call count for each registered path.

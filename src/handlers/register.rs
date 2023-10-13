@@ -73,7 +73,7 @@ pub async fn get(
         }
     };
 
-    let registration_id = state.sleeping_hotel.lock().unwrap().reserve_bed(path_id);
+    let visitor_id = state.visitor_states.register(path_id);
 
-    Ok(Json(registration_id))
+    Ok(Json(visitor_id))
 }
