@@ -1124,7 +1124,7 @@ dependencies = [
 
 [[package]]
 name = "oxitraffic"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
  "anyhow",
  "askama",

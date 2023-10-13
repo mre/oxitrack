@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.8
+
+### Features
+
+- Record the total time spent on a page and show the average.
+
+### Fixes
+
+- Encode the path sent for registration.
+
 ## 0.4.7
 
 ### Features
