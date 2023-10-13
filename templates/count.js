@@ -6,7 +6,7 @@ async function count() {
 
   // Register and get an ID
   const registration_resp = await fetch("{{ base_url }}/register?path=" + window.location.pathname);
-  const registration_id = await registration_resp.json();
+  const visitor_id = await registration_resp.json();
 
   // Sleep the required amount before being able to call `/post-sleep`
   await new Promise(r => setTimeout(r, 1000 * parseInt("{{ sleep_secs }}")));
@@ -25,7 +25,12 @@ async function count() {
   }
 
   // Call `/post-sleep` for the visit to be counted
-  await fetch("{{ base_url }}/post-sleep/" + registration_id + query_params);
+  await fetch("{{ base_url }}/post-sleep/" + visitor_id + query_params);
+
+  // Call `/page-left` to record the total spent time
+  window.addEventListener("beforeunload", async () => {
+    await fetch("{{ base_url }}/page-left/" + visitor_id);
+  });
 }
 
 count();

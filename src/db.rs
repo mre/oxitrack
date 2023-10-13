@@ -3,7 +3,6 @@ use oxi_axum_helpers::{PgConfig, RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::ops::Deref;
-use time::OffsetDateTime;
 
 pub struct Database {
     pool: PgPool,
@@ -28,14 +27,6 @@ impl Database {
 
         Ok(Self { pool })
     }
-}
-
-pub struct Id {
-    pub id: i64,
-}
-
-pub struct TimeStamp {
-    pub timestamp: OffsetDateTime,
 }
 
 #[derive(Serialize)]

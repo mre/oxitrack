@@ -6,10 +6,7 @@ use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
 use url::Url;
 
-use crate::{
-    db::Id,
-    states::{sleeping_hotel::SleepingHotelInd, AppState},
-};
+use crate::states::{visitor_state::VisitorId, AppState};
 
 const MAX_DOMAIN_LEN: usize = 255;
 
@@ -48,20 +45,18 @@ fn referrer_domain(url: &Url) -> Option<&str> {
 pub async fn get(
     State(state): AppState,
     Query(params): Query<Params>,
-    Path(registration_id): Path<SleepingHotelInd>,
+    Path(visitor_id): Path<VisitorId>,
 ) -> Result<StatusCode, RespErr> {
     let path_id = state
-        .sleeping_hotel
-        .lock()
-        .unwrap()
-        .wake_up(registration_id)
+        .visitor_states
+        .post_sleep(visitor_id)
         .ctx(Status::BadRequest)
-        .user_msg("The registered ID is invalid or has expired!")?;
+        .user_msg("The visitor ID is invalid or has expired!")?;
 
     let referrer_origin = params.referrer_origin(&state.tracked_origin);
     let referrer_domain = referrer_origin.as_ref().and_then(referrer_domain);
 
-    if let Some(referrer_domain) = referrer_domain {
+    let visit_id = if let Some(referrer_domain) = referrer_domain {
         let mut tx = state
             .db
             .begin()
@@ -70,8 +65,7 @@ pub async fn get(
             .err_msg("Failed to begin a transaction!")?;
 
         // Try to insert if the referrer doesn't already exist.
-        let referrer_id = sqlx::query_as!(
-            Id,
+        let referrer_id = sqlx::query!(
             "INSERT INTO referrers(domain) VALUES ($1)
             ON CONFLICT DO NOTHING
             RETURNING id",
@@ -82,12 +76,11 @@ pub async fn get(
         .ctx(Status::Internal)
         .err_msg("Failed to insert a referrer!")?;
 
-        let referrer_id = if let Some(Id { id }) = referrer_id {
-            id
+        let referrer_id = if let Some(id) = referrer_id {
+            id.id
         } else {
             // Insertion had a conflict, therefore the referrer must already exist.
-            sqlx::query_as!(
-                Id,
+            sqlx::query!(
                 "SELECT id FROM referrers
                 WHERE domain = $1",
                 referrer_domain,
@@ -99,27 +92,40 @@ pub async fn get(
             .id
         };
 
-        sqlx::query!(
-            "INSERT INTO visits(path_id, referrer_id) VALUES ($1, $2)",
+        let visit_id = sqlx::query!(
+            "INSERT INTO visits(path_id, referrer_id) VALUES ($1, $2)
+            RETURNING id",
             path_id,
             referrer_id,
         )
-        .execute(&mut *tx)
+        .fetch_one(&mut *tx)
         .await
         .ctx(Status::Internal)
-        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?;
+        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
+        .id;
 
         tx.commit()
             .await
             .ctx(Status::Internal)
             .err_msg("Failed to commit the post sleep transaction with referrer.")?;
+
+        visit_id
     } else {
-        sqlx::query!("INSERT INTO visits(path_id) VALUES ($1)", path_id,)
-            .execute(&*state.db)
-            .await
-            .ctx(Status::Internal)
-            .err_msg(|| format!("Failed to insert call for path_id {path_id}!"))?;
-    }
+        sqlx::query!(
+            "INSERT INTO visits(path_id) VALUES ($1)
+            RETURNING id",
+            path_id
+        )
+        .fetch_one(&*state.db)
+        .await
+        .ctx(Status::Internal)
+        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
+        .id
+    };
+
+    state
+        .visitor_states
+        .post_visit_insertion(visitor_id, visit_id);
 
     Ok(StatusCode::OK)
 }

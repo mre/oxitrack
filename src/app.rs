@@ -32,10 +32,8 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
     let counting_router = Router::new()
         .route("/register", get(handlers::register::get))
-        .route(
-            "/post-sleep/:registration_id",
-            get(handlers::post_sleep::get),
-        )
+        .route("/post-sleep/:visitor_id", get(handlers::post_sleep::get))
+        .route("/page-left/:visitor_id", get(handlers::page_left::get))
         .layer(cors_layer.clone());
 
     let count_js_router = Router::new()

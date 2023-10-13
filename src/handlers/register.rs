@@ -4,7 +4,7 @@ use axum::{
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 
-use crate::{db::Id, states::AppState};
+use crate::states::AppState;
 
 use super::queries::PathQuery;
 
@@ -14,8 +14,7 @@ pub async fn get(
 ) -> Result<Json<u16>, RespErr> {
     let path = path.normalized();
 
-    let path_id = sqlx::query_as!(
-        Id,
+    let path_id = sqlx::query!(
         "SELECT id FROM paths
         WHERE path = $1",
         path
@@ -25,8 +24,8 @@ pub async fn get(
     .ctx(Status::Internal)
     .err_msg(|| format!("Failed to run path query for path {path}!"))?;
 
-    let path_id = if let Some(Id { id }) = path_id {
-        id
+    let path_id = if let Some(id) = path_id {
+        id.id
     } else {
         let status = reqwest::get(state.tracked_url_from_path(path))
             .await
@@ -43,8 +42,7 @@ pub async fn get(
         // If two requests to the same new path try to insert it at the same time,
         // then only one insertion will be succussful.
         // If the insertion fails because of the constraint, we will try to select.
-        let inserted_id = sqlx::query_as!(
-            Id,
+        let inserted_id = sqlx::query!(
             "INSERT INTO paths(path) VALUES ($1)
                 ON CONFLICT ON CONSTRAINT unique_path DO NOTHING
                 RETURNING id",
@@ -55,12 +53,11 @@ pub async fn get(
         .ctx(Status::Internal)
         .err_msg(|| format!("Failed to insert path {path}!"))?;
 
-        if let Some(Id { id }) = inserted_id {
-            id
+        if let Some(id) = inserted_id {
+            id.id
         } else {
             // Other request did insert the path first.
-            sqlx::query_as!(
-                Id,
+            sqlx::query!(
                 "SELECT id FROM paths
                         WHERE path = $1",
                 path
@@ -73,7 +70,7 @@ pub async fn get(
         }
     };
 
-    let registration_id = state.sleeping_hotel.lock().unwrap().reserve_bed(path_id);
+    let visitor_id = state.visitor_states.register(path_id);
 
-    Ok(Json(registration_id))
+    Ok(Json(visitor_id))
 }
