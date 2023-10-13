@@ -5,7 +5,7 @@ async function count() {
   }
 
   // Register and get an ID
-  const registration_resp = await fetch("{{ base_url }}/register?path=" + window.location.pathname);
+  const registration_resp = await fetch("{{ base_url }}/register?path=" + encodeURIComponent(window.location.pathname));
   const visitor_id = await registration_resp.json();
 
   // Sleep the required amount before being able to call `/post-sleep`
