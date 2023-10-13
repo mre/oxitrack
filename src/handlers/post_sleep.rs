@@ -6,10 +6,7 @@ use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
 use url::Url;
 
-use crate::{
-    db::Id,
-    states::{visitor_state::VisitorId, AppState},
-};
+use crate::states::{visitor_state::VisitorId, AppState};
 
 const MAX_DOMAIN_LEN: usize = 255;
 
@@ -68,8 +65,7 @@ pub async fn get(
             .err_msg("Failed to begin a transaction!")?;
 
         // Try to insert if the referrer doesn't already exist.
-        let referrer_id = sqlx::query_as!(
-            Id,
+        let referrer_id = sqlx::query!(
             "INSERT INTO referrers(domain) VALUES ($1)
             ON CONFLICT DO NOTHING
             RETURNING id",
@@ -80,12 +76,11 @@ pub async fn get(
         .ctx(Status::Internal)
         .err_msg("Failed to insert a referrer!")?;
 
-        let referrer_id = if let Some(Id { id }) = referrer_id {
-            id
+        let referrer_id = if let Some(id) = referrer_id {
+            id.id
         } else {
             // Insertion had a conflict, therefore the referrer must already exist.
-            sqlx::query_as!(
-                Id,
+            sqlx::query!(
                 "SELECT id FROM referrers
                 WHERE domain = $1",
                 referrer_domain,
@@ -97,8 +92,7 @@ pub async fn get(
             .id
         };
 
-        let visit_id = sqlx::query_as!(
-            Id,
+        let visit_id = sqlx::query!(
             "INSERT INTO visits(path_id, referrer_id) VALUES ($1, $2)
             RETURNING id",
             path_id,
@@ -117,8 +111,7 @@ pub async fn get(
 
         visit_id
     } else {
-        sqlx::query_as!(
-            Id,
+        sqlx::query!(
             "INSERT INTO visits(path_id) VALUES ($1)
             RETURNING id",
             path_id
