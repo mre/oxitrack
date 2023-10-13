@@ -19,7 +19,7 @@ enum VisitorState {
     None,
     Sleeping {
         path_id: PathId,
-        registerd_at: Instant,
+        registered_at: Instant,
     },
     PostSleep {
         visit_id: VisitId,
@@ -73,7 +73,7 @@ impl VisitorStateStore {
     pub fn register(&self, path_id: PathId) -> VisitorId {
         let state = VisitorState::Sleeping {
             path_id,
-            registerd_at: Instant::now(),
+            registered_at: Instant::now(),
         };
 
         let mut inner = self.locked();
@@ -93,13 +93,13 @@ impl VisitorStateStore {
 
         let VisitorState::Sleeping {
             path_id,
-            registerd_at,
+            registered_at,
         } = state
         else {
             return None;
         };
 
-        let elapsed = registerd_at.elapsed().as_secs();
+        let elapsed = registered_at.elapsed().as_secs();
         let slept_well = elapsed >= self.min_secs;
 
         slept_well.then_some(path_id)
