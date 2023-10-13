@@ -5,7 +5,7 @@ use axum::{
 };
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
-use sqlx::PgPool;
+use sqlx::{types::BigDecimal, PgPool};
 
 use crate::{
     handlers::{base_template::Base, queries::PathQuery},
@@ -18,6 +18,7 @@ struct Visits {
     min_chart_timestamp: i64,
     max_chart_timestamp: i64,
     per_day: f64,
+    average_time_spent_secs: Option<BigDecimal>,
 }
 
 impl Visits {
@@ -59,12 +60,25 @@ impl Visits {
             .ctx(Status::Internal)
             .err_msg("Failed to convert history to JSON string!")?;
 
+        let average_time_spent_secs = sqlx::query!(
+            "SELECT EXTRACT(EPOCH FROM AVG(left_at - timestamp)) FROM visits
+            WHERE path_id = $1",
+            path_id
+        )
+        .fetch_one(pool)
+        .await
+        .ctx(Status::Internal)
+        .err_msg("Failed to run the average time spent query!")?
+        .extract
+        .map(|decimal| decimal.round(0));
+
         Ok(Self {
             timestamps_json,
             len,
             min_chart_timestamp,
             max_chart_timestamp,
             per_day: visits_per_day,
+            average_time_spent_secs,
         })
     }
 }
