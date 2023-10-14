@@ -9,6 +9,10 @@
             </td>
         </tr>
         <tr>
+            <td>First visits</td>
+            <td>{{ visits.first }}</td>
+        </tr>
+        <tr>
             <td>Visits</td>
             <td>{{ visits.len }}</td>
         </tr>
@@ -30,10 +34,6 @@
         <canvas id="bar_chart"></canvas>
     </div>
 
-    <div class="relative mb-12 w-full h-[50vh] md:h-[50vh]">
-        <canvas id="line_chart"></canvas>
-    </div>
-
     <table class="w-full md:w-fit">
         <tr class="border-b-4">
             <th class="pr-5 text-left">Referrer</th>
@@ -53,5 +53,5 @@
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_charts({{ visits.timestamps_json }}, {{ visits.min_chart_timestamp }}, {{ visits.max_chart_timestamp }});</script>
+    <script>oxitraffic.stats.render_bar_chart({{ visits.chart_json_data|safe }}, {{ visits.chart_max_count }}, "{{ visits.chart_date_trunc }}");</script>
 {% endblock %}
