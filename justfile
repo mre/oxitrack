@@ -1,4 +1,5 @@
-tailwind_cmd := "npx tailwindcss -m -i input.css -o static/main.css"
+tailwind_cmd := "npx tailwindcss -m -i input.css -o static/main.css && gzip -kf --best static/main.css"
+rspack_cmd := "npx rspack && gzip -kf --best static/stats.js{,.map}"
 
 alias r := run
 
@@ -6,19 +7,19 @@ alias r := run
 run:
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
-# Run tailwindcss in watch mode
+# Run tailwind in watch mode
 tailwind:
-	{{tailwind_cmd}} -w
+	watchexec -r -w templates "{{tailwind_cmd}}"
 
 # Run rspack in watch mode
 rspack:
-	npx rspack --watch
+	watchexec -r -w ts "{{rspack_cmd}}"
 
 # Initialize the project for development or compilation from source
 init:
 	npm install
 	{{tailwind_cmd}}
-	npx rspack
+	{{rspack_cmd}}
 
 # Publish on crates.io
 publish:
@@ -26,9 +27,8 @@ publish:
 	cargo outdated --exit-code 1
 	typos
 	{{tailwind_cmd}}
-	npx rspack
+	{{rspack_cmd}}
 	cargo sqlx prepare --check
 	cargo test
-	gzip --keep --force --best static/{main.css,stats.js{,.map}}
 	cargo publish --allow-dirty
 	git push origin main
