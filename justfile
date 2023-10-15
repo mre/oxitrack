@@ -1,33 +1,35 @@
-tailwind_cmd := "npx tailwindcss -m -i input.css -o static/main.css && gzip -kf --best static/main.css"
-rspack_cmd := "npx rspack && gzip -kf --best static/stats.js{,.map}"
+tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
+gzip_options := "-kf static/{main.css,stats.js{,.map}}"
+
+build-static-dev:
+	{{tailwind_cmd}}
+	npx rspack --mode development
+	gzip --fast {{gzip_options}}
 
 alias r := run
 
 # Run the binary
-run:
+run: build-static-dev
 	OXITRAFFIC_DATA_DIR=dev cargo r
 
-# Run tailwind in watch mode
-tailwind:
-	watchexec -r -w templates "{{tailwind_cmd}}"
+alias w := watch
 
-# Run rspack in watch mode
-rspack:
-	watchexec -r -w ts "{{rspack_cmd}}"
+# Run the binary in watch mode
+watch:
+	watchexec -nr -w src -w templates -w ts just r
 
 # Initialize the project for development or compilation from source
-init:
+init: && build-static-dev
 	npm install
-	{{tailwind_cmd}}
-	{{rspack_cmd}}
 
 # Publish on crates.io
 publish:
 	npm outdated
 	cargo outdated --exit-code 1
 	typos
-	{{tailwind_cmd}}
-	{{rspack_cmd}}
+	{{tailwind_cmd}} -m
+	npx rspack
+	gzip --best {{gzip_options}}
 	cargo sqlx prepare --check
 	cargo test
 	cargo publish --allow-dirty
