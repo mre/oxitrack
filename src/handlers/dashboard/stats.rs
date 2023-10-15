@@ -49,9 +49,9 @@ impl Visits {
         }
 
         let first_visit = sqlx::query!(
-            "SELECT timestamp FROM visits
+            "SELECT registered_at FROM visits
             WHERE path_id = $1
-            ORDER BY timestamp
+            ORDER BY registered_at
             LIMIT 1",
             path_id,
         )
@@ -59,7 +59,7 @@ impl Visits {
         .await
         .ctx(Status::Internal)
         .user_msg("Failed to query the first visit")?
-        .timestamp;
+        .registered_at;
 
         let first_visit_formatted = first_visit
             .format(&Rfc3339)
@@ -77,16 +77,16 @@ impl Visits {
         let (chart_data, chart_date_trunc) = if days_since_first_visit > 1460 {
             // More than 4 years.
             let data = sqlx::query!(
-                r#"SELECT date_trunc('year', timestamp) AS "trunc_timestamp!",
-                COUNT(timestamp) AS "count!" FROM visits
+                r#"SELECT date_trunc('year', registered_at) AS "trunc_registered_at!",
+                COUNT(registered_at) AS "count!" FROM visits
                 WHERE path_id = $1
-                GROUP BY "trunc_timestamp!"
-                ORDER BY "trunc_timestamp!""#,
+                GROUP BY "trunc_registered_at!"
+                ORDER BY "trunc_registered_at!""#,
                 path_id,
             )
             .fetch(pool)
             .map_ok(|row| DataPoint {
-                x: row.trunc_timestamp.year().to_string(),
+                x: row.trunc_registered_at.year().to_string(),
                 y: row.count,
             })
             .try_collect::<Vec<_>>()
@@ -96,16 +96,16 @@ impl Visits {
         } else if days_since_first_visit > 62 {
             // More than 2 months.
             let data = sqlx::query!(
-                r#"SELECT date_trunc('month', timestamp) AS "trunc_timestamp!",
-                COUNT(timestamp) AS "count!" FROM visits
+                r#"SELECT date_trunc('month', registered_at) AS "trunc_registered_at!",
+                COUNT(registered_at) AS "count!" FROM visits
                 WHERE path_id = $1
-                GROUP BY "trunc_timestamp!"
-                ORDER BY "trunc_timestamp!""#,
+                GROUP BY "trunc_registered_at!"
+                ORDER BY "trunc_registered_at!""#,
                 path_id,
             )
             .fetch(pool)
             .map_ok(|row| DataPoint {
-                x: row.trunc_timestamp.month().to_string(),
+                x: row.trunc_registered_at.month().to_string(),
                 y: row.count,
             })
             .try_collect::<Vec<_>>()
@@ -114,16 +114,16 @@ impl Visits {
             (data, "month")
         } else {
             let data = sqlx::query!(
-                r#"SELECT date_trunc('day', timestamp) AS "trunc_timestamp!",
-                COUNT(timestamp) AS "count!" FROM visits
+                r#"SELECT date_trunc('day', registered_at) AS "trunc_registered_at!",
+                COUNT(registered_at) AS "count!" FROM visits
                 WHERE path_id = $1
-                GROUP BY "trunc_timestamp!"
-                ORDER BY "trunc_timestamp!""#,
+                GROUP BY "trunc_registered_at!"
+                ORDER BY "trunc_registered_at!""#,
                 path_id,
             )
             .fetch(pool)
             .map_ok(|row| DataPoint {
-                x: row.trunc_timestamp.date().to_string(),
+                x: row.trunc_registered_at.date().to_string(),
                 y: row.count,
             })
             .try_collect::<Vec<_>>()
@@ -148,7 +148,7 @@ impl Visits {
 
         // TODO: In minutes instead of seconds.
         let average_time_spent_secs = sqlx::query!(
-            "SELECT EXTRACT(EPOCH FROM AVG(left_at - timestamp)) FROM visits
+            "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
             WHERE path_id = $1",
             path_id
         )

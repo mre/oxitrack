@@ -6,7 +6,10 @@ use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
 use url::Url;
 
-use crate::states::{visitor_state::VisitorId, AppState};
+use crate::states::{
+    visitor_state::{SleepingState, VisitorId},
+    AppState,
+};
 
 const MAX_DOMAIN_LEN: usize = 255;
 
@@ -47,7 +50,10 @@ pub async fn get(
     Query(params): Query<Params>,
     Path(visitor_id): Path<VisitorId>,
 ) -> Result<StatusCode, RespErr> {
-    let path_id = state
+    let SleepingState {
+        path_id,
+        registered_at,
+    } = state
         .visitor_states
         .post_sleep(visitor_id)
         .ctx(Status::BadRequest)
@@ -93,9 +99,10 @@ pub async fn get(
         };
 
         let visit_id = sqlx::query!(
-            "INSERT INTO visits(path_id, referrer_id) VALUES ($1, $2)
+            "INSERT INTO visits(path_id, registered_at, referrer_id) VALUES ($1, $2, $3)
             RETURNING id",
             path_id,
+            registered_at,
             referrer_id,
         )
         .fetch_one(&mut *tx)
@@ -112,9 +119,10 @@ pub async fn get(
         visit_id
     } else {
         sqlx::query!(
-            "INSERT INTO visits(path_id) VALUES ($1)
+            "INSERT INTO visits(path_id, registered_at) VALUES ($1, $2)
             RETURNING id",
-            path_id
+            path_id,
+            registered_at,
         )
         .fetch_one(&*state.db)
         .await

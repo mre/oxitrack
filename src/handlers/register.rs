@@ -3,8 +3,9 @@ use axum::{
     Json,
 };
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use time::OffsetDateTime;
 
-use crate::states::AppState;
+use crate::states::{visitor_state::SleepingState, AppState};
 
 use super::queries::PathQuery;
 
@@ -12,6 +13,9 @@ pub async fn get(
     State(state): AppState,
     Query(path): Query<PathQuery>,
 ) -> Result<Json<u16>, RespErr> {
+    // As early as possible for a correct time measurement.
+    let registered_at = OffsetDateTime::now_utc();
+
     let path = path.normalized();
 
     let path_id = sqlx::query!(
@@ -70,7 +74,10 @@ pub async fn get(
         }
     };
 
-    let visitor_id = state.visitor_states.register(path_id);
+    let visitor_id = state.visitor_states.register(SleepingState {
+        path_id,
+        registered_at,
+    });
 
     Ok(Json(visitor_id))
 }

@@ -26,16 +26,16 @@ pub async fn get(
     .id;
 
     sqlx::query!(
-        "SELECT timestamp FROM visits
+        "SELECT registered_at FROM visits
         WHERE path_id = $1
-        ORDER BY timestamp",
+        ORDER BY registered_at",
         path_id,
     )
     .fetch(&*state.db)
     .map(|row| {
         row.ctx(Status::Internal)
             .err_msg(|| format!("History query failed for path {path}!"))?
-            .timestamp
+            .registered_at
             .to_offset(state.utc_offset)
             .format(&Rfc3339)
             .ctx(Status::Internal)

@@ -1,9 +1,9 @@
 use std::{
     mem, process,
     sync::{Mutex, MutexGuard},
-    time::Instant,
 };
 
+use time::OffsetDateTime;
 use tracing::error;
 
 pub type VisitorId = u16;
@@ -13,14 +13,27 @@ const MAX_N_CONCURRENT_VISITORS: usize = VisitorId::MAX as usize + 1;
 pub type VisitId = i64;
 pub type PathId = i64;
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct SleepingState {
+    pub path_id: PathId,
+    pub registered_at: OffsetDateTime,
+}
+
+#[cfg(test)]
+impl SleepingState {
+    fn new(path_id: PathId) -> Self {
+        Self {
+            path_id,
+            registered_at: OffsetDateTime::now_utc(),
+        }
+    }
+}
+
 #[derive(Default)]
 enum VisitorState {
     #[default]
     None,
-    Sleeping {
-        path_id: PathId,
-        registered_at: Instant,
-    },
+    Sleeping(SleepingState),
     PostSleep {
         visit_id: VisitId,
     },
@@ -41,7 +54,7 @@ impl VisitorStateStoreInner {
 
 pub struct VisitorStateStore {
     inner: Mutex<VisitorStateStoreInner>,
-    min_secs: u64,
+    min_secs: i64,
 }
 
 impl VisitorStateStore {
@@ -54,7 +67,10 @@ impl VisitorStateStore {
             .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
 
         Self {
-            min_secs,
+            min_secs: i64::try_from(min_secs).unwrap_or_else(|_| {
+                error!("The value of minimum delay is too big!");
+                process::exit(1);
+            }),
             inner: Mutex::new(VisitorStateStoreInner {
                 last_id: 0,
                 visitor_states: visitors,
@@ -70,11 +86,8 @@ impl VisitorStateStore {
     }
 
     #[must_use]
-    pub fn register(&self, path_id: PathId) -> VisitorId {
-        let state = VisitorState::Sleeping {
-            path_id,
-            registered_at: Instant::now(),
-        };
+    pub fn register(&self, sleeping_state: SleepingState) -> VisitorId {
+        let state = VisitorState::Sleeping(sleeping_state);
 
         let mut inner = self.locked();
         let id = inner.last_id;
@@ -85,24 +98,21 @@ impl VisitorStateStore {
         id
     }
 
-    /// Returns the DB path ID if the visitor waited at least the minimum delay.
+    /// Returns the DB path ID and datetime of registration if the visitor
+    /// waited at least the minimum delay.
     /// Returns `None` otherwise after clearing the visitor state.
     #[must_use]
-    pub fn post_sleep(&self, visitor_id: VisitorId) -> Option<PathId> {
+    pub fn post_sleep(&self, visitor_id: VisitorId) -> Option<SleepingState> {
         let state = mem::take(self.locked().get_mut(visitor_id));
 
-        let VisitorState::Sleeping {
-            path_id,
-            registered_at,
-        } = state
-        else {
+        let VisitorState::Sleeping(sleeping_state) = state else {
             return None;
         };
 
-        let elapsed = registered_at.elapsed().as_secs();
+        let elapsed = (OffsetDateTime::now_utc() - sleeping_state.registered_at).whole_seconds();
         let slept_well = elapsed >= self.min_secs;
 
-        slept_well.then_some(path_id)
+        slept_well.then_some(sleeping_state)
     }
 
     pub fn post_visit_insertion(&self, visitor_id: VisitorId, visit_id: VisitId) {
@@ -125,38 +135,39 @@ impl VisitorStateStore {
 
 #[cfg(test)]
 mod tests {
-    use super::{VisitorId, VisitorStateStore};
+    use super::{SleepingState, VisitorId, VisitorStateStore};
 
     #[test]
     fn ids() {
         let store = VisitorStateStore::new(0);
+        let sleeping_state = SleepingState::new(42);
 
-        assert_eq!(store.register(42), 0);
-        assert_eq!(store.register(42), 1);
+        assert_eq!(store.register(sleeping_state.clone()), 0);
+        assert_eq!(store.register(sleeping_state.clone()), 1);
 
         store.locked().last_id = VisitorId::MAX;
 
-        assert_eq!(store.register(42), VisitorId::MAX);
-        assert_eq!(store.register(42), 0);
+        assert_eq!(store.register(sleeping_state.clone()), VisitorId::MAX);
+        assert_eq!(store.register(sleeping_state), 0);
     }
 
     #[test]
     fn no_delay() {
         let store = VisitorStateStore::new(0);
+        let sleeping_state = SleepingState::new(42);
 
-        let path_id = 42;
-        let id = store.register(path_id);
+        let id = store.register(sleeping_state.clone());
 
-        assert_eq!(store.post_sleep(id), Some(path_id));
+        assert_eq!(store.post_sleep(id), Some(sleeping_state));
         assert_eq!(store.post_sleep(id), None);
     }
 
     #[test]
     fn pre_min_delay() {
         let store = VisitorStateStore::new(100);
+        let sleeping_state = SleepingState::new(42);
 
-        let path_id = 42;
-        let id = store.register(path_id);
+        let id = store.register(sleeping_state);
 
         assert_eq!(store.post_sleep(id), None);
     }
@@ -165,25 +176,25 @@ mod tests {
     fn post_min_delay() {
         let min_delay = 1;
         let store = VisitorStateStore::new(min_delay);
+        let sleeping_state = SleepingState::new(42);
 
-        let path_id = 42;
-        let id = store.register(path_id);
+        let id = store.register(sleeping_state.clone());
 
         std::thread::sleep(std::time::Duration::new(min_delay, 1));
 
-        assert_eq!(store.post_sleep(id), Some(path_id));
+        assert_eq!(store.post_sleep(id), Some(sleeping_state));
         assert_eq!(store.post_sleep(id), None);
     }
 
     #[test]
     fn page_left() {
         let store = VisitorStateStore::new(0);
+        let sleeping_state = SleepingState::new(42);
 
-        let path_id = 42;
         let visit_id = 13;
-        let id = store.register(path_id);
+        let id = store.register(sleeping_state.clone());
 
-        assert_eq!(store.post_sleep(id), Some(path_id));
+        assert_eq!(store.post_sleep(id), Some(sleeping_state));
         store.post_visit_insertion(id, visit_id);
         assert_eq!(store.page_left(id), Some(visit_id));
     }
@@ -191,11 +202,11 @@ mod tests {
     #[test]
     fn no_post_visit_insertion() {
         let store = VisitorStateStore::new(0);
+        let sleeping_state = SleepingState::new(42);
 
-        let path_id = 42;
-        let id = store.register(path_id);
+        let id = store.register(sleeping_state.clone());
 
-        assert_eq!(store.post_sleep(id), Some(path_id));
+        assert_eq!(store.post_sleep(id), Some(sleeping_state));
         assert_eq!(store.page_left(id), None);
     }
 }

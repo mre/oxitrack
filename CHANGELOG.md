@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.9
+
+### Fixes
+
+- Fix the average spent time by considering the minimum delay.
+
 ## 0.4.8
 
 ### Features
