@@ -1,18 +1,29 @@
+use std::fmt;
+
 use askama::Template;
 use axum::{
     extract::{Query, State},
     response::Response,
 };
+use bigdecimal::ToPrimitive;
 use futures::TryStreamExt;
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
 use serde::Serialize;
-use sqlx::{types::BigDecimal, PgPool};
+use sqlx::PgPool;
 use time::format_description::well_known::Rfc3339;
 
 use crate::{
     handlers::{base_template::Base, queries::PathQuery},
     states::AppState,
 };
+
+struct Seconds(u64);
+
+impl fmt::Display for Seconds {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}min {:02}s", self.0 / 60, self.0 % 60)
+    }
+}
 
 #[derive(Serialize)]
 struct DataPoint {
@@ -27,7 +38,7 @@ struct Visits {
     first: String,
     len: i64,
     per_day: f64,
-    average_time_spent_secs: Option<BigDecimal>,
+    average_time_spent: Option<Seconds>,
 }
 
 impl Visits {
@@ -146,8 +157,7 @@ impl Visits {
             .max()
             .unwrap_or_default();
 
-        // TODO: In minutes instead of seconds.
-        let average_time_spent_secs = sqlx::query!(
+        let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
             WHERE path_id = $1",
             path_id
@@ -157,7 +167,7 @@ impl Visits {
         .ctx(Status::Internal)
         .err_msg("Failed to run the average time spent query!")?
         .extract
-        .map(|decimal| decimal.round(0));
+        .and_then(|decimal| decimal.to_u64().map(Seconds));
 
         Ok(Self {
             chart_json_data,
@@ -166,7 +176,7 @@ impl Visits {
             first: first_visit_formatted,
             len,
             per_day: visits_per_day,
-            average_time_spent_secs,
+            average_time_spent,
         })
     }
 }

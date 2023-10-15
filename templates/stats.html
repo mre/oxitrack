@@ -20,11 +20,11 @@
             <td>Visits/day</td>
             <td>{{ "{:.2}"|format(visits.per_day) }}</td>
         </tr>
-        {% match visits.average_time_spent_secs %}
-            {% when Some with (secs) %}
+        {% match visits.average_time_spent %}
+            {% when Some with (time) %}
             <tr>
-                <td>Average time spent [s]</td>
-                <td>{{ secs }}</td>
+                <td>Average time spent</td>
+                <td>{{ time }}</td>
             </tr>
             {% when None %}
         {% endmatch %}

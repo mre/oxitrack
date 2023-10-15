@@ -2,6 +2,10 @@
 
 ## 0.4.9
 
+### Features
+
+- Show the average spent time as minutes + seconds instead of only seconds.
+
 ### Fixes
 
 - Fix the average spent time by considering the minimum delay.
