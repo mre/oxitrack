@@ -44,6 +44,10 @@ The script calls `/register?path=PATH` to receive a visitor ID.
 
 This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/VISITOR_ID` which leads to counting that visit.
 
+When the page is left, a request is sent to `/page-left/VISITOR_ID` to record the total spent time.
+
+### Path validation
+
 How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
 
 Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_origin_callback`.
