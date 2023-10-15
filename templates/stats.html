@@ -34,21 +34,23 @@
         <canvas id="bar_chart"></canvas>
     </div>
 
-    <table class="w-full md:w-fit">
-        <tr class="border-b-4">
-            <th class="pr-5 text-left">Referrer</th>
-            <th class="pr-5 text-left">Visits</th>
-        </tr>
-
-        {% for referrer in referrers %}
-            <tr class="border-b-[12px] border-transparent">
-                <td class="pr-5">
-                    <a href="https://{{ referrer.domain }}">{{ referrer.domain }}</a>
-                </td>
-                <td class="pr-5">{{ referrer.count }}</td>
+    {% if !referrers.is_empty() %}
+        <table class="w-full md:w-fit">
+            <tr class="border-b-4">
+                <th class="pr-5 text-left">Referrer</th>
+                <th class="pr-5 text-left">Visits</th>
             </tr>
-        {% endfor %}
-    </table>
+
+            {% for referrer in referrers %}
+                <tr class="border-b-[12px] border-transparent">
+                    <td class="pr-5">
+                        <a href="https://{{ referrer.domain }}">{{ referrer.domain }}</a>
+                    </td>
+                    <td class="pr-5">{{ referrer.count }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
 {% endblock %}
 
 {% block scripts %}

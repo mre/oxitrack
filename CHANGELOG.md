@@ -5,6 +5,7 @@
 ### Features
 
 - Show the average spent time as minutes + seconds instead of only seconds.
+- Hide the referrer table if there are no referrers.
 
 ### Fixes
 
