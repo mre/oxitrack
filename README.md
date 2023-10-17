@@ -9,7 +9,7 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
   - Makes it less likely to count visits by web bots 🤖
 - Respects privacy (no personal data or IP is logged) 🥷🏼
 - Self-hosted 🕊️
-- Visualization of call history 📈
+- Visualization of visits history 📈
 - API for visits history and count 💻️
 - Low memory usage (about 12 MB) 🏅
 - First class container support 📦️
@@ -21,7 +21,7 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 ## Demonstration
 
 My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
-You can visit the OxiTraffic [dashboard](https://oxitraffic.mo8it.com) to see the call history of each page on the website.
+You can visit the OxiTraffic [dashboard](https://oxitraffic.mo8it.com) to see the visits history of each page on the website.
 Here is an [example](https://oxitraffic.mo8it.com/stats?path=/blog/rust-vs-julia) for a specific blog post.
 
 Try out the following API endpoints (with `curl` for example):
@@ -131,10 +131,10 @@ OxiTraffic has the following endpoints:
 - `/register?path=PATH`: Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting.
 - `/post-sleep/VISITOR_ID`: Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.
 - `/page-left/VISITOR_ID`: Use the visitor ID on leaving the page to record the total spent time.
-- `/`: A list of registered paths to see their call history.
-- `/stats?path=PATH`: Statistics of the call history of a specific path.
-- `/api/counts`: JSON with the call count for each registered path.
-- `/api/history?path=PATH`: JSON with the call datetimes for a specific path. You can use it to make your own analysis and plots.
+- `/`: A list of registered paths to see their visits history.
+- `/stats?path=PATH`: Statistics of the visits history of a specific path.
+- `/api/counts`: JSON with the visits count for each registered path.
+- `/api/history?path=PATH`: JSON with the visits datetimes for a specific path. You can use it to make your own analysis and plots.
 
 ## Questions?
 
