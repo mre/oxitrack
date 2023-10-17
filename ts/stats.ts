@@ -1,11 +1,18 @@
 import { Chart } from "chart.js/auto";
 
-export async function render_bar_chart(data: Array<{ x: string, y: number }>, max_count: number, date_trunc: string) {
-  if (data.length == 0) {
-    return;
+export async function render_bar_chart(base_url: string, path: string) {
+  const query_params = "?path=" + encodeURIComponent(path);
+  const chart_data_url = base_url + "/chart-data/";
+
+  async function chart_data(filter: string): Promise<Array<{ x: string, y: number }>> {
+    return fetch(chart_data_url + filter + query_params).then((response) => {
+      return response.json();
+    });
   }
 
-  new Chart(
+  const data = await chart_data("last-month");
+
+  const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
     type: 'bar',
     data: {
@@ -22,7 +29,7 @@ export async function render_bar_chart(data: Array<{ x: string, y: number }>, ma
       plugins: {
         title: {
           display: true,
-          text: "visits/" + date_trunc
+          text: "visits"
         },
         legend: {
           display: false
@@ -40,7 +47,6 @@ export async function render_bar_chart(data: Array<{ x: string, y: number }>, ma
         y: {
           type: 'linear',
           min: 0,
-          max: max_count,
           ticks: {
             precision: 0,
             minRotation: 0,
@@ -50,4 +56,15 @@ export async function render_bar_chart(data: Array<{ x: string, y: number }>, ma
       }
     }
   });
+
+  for (const filter of ["last-day", "last-month", "last-year", "all-time"]) {
+    const btn = document.getElementById(filter) as HTMLInputElement;
+
+    btn.addEventListener("change", async () => {
+      const data = await chart_data(filter);
+
+      chart.data.datasets[0]!.data = data;
+      chart.update();
+    })
+  }
 }

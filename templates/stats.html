@@ -30,8 +30,22 @@
         {% endmatch %}
     </table>
 
-    <div class="relative mb-12 w-full h-[50vh] md:h-[50vh]">
+    <div class="relative mb-2 w-full h-[50vh] md:h-[50vh]">
         <canvas id="bar_chart"></canvas>
+    </div>
+
+    <div class="grid gap-2 grid-rows-2 grid-flow-col md:grid-rows-1 mb-10">
+        {% for (filter, label, checked) in [("last-day", "Last day", false), ("last-month", "Last month", true), ("last-year", "Last year", false), ("all-time", "All time", false)] %}
+            <label class="p-1 px-2 bg-gray-200 rounded" for="{{ filter }}">
+                <input class="mr-1.5"
+                       type="radio"
+                       id="{{ filter }}"
+                       name="filter"
+                       value="{{ filter }}"
+                       {% if checked %}checked{% endif %} />
+                {{- label -}}
+            </label>
+        {% endfor %}
     </div>
 
     {% if !referrers.is_empty() %}
@@ -55,5 +69,5 @@
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_bar_chart({{ visits.chart_json_data|safe }}, {{ visits.chart_max_count }}, "{{ visits.chart_date_trunc }}");</script>
+    <script>oxitraffic.stats.render_bar_chart({{ base_url }}, {{ path }});</script>
 {% endblock %}
