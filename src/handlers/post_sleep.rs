@@ -19,7 +19,7 @@ pub struct Params {
 }
 
 impl Params {
-    fn referrer_origin(&self, tracked_origin: &str) -> Option<Url> {
+    fn referrer_origin(&self, tracked_origin: &'static str) -> Option<Url> {
         let referrer_origin = self.referrer_origin.as_ref()?;
 
         if referrer_origin.starts_with(tracked_origin) {
@@ -59,7 +59,7 @@ pub async fn get(
         .ctx(Status::BadRequest)
         .user_msg("The visitor ID is invalid or has expired!")?;
 
-    let referrer_origin = params.referrer_origin(&state.tracked_origin);
+    let referrer_origin = params.referrer_origin(state.tracked_origin);
     let referrer_domain = referrer_origin.as_ref().and_then(referrer_domain);
 
     let visit_id = if let Some(referrer_domain) = referrer_domain {

@@ -41,7 +41,7 @@ impl<'a> IntoIterator for &'a CountsRows {
 #[template(path = "index.html")]
 struct Index<'a> {
     pub base: Base<'a>,
-    pub tracked_origin: &'a str,
+    pub tracked_origin: &'static str,
     pub counts_rows: CountsRows,
 }
 
@@ -56,7 +56,7 @@ pub async fn get(State(state): AppState) -> Result<Response, RespErr> {
 
     Index {
         base: Base::new("Dashboard"),
-        tracked_origin: &state.tracked_origin,
+        tracked_origin: state.tracked_origin,
         counts_rows,
     }
     .try_into_resp()

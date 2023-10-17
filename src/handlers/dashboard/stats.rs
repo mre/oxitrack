@@ -214,7 +214,8 @@ impl Referrer {
 #[template(path = "stats.html")]
 struct Stats<'a> {
     pub base: Base<'a>,
-    pub tracked_origin: &'a str,
+    pub base_url: &'static str,
+    pub tracked_origin: &'static str,
     pub path: &'a str,
     pub visits: Visits,
     pub referrers: Vec<Referrer>,
@@ -248,7 +249,8 @@ pub async fn get(
 
     Stats {
         base: Base::new(path),
-        tracked_origin: &state.tracked_origin,
+        base_url: state.base_url,
+        tracked_origin: state.tracked_origin,
         path,
         visits,
         referrers,
