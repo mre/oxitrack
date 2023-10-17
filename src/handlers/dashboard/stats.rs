@@ -21,7 +21,13 @@ struct Seconds(u64);
 
 impl fmt::Display for Seconds {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}min {:02}s", self.0 / 60, self.0 % 60)
+        let minutes = self.0 / 60;
+
+        if minutes > 0 {
+            write!(f, "{}min {:02}s", self.0 / 60, self.0 % 60)
+        } else {
+            write!(f, "{:02}s", self.0 % 60)
+        }
     }
 }
 
