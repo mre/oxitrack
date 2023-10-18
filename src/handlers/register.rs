@@ -24,7 +24,7 @@ pub async fn get(
         WHERE path = $1",
         path
     )
-    .fetch_optional(&*state.db)
+    .fetch_optional(&state.pool)
     .await
     .ctx(Status::Internal)
     .err_msg(|| format!("Failed to run path query for path {path}!"))?;
@@ -53,7 +53,7 @@ pub async fn get(
             RETURNING id",
             path
         )
-        .fetch_optional(&*state.db)
+        .fetch_optional(&state.pool)
         .await
         .ctx(Status::Internal)
         .err_msg(|| format!("Failed to insert path {path}!"))?;
@@ -67,7 +67,7 @@ pub async fn get(
                 WHERE path = $1",
                 path
             )
-            .fetch_one(&*state.db)
+            .fetch_one(&state.pool)
             .await
             .ctx(Status::Internal)
             .err_msg(|| format!("Failed to insert path {path}!"))?

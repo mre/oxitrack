@@ -3,9 +3,10 @@ pub mod visitor_state;
 use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
+use sqlx::PgPool;
 use time::UtcOffset;
 
-use crate::{config::Config, db::Database};
+use crate::config::Config;
 use visitor_state::VisitorStateStore;
 
 #[derive(Template)]
@@ -17,7 +18,7 @@ pub struct CountJs {
 
 /// The application state.
 pub struct InnerAppState {
-    pub db: Database,
+    pub pool: PgPool,
     pub tracked_origin: &'static str,
     pub tracked_origin_callback: &'static str,
     pub visitor_states: VisitorStateStore,
@@ -28,7 +29,12 @@ pub struct InnerAppState {
 
 impl InnerAppState {
     pub async fn build(config: Config, utc_offset: UtcOffset) -> Result<Self> {
-        let db = Database::build(config.db).await?;
+        let pool = config.db.try_into_pool().await?;
+
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .context("Failed to run migrations!")?;
 
         let tracked_origin: &str = config.tracked_origin.leak();
 
@@ -58,7 +64,7 @@ impl InnerAppState {
         .leak();
 
         Ok(Self {
-            db,
+            pool,
             tracked_origin_callback,
             tracked_origin,
             visitor_states,

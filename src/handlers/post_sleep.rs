@@ -64,7 +64,7 @@ pub async fn get(
 
     let visit_id = if let Some(referrer_domain) = referrer_domain {
         let mut tx = state
-            .db
+            .pool
             .begin()
             .await
             .ctx(Status::Internal)
@@ -124,7 +124,7 @@ pub async fn get(
             path_id,
             registered_at,
         )
-        .fetch_one(&*state.db)
+        .fetch_one(&state.pool)
         .await
         .ctx(Status::Internal)
         .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?

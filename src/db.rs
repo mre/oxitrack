@@ -1,33 +1,7 @@
-use anyhow::{Context, Result};
-use oxi_axum_helpers::{PgConfig, RespErr, RespErrCtx, RespErrExt, Status};
+use anyhow::Result;
+use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
-use std::ops::Deref;
-
-pub struct Database {
-    pool: PgPool,
-}
-
-impl Deref for Database {
-    type Target = PgPool;
-
-    fn deref(&self) -> &Self::Target {
-        &self.pool
-    }
-}
-
-impl Database {
-    pub async fn build(db_config: PgConfig) -> Result<Self> {
-        let pool = db_config.try_into_pool().await?;
-
-        sqlx::migrate!()
-            .run(&pool)
-            .await
-            .context("Failed to run migrations!")?;
-
-        Ok(Self { pool })
-    }
-}
 
 #[derive(Serialize)]
 pub struct VisitCount {

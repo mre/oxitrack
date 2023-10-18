@@ -46,7 +46,7 @@ struct Index<'a> {
 }
 
 pub async fn get(State(state): AppState) -> Result<Response, RespErr> {
-    let counts = VisitCount::all_sorted(&state.db).await?;
+    let counts = VisitCount::all_sorted(&state.pool).await?;
     let total_n_visits = counts.iter().map(|c| c.count).sum::<i64>();
     let mult_factor = 100.0 / total_n_visits as f64;
     let counts_rows = CountsRows {

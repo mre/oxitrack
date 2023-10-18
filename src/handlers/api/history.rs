@@ -12,7 +12,7 @@ pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
 ) -> Result<Json<Vec<String>>, RespErr> {
-    let (path, path_id) = path.normalized_with_id(&state.db).await?;
+    let (path, path_id) = path.normalized_with_id(&state.pool).await?;
 
     sqlx::query!(
         "SELECT registered_at FROM visits
@@ -20,7 +20,7 @@ pub async fn get(
         ORDER BY registered_at",
         path_id,
     )
-    .fetch(&*state.db)
+    .fetch(&state.pool)
     .map(|row| {
         row.ctx(Status::Internal)
             .err_msg(|| format!("History query failed for path {path}!"))?

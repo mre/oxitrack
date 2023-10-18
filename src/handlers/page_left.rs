@@ -22,7 +22,7 @@ pub async fn get(
         WHERE id = $1",
         visit_id
     )
-    .execute(&*state.db)
+    .execute(&state.pool)
     .await
     .ctx(Status::Internal)
     .err_msg(|| format!("Failed to set left_at for visit_id {visit_id}"))?;

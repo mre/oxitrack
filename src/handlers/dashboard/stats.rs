@@ -119,12 +119,12 @@ pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
 ) -> Result<Response, RespErr> {
-    let (path, path_id) = path.normalized_with_id(&state.db).await?;
+    let (path, path_id) = path.normalized_with_id(&state.pool).await?;
 
     // Run queries concurrently.
-    let visits_handler = tokio::spawn(Visits::build(&state.db, path_id));
+    let visits_handler = tokio::spawn(Visits::build(&state.pool, path_id));
 
-    let referrers = Referrer::all(&state.db, path_id).await?;
+    let referrers = Referrer::all(&state.pool, path_id).await?;
     let visits = visits_handler
         .await
         .ctx(Status::Internal)
