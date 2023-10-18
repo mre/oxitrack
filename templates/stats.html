@@ -36,7 +36,7 @@
 
     <div class="flex gap-2 mb-10">
         {% for (ind, (filter, label)) in [("last-60-days", "Last 60 days"), ("all-time", "All time")].iter().enumerate() %}
-            <label class="p-1 px-2 bg-gray-200 rounded w-full" for="{{ filter }}">
+            <label class="p-1 px-2 w-full bg-gray-200 rounded" for="{{ filter }}">
                 <input class="mr-1.5"
                        type="radio"
                        id="{{ filter }}"
@@ -56,7 +56,7 @@
             </tr>
 
             {% for referrer in referrers %}
-                <tr class="border-b-[12px] border-transparent">
+                <tr class="border-transparent border-b-[12px]">
                     <td class="pr-5">
                         <a href="https://{{ referrer.domain }}">{{ referrer.domain }}</a>
                     </td>
