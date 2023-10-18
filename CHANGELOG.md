@@ -1,10 +1,15 @@
 # Changelog
 
-## 0.4.9
+## 0.5.0
+
+### Breaking changes
+
+- **Remove the visits line chart** because it causes huge performance hits when the number of visits grows.
+- Add a **filter to only show the last 60 days**. This filter is applied by default but one can choose the **"all time" filter** to display all visits over time, but these might be grouped into months or even years instead of days depending on the total number of days.
 
 ### Features
 
-- Show the average spent time as minutes + seconds instead of only seconds.
+- Show the average spent time as a combosition of minutes and seconds instead of only seconds if the amount of seconds is more than 60.
 - Hide the referrer table if there are no referrers.
 
 ### Fixes
