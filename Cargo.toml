@@ -23,9 +23,9 @@ include = [
 [dependencies]
 anyhow = "1.0.75"
 askama = { version = "0.12.1", default-features = false }
-async-trait = "0.1.73"
+async-trait = "0.1.74"
 axum = { version = "0.6.20", default-features = false, features = ["http1", "tokio", "json", "query"] }
-bigdecimal = "0.4.1"
+bigdecimal = "0.4.2"
 figment = { version = "0.10.11", features = ["toml", "env", "test"] }
 futures = "0.3.28"
 oxi-axum-helpers = { version = "0.0.17", features = ["postgres", "templates", "static_router"] }
@@ -33,20 +33,20 @@ reqwest = { version = "0.11.22", default-features = false, features = ["rustls-t
 serde_json = "1.0.107"
 serde = { version = "1.0.189", features = ["derive"] }
 sqlx = { version = "0.7.2", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "macros", "migrate", "time", "bigdecimal"] }
-time = { version = "0.3.29", features = ["formatting"] }
+time = { version = "0.3.30", features = ["formatting"] }
 tokio = { version = "1.33.0", default-features = false, features = ["rt", "macros"] }
 tower-http = { version = "0.4.4", default-features = false, features = ["cors", "trace", "compression-gzip"] }
-tracing = "0.1.37"
+tracing = "0.1.39"
 url = "2.4.1"
 
 [dev-dependencies]
 hyper = { version = "0.14.27", default-features = false }
 mime = "0.3.17"
 tower = { version = "0.4.13", default-features = false }
-typed-builder = "0.16.2"
+typed-builder = "0.17.0"
 
 [build-dependencies]
-time = { version = "0.3.29" }
+time = { version = "0.3.30" }
 
 [profile.release]
 lto = true
