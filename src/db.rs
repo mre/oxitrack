@@ -30,13 +30,13 @@ impl Database {
 }
 
 #[derive(Serialize)]
-pub struct Count {
+pub struct VisitCount {
     pub path: String,
     pub count: i64,
 }
 
-impl Count {
-    pub async fn query_all_sorted(pool: &PgPool) -> Result<Vec<Self>, RespErr> {
+impl VisitCount {
+    pub async fn all_sorted(pool: &PgPool) -> Result<Vec<Self>, RespErr> {
         sqlx::query_as!(
             Self,
             r#"SELECT path, COUNT(*) AS "count!" FROM paths

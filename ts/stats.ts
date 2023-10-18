@@ -10,7 +10,7 @@ export async function render_bar_chart(base_url: string, path: string) {
     });
   }
 
-  const data = await chart_data("last-month");
+  const data = await chart_data("last-60-days");
 
   const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
@@ -57,7 +57,7 @@ export async function render_bar_chart(base_url: string, path: string) {
     }
   });
 
-  for (const filter of ["last-day", "last-month", "last-year", "all-time"]) {
+  for (const filter of ["last-60-days", "all-time"]) {
     const btn = document.getElementById(filter) as HTMLInputElement;
 
     btn.addEventListener("change", async () => {

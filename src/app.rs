@@ -30,10 +30,19 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     let compression_layer = CompressionLayer::new().gzip(true);
     let cors_layer = CorsLayer::new().allow_origin(allowed_origin);
 
+    let chart_data_router = Router::new()
+        .route(
+            "/last-60-days",
+            get(handlers::chart_data::last_60_days::get),
+        )
+        .route("/all-time", get(handlers::chart_data::all_time::get))
+        .layer(compression_layer.clone());
+
     let counting_router = Router::new()
         .route("/register", get(handlers::register::get))
         .route("/post-sleep/:visitor_id", get(handlers::post_sleep::get))
         .route("/page-left/:visitor_id", get(handlers::page_left::get))
+        .nest("/chart-data", chart_data_router)
         .layer(cors_layer.clone());
 
     let count_js_router = Router::new()
@@ -62,8 +71,8 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .merge(static_router)
         .merge(counting_router)
         .merge(count_js_router)
-        .nest("/api", api_router)
         .merge(dashboard_router)
+        .nest("/api", api_router)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::new().level(Level::INFO))

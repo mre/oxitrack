@@ -6,24 +6,13 @@ use futures::{StreamExt, TryStreamExt};
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use time::format_description::well_known::Rfc3339;
 
-use crate::{handlers::queries::PathQuery, states::AppState};
+use crate::{extractors::query_path::QueryPath, states::AppState};
 
 pub async fn get(
     State(state): AppState,
-    Query(path): Query<PathQuery>,
+    Query(path): Query<QueryPath>,
 ) -> Result<Json<Vec<String>>, RespErr> {
-    let path = path.normalized();
-
-    let path_id = sqlx::query!(
-        "SELECT id FROM paths
-        WHERE path = $1",
-        path
-    )
-    .fetch_one(&*state.db)
-    .await
-    .ctx(Status::NotFound)
-    .err_msg(|| format!("Path {path} not found!"))?
-    .id;
+    let (path, path_id) = path.normalized_with_id(&state.db).await?;
 
     sqlx::query!(
         "SELECT registered_at FROM visits

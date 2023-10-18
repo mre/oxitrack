@@ -3,20 +3,20 @@ use axum::{extract::State, response::Response};
 use oxi_axum_helpers::{RespErr, TryIntoTemplResp};
 use std::slice::Iter;
 
-use crate::{db::Count, handlers::base_template::Base, states::AppState};
+use crate::{db::VisitCount, handlers::base_template::Base, states::AppState};
 
 pub struct CountsRows {
-    counts: Vec<Count>,
+    counts: Vec<VisitCount>,
     mult_factor: f64,
 }
 
 pub struct CountsRowsIter<'a> {
-    counts_iter: Iter<'a, Count>,
+    counts_iter: Iter<'a, VisitCount>,
     mult_factor: f64,
 }
 
 impl<'a> Iterator for CountsRowsIter<'a> {
-    type Item = (&'a Count, f64);
+    type Item = (&'a VisitCount, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.counts_iter
@@ -46,7 +46,7 @@ struct Index<'a> {
 }
 
 pub async fn get(State(state): AppState) -> Result<Response, RespErr> {
-    let counts = Count::query_all_sorted(&state.db).await?;
+    let counts = VisitCount::all_sorted(&state.db).await?;
     let total_n_visits = counts.iter().map(|c| c.count).sum::<i64>();
     let mult_factor = 100.0 / total_n_visits as f64;
     let counts_rows = CountsRows {

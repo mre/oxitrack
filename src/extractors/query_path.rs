@@ -1,12 +1,14 @@
+use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
+use sqlx::PgPool;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct PathQuery {
+pub struct QueryPath {
     path: String,
 }
 
-impl PathQuery {
+impl QueryPath {
     pub fn normalized(&self) -> &str {
         let path = self.path.trim_end_matches('/');
 
@@ -16,11 +18,28 @@ impl PathQuery {
             path
         }
     }
+
+    pub async fn normalized_with_id(&self, pool: &PgPool) -> Result<(&str, i64), RespErr> {
+        let normalized = self.normalized();
+
+        let id = sqlx::query!(
+            "SELECT id FROM paths
+            WHERE path = $1",
+            normalized,
+        )
+        .fetch_one(pool)
+        .await
+        .ctx(Status::NotFound)
+        .err_msg(|| format!("Path {normalized} not found!"))?
+        .id;
+
+        Ok((normalized, id))
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::PathQuery;
+    use super::QueryPath;
 
     #[test]
     fn path_normalization() {
@@ -33,7 +52,7 @@ mod tests {
             ("/nested/path", "/nested/path"),
             ("/nested/path///", "/nested/path"),
         ] {
-            let path = PathQuery {
+            let path = QueryPath {
                 path: before.to_owned(),
             };
 

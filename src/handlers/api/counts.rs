@@ -1,8 +1,8 @@
 use axum::{extract::State, Json};
 use oxi_axum_helpers::RespErr;
 
-use crate::{db::Count, states::AppState};
+use crate::{db::VisitCount, states::AppState};
 
-pub async fn get(State(state): AppState) -> Result<Json<Vec<Count>>, RespErr> {
-    Count::query_all_sorted(&state.db).await.map(Json)
+pub async fn get(State(state): AppState) -> Result<Json<Vec<VisitCount>>, RespErr> {
+    VisitCount::all_sorted(&state.db).await.map(Json)
 }

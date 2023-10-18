@@ -5,13 +5,14 @@ use axum::{
 use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use time::OffsetDateTime;
 
-use crate::states::{visitor_state::SleepingState, AppState};
-
-use super::queries::PathQuery;
+use crate::{
+    extractors::query_path::QueryPath,
+    states::{visitor_state::SleepingState, AppState},
+};
 
 pub async fn get(
     State(state): AppState,
-    Query(path): Query<PathQuery>,
+    Query(path): Query<QueryPath>,
 ) -> Result<Json<u16>, RespErr> {
     // As early as possible for a correct time measurement.
     let registered_at = OffsetDateTime::now_utc();
