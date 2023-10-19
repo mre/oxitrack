@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:latest AS builder
+FROM docker.io/library/rust:slim AS builder
 ENV SQLX_OFFLINE=true
 RUN rustup target add x86_64-unknown-linux-musl
 RUN apt update && apt install -y musl-tools
@@ -8,4 +8,4 @@ FROM docker.io/library/alpine:latest
 EXPOSE 80
 ENV OXITRAFFIC_DATA_DIR=/volumes/data
 COPY --from=builder /usr/local/cargo/bin/oxitraffic /usr/local/bin/oxitraffic
-CMD ["oxitraffic"]
+CMD ["/usr/local/bin/oxitraffic"]
