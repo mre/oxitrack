@@ -27,10 +27,11 @@ publish:
 	npm outdated
 	cargo outdated --exit-code 1
 	typos
+	cargo sqlx prepare --check
+	cargo test
 	{{tailwind_cmd}} -m
 	npx rspack
 	gzip --best {{gzip_options}}
-	cargo sqlx prepare --check
-	cargo test
 	cargo publish --allow-dirty
-	git push origin main
+	git tag "v$(cargo read-manifest | jaq -r '.version')"
+	git push --follow-tags origin main
