@@ -33,5 +33,5 @@ publish:
 	npx rspack
 	gzip --best {{gzip_options}}
 	cargo publish --allow-dirty
-	git tag "v$(cargo read-manifest | jaq -r '.version')"
+	git tag -a -m "release" "v$(cargo read-manifest | jaq -r '.version')"
 	git push --follow-tags origin main
