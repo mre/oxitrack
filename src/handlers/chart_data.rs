@@ -1,5 +1,5 @@
 use axum::Json;
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::num::NonZeroU64;
@@ -62,7 +62,7 @@ impl DataPoint {
             }
         }
         .ctx(Status::Internal)
-        .err_msg("Failed to query chart data!")?;
+        .log_msg("Failed to query chart data!")?;
 
         let (first_date, last_date) = match rows.as_slice() {
             [] => return Ok(Json(Vec::new())),
@@ -141,7 +141,7 @@ impl TotalLen {
         .fetch_one(pool)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to query the count of visits")?
+        .log_msg("Failed to query the count of visits")?
         .count as u64;
 
         match NonZeroU64::new(len) {

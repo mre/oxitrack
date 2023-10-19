@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Json,
 };
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use time::OffsetDateTime;
 
 use crate::{
@@ -27,7 +27,7 @@ pub async fn get(
     .fetch_optional(&state.pool)
     .await
     .ctx(Status::Internal)
-    .err_msg(|| format!("Failed to run path query for path {path}!"))?;
+    .log_msg(|| format!("Failed to run path query for path {path}!"))?;
 
     let path_id = if let Some(id) = path_id {
         id.id
@@ -35,12 +35,12 @@ pub async fn get(
         let status = reqwest::get(state.tracked_url_from_path(path))
             .await
             .ctx(Status::NotFound)
-            .err_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
+            .log_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
             .status();
 
         if !status.is_success() {
             return Err(RespErr::new(Status::NotFound)
-                .err_msg(format!("Path {path} not found on tracked website!")));
+                .log_msg(format!("Path {path} not found on tracked website!")));
         }
 
         // There is a possible race condition here.
@@ -56,7 +56,7 @@ pub async fn get(
         .fetch_optional(&state.pool)
         .await
         .ctx(Status::Internal)
-        .err_msg(|| format!("Failed to insert path {path}!"))?;
+        .log_msg(|| format!("Failed to insert path {path}!"))?;
 
         if let Some(id) = inserted_id {
             id.id
@@ -70,7 +70,7 @@ pub async fn get(
             .fetch_one(&state.pool)
             .await
             .ctx(Status::Internal)
-            .err_msg(|| format!("Failed to insert path {path}!"))?
+            .log_msg(|| format!("Failed to insert path {path}!"))?
             .id
         }
     };

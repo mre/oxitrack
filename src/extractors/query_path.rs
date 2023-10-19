@@ -1,4 +1,4 @@
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -30,7 +30,7 @@ impl QueryPath {
         .fetch_one(pool)
         .await
         .ctx(Status::NotFound)
-        .err_msg(|| format!("Path {normalized} not found!"))?
+        .log_msg(|| format!("Path {normalized} not found!"))?
         .id;
 
         Ok((normalized, id))

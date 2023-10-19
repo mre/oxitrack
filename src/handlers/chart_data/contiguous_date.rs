@@ -1,4 +1,4 @@
-use oxi_axum_helpers::{RespErr, Status};
+use axum_ctx::{RespErr, Status};
 use std::fmt;
 use time::{Date, Month, OffsetDateTime};
 
@@ -106,7 +106,7 @@ impl ContiguousDatePart for ContiguousDay {
                 self.0 = day;
                 Ok(())
             }
-            None => Err(RespErr::new(Status::Internal).err_msg("Failed to get the next day!")),
+            None => Err(RespErr::new(Status::Internal).log_msg("Failed to get the next day!")),
         }
     }
 

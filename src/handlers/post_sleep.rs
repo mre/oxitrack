@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
 use url::Url;
 
@@ -68,7 +68,7 @@ pub async fn get(
             .begin()
             .await
             .ctx(Status::Internal)
-            .err_msg("Failed to begin a transaction!")?;
+            .log_msg("Failed to begin a transaction!")?;
 
         // Try to insert if the referrer doesn't already exist.
         let referrer_id = sqlx::query!(
@@ -80,7 +80,7 @@ pub async fn get(
         .fetch_optional(&mut *tx)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to insert a referrer!")?;
+        .log_msg("Failed to insert a referrer!")?;
 
         let referrer_id = if let Some(id) = referrer_id {
             id.id
@@ -94,7 +94,7 @@ pub async fn get(
             .fetch_one(&mut *tx)
             .await
             .ctx(Status::Internal)
-            .err_msg("Referrer not found although its insertion had a conflict!")?
+            .log_msg("Referrer not found although its insertion had a conflict!")?
             .id
         };
 
@@ -108,13 +108,13 @@ pub async fn get(
         .fetch_one(&mut *tx)
         .await
         .ctx(Status::Internal)
-        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
+        .log_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
         .id;
 
         tx.commit()
             .await
             .ctx(Status::Internal)
-            .err_msg("Failed to commit the post sleep transaction with referrer.")?;
+            .log_msg("Failed to commit the post sleep transaction with referrer.")?;
 
         visit_id
     } else {
@@ -127,7 +127,7 @@ pub async fn get(
         .fetch_one(&state.pool)
         .await
         .ctx(Status::Internal)
-        .err_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
+        .log_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
         .id
     };
 

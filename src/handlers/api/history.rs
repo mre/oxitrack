@@ -2,8 +2,8 @@ use axum::{
     extract::{Query, State},
     Json,
 };
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use futures::{StreamExt, TryStreamExt};
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
 use time::format_description::well_known::Rfc3339;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
@@ -23,12 +23,12 @@ pub async fn get(
     .fetch(&state.pool)
     .map(|row| {
         row.ctx(Status::Internal)
-            .err_msg(|| format!("History query failed for path {path}!"))?
+            .log_msg(|| format!("History query failed for path {path}!"))?
             .registered_at
             .to_offset(state.utc_offset)
             .format(&Rfc3339)
             .ctx(Status::Internal)
-            .err_msg("Failed to format datetime!")
+            .log_msg("Failed to format datetime!")
     })
     .try_collect()
     .await

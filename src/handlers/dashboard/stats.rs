@@ -3,8 +3,9 @@ use axum::{
     extract::{Query, State},
     response::Response,
 };
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use bigdecimal::ToPrimitive;
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status, TryIntoTemplResp};
+use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
 use std::{fmt, num::NonZeroU64};
 use time::format_description::well_known::Rfc3339;
@@ -50,7 +51,7 @@ impl Visits {
         let first_visit_formatted = first_visit
             .format(&Rfc3339)
             .ctx(Status::Internal)
-            .err_msg("Failed to format the datetime of the first visit!")?;
+            .log_msg("Failed to format the datetime of the first visit!")?;
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
@@ -60,7 +61,7 @@ impl Visits {
         .fetch_one(pool)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to run the average time spent query!")?
+        .log_msg("Failed to run the average time spent query!")?
         .extract
         .and_then(|decimal| decimal.to_u64().map(Seconds));
 
@@ -100,7 +101,7 @@ impl Referrer {
         .fetch_all(pool)
         .await
         .ctx(Status::Internal)
-        .err_msg("Failed to query referrers!")
+        .log_msg("Failed to query referrers!")
     }
 }
 
@@ -128,7 +129,7 @@ pub async fn get(
     let visits = visits_handler
         .await
         .ctx(Status::Internal)
-        .err_msg("Visits task panicked!")??;
+        .log_msg("Visits task panicked!")??;
 
     Stats {
         base: Base::new(path),

@@ -178,6 +178,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-ctx"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8e4c0217a170bf07057cf0525043bdb24ad383ab6564dee40b57fd396d2d2e0"
+dependencies = [
+ "axum-core",
+ "http",
+ "tracing",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1121,15 +1132,14 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.17"
+version = "0.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7c6a25b9df39eaf79cd71b28b29a15f0965ef473c7a2d8a4996e4a312b69035"
+checksum = "a126a5488074527c56b982b86f16f602be2be7a9d8ed3e082749baead4adde03"
 dependencies = [
  "anyhow",
  "askama",
  "axum",
- "axum-core",
- "http",
+ "axum-ctx",
  "serde",
  "sqlx",
  "time",
@@ -1146,6 +1156,7 @@ dependencies = [
  "askama",
  "async-trait",
  "axum",
+ "axum-ctx",
  "bigdecimal 0.4.2",
  "figment",
  "futures",
@@ -2228,9 +2239,9 @@ checksum = "b6bc1c9ce2b5135ac7f93c72918fc37feb872bdc6a5533a8b85eb4b86bfdae52"
 
 [[package]]
 name = "tracing"
-version = "0.1.39"
+version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2ef2af84856a50c1d430afce2fdded0a4ec7eda868db86409b4543df0797f9"
+checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
  "log",
  "pin-project-lite",

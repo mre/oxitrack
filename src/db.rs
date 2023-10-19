@@ -1,5 +1,5 @@
 use anyhow::Result;
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 
@@ -21,6 +21,6 @@ impl VisitCount {
         .fetch_all(pool)
         .await
         .ctx(Status::Internal)
-        .err_msg("Counts query failed!")
+        .log_msg("Counts query failed!")
     }
 }

@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use oxi_axum_helpers::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 
 use crate::states::{visitor_state::VisitorId, AppState};
 
@@ -13,7 +13,7 @@ pub async fn get(
     let visit_id = state
         .visitor_states
         .page_left(visitor_id)
-        .ctx(oxi_axum_helpers::Status::BadRequest)
+        .ctx(Status::BadRequest)
         .user_msg("The visitor ID is invalid or has expired!")?;
 
     sqlx::query!(
@@ -25,7 +25,7 @@ pub async fn get(
     .execute(&state.pool)
     .await
     .ctx(Status::Internal)
-    .err_msg(|| format!("Failed to set left_at for visit_id {visit_id}"))?;
+    .log_msg(|| format!("Failed to set left_at for visit_id {visit_id}"))?;
 
     Ok(StatusCode::OK)
 }
