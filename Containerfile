@@ -1,8 +1,6 @@
-FROM docker.io/library/rust:slim AS builder
-ENV SQLX_OFFLINE=true
-RUN rustup target add x86_64-unknown-linux-musl
-RUN apt update && apt install -y musl-tools
-RUN cargo install oxitraffic --locked --target x86_64-unknown-linux-musl
+FROM docker.io/library/rust:alpine AS builder
+RUN apk add --no-cache musl-dev
+RUN SQLX_OFFLINE=true cargo install oxitraffic --locked
 
 FROM docker.io/library/alpine:latest
 EXPOSE 80
