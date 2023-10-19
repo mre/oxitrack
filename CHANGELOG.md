@@ -2,7 +2,7 @@
 
 ## 0.5.0
 
-### Breaking changes
+### Breaking
 
 - **Remove the visits line chart** because it causes huge performance hits when the number of visits grows.
 - Add a **filter to only show the last 60 days**. This filter is applied by default but one can choose the **"all time" filter** to display all visits over time, but these might be grouped into months or even years instead of days depending on the total number of days.
@@ -32,7 +32,7 @@
 
 - Improve the performance of serving static files.
 - Compress static files.
-- Reduce crate and binary size.
+- Reduce binary size.
 
 ## 0.4.6
 
