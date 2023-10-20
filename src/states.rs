@@ -4,6 +4,7 @@ use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
 use sqlx::PgPool;
+use std::time::Duration;
 use time::UtcOffset;
 
 use crate::config::Config;
@@ -46,6 +47,7 @@ impl InnerAppState {
         let visitor_states = VisitorStateStore::new(config.min_delay_secs);
 
         let http_client = reqwest::ClientBuilder::new()
+            .timeout(Duration::from_secs(10))
             .build()
             .context("Failed to build the reqwest client!")?;
 
