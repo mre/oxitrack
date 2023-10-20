@@ -1,13 +1,13 @@
+pub mod all_time;
+mod contiguous_date;
+pub mod last_60_days;
+
 use axum::Json;
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::num::NonZeroU64;
 use time::OffsetDateTime;
-
-pub mod all_time;
-mod contiguous_date;
-pub mod last_60_days;
 
 use contiguous_date::ContiguousDatePart;
 
