@@ -8,13 +8,29 @@ use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::num::NonZeroU64;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 
 use contiguous_date_part::ContiguousDatePart;
 
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
     count: i64,
+}
+
+struct StartDatetime {
+    start: OffsetDateTime,
+    now: OffsetDateTime,
+}
+
+impl StartDatetime {
+    fn from_sub_duration(duration: Duration) -> Self {
+        let now = OffsetDateTime::now_utc();
+
+        Self {
+            start: now - duration,
+            now,
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -27,13 +43,13 @@ impl DataPoint {
     async fn all<D: ContiguousDatePart>(
         pool: &PgPool,
         path_id: i64,
-        start_date: Option<OffsetDateTime>,
+        start_date: Option<StartDatetime>,
     ) -> Result<Json<Vec<Self>>, RespErr> {
         let date_truncation = D::date_truncation();
 
-        let rows = match start_date {
-            Some(start_date) => {
-                sqlx::query_as!(
+        let (rows, now) = match start_date {
+            Some(StartDatetime { start, now }) => {
+                let rows = sqlx::query_as!(
                     TruncDateCount,
                     r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
                     COUNT(registered_at) AS "count!" FROM visits
@@ -42,13 +58,17 @@ impl DataPoint {
                     ORDER BY "trunc_registered_at!""#,
                     date_truncation,
                     path_id,
-                    start_date,
+                    start,
                 )
                 .fetch_all(pool)
                 .await
+                .ctx(Status::Internal)
+                .log_msg("Failed to query chart data with a start date!")?;
+
+                (rows, now)
             }
             None => {
-                sqlx::query_as!(
+                let rows = sqlx::query_as!(
                     TruncDateCount,
                     r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
                     COUNT(registered_at) AS "count!" FROM visits
@@ -60,10 +80,12 @@ impl DataPoint {
                 )
                 .fetch_all(pool)
                 .await
+                .ctx(Status::Internal)
+                .log_msg("Failed to query chart data!")?;
+
+                (rows, OffsetDateTime::now_utc())
             }
-        }
-        .ctx(Status::Internal)
-        .log_msg("Failed to query chart data!")?;
+        };
 
         let (first_date, last_date) = match rows.as_slice() {
             [] => return Ok(Json(Vec::new())),
@@ -71,7 +93,7 @@ impl DataPoint {
             [first, .., last] => (first.trunc_registered_at, last.trunc_registered_at),
         };
 
-        let now_date_part = D::from(OffsetDateTime::now_utc());
+        let now_date_part = D::from(now);
 
         let mut chart_data = Vec::with_capacity(rows.len());
         let mut iter_date_part = D::from(first_date);
