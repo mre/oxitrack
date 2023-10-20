@@ -32,7 +32,10 @@ pub async fn get(
     let path_id = if let Some(id) = path_id {
         id.id
     } else {
-        let status = reqwest::get(state.tracked_url_from_path(path))
+        let status = state
+            .http_client
+            .get(state.tracked_url_from_path(path))
+            .send()
             .await
             .ctx(Status::NotFound)
             .log_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?

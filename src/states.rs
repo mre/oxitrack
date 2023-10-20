@@ -25,6 +25,7 @@ pub struct InnerAppState {
     pub utc_offset: UtcOffset,
     pub base_url: &'static str,
     pub count_js: &'static str,
+    pub http_client: reqwest::Client,
 }
 
 impl InnerAppState {
@@ -44,8 +45,14 @@ impl InnerAppState {
 
         let visitor_states = VisitorStateStore::new(config.min_delay_secs);
 
+        let http_client = reqwest::ClientBuilder::new()
+            .build()
+            .context("Failed to build the reqwest client!")?;
+
         let callback_connection_error = "Failed to connect to the tracked website using the configuration option tracked_origin_callback/tracked_origin!";
-        let callback_status = reqwest::get(tracked_origin_callback)
+        let callback_status = http_client
+            .get(tracked_origin_callback)
+            .send()
             .await
             .context(callback_connection_error)?
             .status();
@@ -71,6 +78,7 @@ impl InnerAppState {
             utc_offset,
             base_url,
             count_js,
+            http_client,
         })
     }
 
