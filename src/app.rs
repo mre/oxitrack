@@ -35,6 +35,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
             "/last-60-days",
             get(handlers::chart_data::last_60_days::get),
         )
+        .route("/last-2-days", get(handlers::chart_data::last_2_days::get))
         .route("/all-time", get(handlers::chart_data::all_time::get))
         .layer(compression_layer.clone());
 

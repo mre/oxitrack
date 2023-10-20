@@ -1,5 +1,6 @@
 pub mod all_time;
 mod contiguous_date_part;
+pub mod last_2_days;
 pub mod last_60_days;
 
 use axum::Json;

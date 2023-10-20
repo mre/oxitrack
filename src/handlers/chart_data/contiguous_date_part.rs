@@ -114,3 +114,43 @@ impl ContiguousDatePart for ContiguousDay {
         "day"
     }
 }
+
+#[derive(PartialEq, Eq)]
+pub struct ContiguousHour {
+    day: ContiguousDay,
+    hour: u8,
+}
+
+impl From<OffsetDateTime> for ContiguousHour {
+    fn from(date: OffsetDateTime) -> Self {
+        Self {
+            day: ContiguousDay::from(date),
+            hour: date.hour(),
+        }
+    }
+}
+
+impl fmt::Display for ContiguousHour {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {:02}:00", self.day, self.hour)
+    }
+}
+
+impl ContiguousDatePart for ContiguousHour {
+    fn next(&mut self) -> Result<(), RespErr> {
+        match self.hour {
+            0..=22 => {
+                self.hour += 1;
+                Ok(())
+            }
+            _ => {
+                self.hour = 0;
+                self.day.next()
+            }
+        }
+    }
+
+    fn date_truncation() -> &'static str {
+        "hour"
+    }
+}
