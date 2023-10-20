@@ -57,7 +57,7 @@ export async function render_bar_chart(base_url: string, path: string) {
     }
   });
 
-  for (const filter of ["last-60-days", "all-time"]) {
+  for (const filter of ["last-2-days", "last-60-days", "all-time"]) {
     const btn = document.getElementById(filter) as HTMLInputElement;
 
     btn.addEventListener("change", async () => {
