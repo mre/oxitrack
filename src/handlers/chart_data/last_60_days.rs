@@ -7,7 +7,7 @@ use time::{Duration, OffsetDateTime};
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{contiguous_date::ContiguousDay, DataPoint};
+use super::{contiguous_date_part::ContiguousDay, DataPoint};
 
 pub async fn get(
     State(state): AppState,

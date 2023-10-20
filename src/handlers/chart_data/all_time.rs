@@ -7,7 +7,7 @@ use axum_ctx::RespErr;
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
 use super::{
-    contiguous_date::{ContiguousDay, ContiguousMonth, ContiguousYear},
+    contiguous_date_part::{ContiguousDay, ContiguousMonth, ContiguousYear},
     DataPoint, DaysSinceFirstVisit,
 };
 

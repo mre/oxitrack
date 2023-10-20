@@ -1,5 +1,5 @@
 pub mod all_time;
-mod contiguous_date;
+mod contiguous_date_part;
 pub mod last_60_days;
 
 use axum::Json;
@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use std::num::NonZeroU64;
 use time::OffsetDateTime;
 
-use contiguous_date::ContiguousDatePart;
+use contiguous_date_part::ContiguousDatePart;
 
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
