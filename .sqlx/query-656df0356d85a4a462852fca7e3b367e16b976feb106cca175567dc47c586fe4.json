@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO paths(path) VALUES ($1)\n                ON CONFLICT ON CONSTRAINT unique_path DO NOTHING\n                RETURNING id",
+  "query": "INSERT INTO visits(path_id, registered_at, referrer_id) VALUES ($1, $2, $3)\n            RETURNING id",
   "describe": {
     "columns": [
       {
@@ -11,12 +11,14 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int8",
+        "Timestamptz",
+        "Int8"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "1cbdd7ea098abb4919a1cb5aed922f810e7d2d2a2cb287605fc614a4f76d0092"
+  "hash": "656df0356d85a4a462852fca7e3b367e16b976feb106cca175567dc47c586fe4"
 }

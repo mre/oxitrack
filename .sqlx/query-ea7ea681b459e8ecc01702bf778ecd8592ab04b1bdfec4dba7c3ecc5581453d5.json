@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "INSERT INTO visits(path_id, referrer_id) VALUES ($1, $2)\n            RETURNING id",
+  "query": "SELECT id FROM paths\n                WHERE path = $1",
   "describe": {
     "columns": [
       {
@@ -11,13 +11,12 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Text"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "c598ca34a06e586ee482150f701bc221548da1535c6974ee24e0afaa3d7cdb1d"
+  "hash": "ea7ea681b459e8ecc01702bf778ecd8592ab04b1bdfec4dba7c3ecc5581453d5"
 }

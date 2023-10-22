@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id FROM paths\n                        WHERE path = $1",
+  "query": "INSERT INTO visits(path_id, registered_at) VALUES ($1, $2)\n            RETURNING id",
   "describe": {
     "columns": [
       {
@@ -11,12 +11,13 @@
     ],
     "parameters": {
       "Left": [
-        "Text"
+        "Int8",
+        "Timestamptz"
       ]
     },
     "nullable": [
       false
     ]
   },
-  "hash": "dea61af49e39c59618127df5cabb26ef689b4bb8c30b85be962d92e20910e710"
+  "hash": "384fbd68de7aeed1d25b19888ca8757244de7f5676f8f04e14f863c3ef77fa71"
 }

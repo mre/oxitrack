@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO paths(path) VALUES ($1)\n            ON CONFLICT ON CONSTRAINT unique_path DO NOTHING\n            RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "877c194931d5b96c9b7de0c0b35869f77e4a3631a961834c440c68c773051455"
+}
