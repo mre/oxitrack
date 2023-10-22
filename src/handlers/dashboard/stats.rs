@@ -79,6 +79,7 @@ impl Visits {
 
         let len = TotalLen::build(&state.pool, path_id).await?;
 
+        #[allow(clippy::cast_precision_loss)]
         let visits_per_day = if days_since_first_visit > 0 {
             len.inner().get() as f64 / days_since_first_visit as f64
         } else {

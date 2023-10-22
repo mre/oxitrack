@@ -157,15 +157,12 @@ impl Serialize for ContiguousHour {
 
 impl ContiguousDatePart for ContiguousHour {
     fn next(&mut self) -> Result<(), RespErr> {
-        match self.hour {
-            0..=22 => {
-                self.hour += 1;
-                Ok(())
-            }
-            _ => {
-                self.hour = 0;
-                self.day.next()
-            }
+        if let 0..=22 = self.hour {
+            self.hour += 1;
+            Ok(())
+        } else {
+            self.hour = 0;
+            self.day.next()
         }
     }
 

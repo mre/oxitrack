@@ -28,7 +28,7 @@ pub struct Config {
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
 }
-fn default_socket_address() -> SocketAddr {
+const fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
     SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 80))
 }

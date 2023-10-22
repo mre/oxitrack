@@ -59,10 +59,7 @@ impl InnerAppState {
                 .send()
                 .await
                 .with_context(|| {
-                    format!(
-                        "Failed to connect to the tracked website {}!",
-                        tracked_origin_callback
-                    )
+                    format!("Failed to connect to the tracked website {tracked_origin_callback}!")
                 })?
                 .status();
             if !callback_status.is_success() {
@@ -88,8 +85,8 @@ impl InnerAppState {
 
         Ok(Self {
             pool,
-            tracked_origin_callback,
             tracked_origin,
+            tracked_origin_callback,
             visitor_states,
             utc_offset,
             base_url,

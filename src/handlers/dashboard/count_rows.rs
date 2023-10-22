@@ -22,6 +22,7 @@ where
 {
     fn from(counts: Vec<T>) -> Self {
         let total_count = counts.iter().map(|c| c.count()).sum::<i64>();
+        #[allow(clippy::cast_precision_loss)]
         let mult_factor = 100.0 / total_count as f64;
 
         Self {
@@ -43,6 +44,7 @@ where
     type Item = (&'a T, f64);
 
     fn next(&mut self) -> Option<Self::Item> {
+        #[allow(clippy::cast_precision_loss)]
         self.counts_iter
             .next()
             .map(|path_count| (path_count, path_count.count() as f64 * self.mult_factor))

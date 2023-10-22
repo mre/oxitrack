@@ -3,7 +3,7 @@ pub struct Base<'a> {
 }
 
 impl<'a> Base<'a> {
-    pub fn new(title: &'a str) -> Self {
+    pub const fn new(title: &'a str) -> Self {
         Self { title }
     }
 }

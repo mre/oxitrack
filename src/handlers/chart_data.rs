@@ -112,7 +112,8 @@ where
             let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
 
             if iter_date_part == row_date_part {
-                chart_data.push(DataPoint {
+                #[allow(clippy::cast_sign_loss)]
+                chart_data.push(Self {
                     x: iter_date_part,
                     y: row.count as u64,
                 });
@@ -123,7 +124,7 @@ where
             }
 
             loop {
-                chart_data.push(DataPoint {
+                chart_data.push(Self {
                     x: iter_date_part,
                     y: 0,
                 });
@@ -131,7 +132,8 @@ where
                 iter_date_part.next()?;
 
                 if iter_date_part == row_date_part {
-                    chart_data.push(DataPoint {
+                    #[allow(clippy::cast_sign_loss)]
+                    chart_data.push(Self {
                         x: iter_date_part,
                         y: row.count as u64,
                     });
@@ -145,7 +147,7 @@ where
 
         if now_date_part != D::from(state.apply_utc_offset(last_date)?) {
             loop {
-                chart_data.push(DataPoint {
+                chart_data.push(Self {
                     x: iter_date_part,
                     y: 0,
                 });
@@ -175,6 +177,7 @@ pub struct TotalLen(NonZeroU64);
 
 impl TotalLen {
     pub async fn build(pool: &PgPool, path_id: i64) -> Result<Self, RespErr> {
+        #[allow(clippy::cast_sign_loss)]
         let len = sqlx::query!(
             r#"SELECT COUNT(*) AS "count!" FROM visits
             WHERE path_id = $1"#,
@@ -195,7 +198,7 @@ impl TotalLen {
 
     #[inline]
     #[must_use]
-    pub fn inner(&self) -> NonZeroU64 {
+    pub const fn inner(&self) -> NonZeroU64 {
         self.0
     }
 }
