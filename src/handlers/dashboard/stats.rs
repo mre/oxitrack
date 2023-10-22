@@ -8,6 +8,7 @@ use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
 use std::{fmt, num::NonZeroU64};
+use time::OffsetDateTime;
 
 use crate::{
     extractors::query_path::QueryPath,
@@ -34,8 +35,23 @@ impl fmt::Display for Seconds {
     }
 }
 
+struct FullDateFormatter(OffsetDateTime);
+
+impl fmt::Display for FullDateFormatter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} {:02}:{:02} UTC{}",
+            self.0.date(),
+            self.0.hour(),
+            self.0.minute(),
+            self.0.offset(),
+        )
+    }
+}
+
 struct Visits {
-    first: String,
+    first: FullDateFormatter,
     len: NonZeroU64,
     per_day: f64,
     average_time_spent: Option<Seconds>,
@@ -70,16 +86,9 @@ impl Visits {
         };
 
         let first_visit = state.apply_utc_offset(first_visit)?;
-        let first_visit_formatted = format!(
-            "{} {:02}:{:02} UTC{}",
-            first_visit.date(),
-            first_visit.hour(),
-            first_visit.minute(),
-            first_visit.offset(),
-        );
 
         Ok(Self {
-            first: first_visit_formatted,
+            first: FullDateFormatter(first_visit),
             len: len.inner(),
             per_day: visits_per_day,
             average_time_spent,
