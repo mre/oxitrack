@@ -126,15 +126,27 @@ minutes = 0
 
 ## Endpoints
 
-OxiTraffic has the following endpoints:
+### Dashboard
 
-- `/register?path=PATH`: Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting.
-- `/post-sleep/VISITOR_ID`: Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.
-- `/page-left/VISITOR_ID`: Use the visitor ID on leaving the page to record the total spent time.
-- `/`: A list of registered paths to see their visits history.
-- `/stats?path=PATH`: Statistics of the visits history of a specific path.
-- `/api/counts`: JSON with the visits count for each registered path.
-- `/api/history?path=PATH`: JSON with the visits datetimes for a specific path. You can use it to make your own analysis and plots.
+| Endpoint           | Description                                             | Return |
+| ------------------ | ------------------------------------------------------- | ------ |
+| `/`                | A list of registered paths to see their visits history. | HTML   |
+| `/stats?path=PATH` | Statistics of the visits history of a specific path.    | HTML   |
+
+### JSON API
+
+| Endpoint                 | Description                                                                                                                                              | Return                                                                                                                       |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `/api/counts`            | The visits count for each registered path                                                                                                                | `JSON([{"path": String, "count": i64}])`                                                                                     |
+| `/api/history?path=PATH` | The visits datetimes for a specific path with the nullable referrer and global UTC offset. You can use this endpoint to make your own analysis and plots | `JSON({"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "left_at": Option<String>}]})` |
+
+### Script
+
+| Endpoint                 | Description                                                                                                         | Return                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `/register?path=PATH`    | Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting. | `JSON(u16)`                     |
+| `/post-sleep/VISITOR_ID` | Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.                            | Only status code 200 on success |
+| `/page-left/VISITOR_ID`  | Use the visitor ID on leaving the page to record the total spent time.                                              | Only status code 200 on success |
 
 ## Questions?
 
