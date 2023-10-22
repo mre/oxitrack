@@ -18,7 +18,7 @@ pub async fn get(
 
     sqlx::query!(
         "UPDATE visits
-        SET left_at = CURRENT_TIMESTAMP(0)
+        SET left_at = CURRENT_TIMESTAMP
         WHERE id = $1",
         visit_id
     )
