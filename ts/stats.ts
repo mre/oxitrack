@@ -10,7 +10,8 @@ export async function render_bar_chart(base_url: string, path: string) {
     });
   }
 
-  const data = await chart_data("last-60-days");
+  const checked_filter = document.querySelector("input[name='filter']:checked") as HTMLInputElement;
+  const data = await chart_data(checked_filter.value);
 
   const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
