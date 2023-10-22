@@ -33,34 +33,47 @@ impl InnerAppState {
     pub async fn build(config: Config, utc_offset: UtcOffset) -> Result<Self> {
         let pool = config.db.try_into_pool().await?;
 
-        sqlx::migrate!()
-            .run(&pool)
-            .await
-            .context("Failed to run migrations!")?;
-
         let tracked_origin: &str = config.tracked_origin.leak();
 
         let tracked_origin_callback = config
             .tracked_origin_callback
             .map_or(tracked_origin, |callback| callback.leak());
 
-        let visitor_states = VisitorStateStore::new(config.min_delay_secs);
-
         let http_client = reqwest::ClientBuilder::new()
             .timeout(Duration::from_secs(10))
             .build()
             .context("Failed to build the reqwest client!")?;
 
-        let callback_connection_error = "Failed to connect to the tracked website using the configuration option tracked_origin_callback/tracked_origin!";
-        let callback_status = http_client
-            .get(tracked_origin_callback)
-            .send()
-            .await
-            .context(callback_connection_error)?
-            .status();
-        if !callback_status.is_success() {
-            bail!(callback_connection_error);
+        if !cfg!(debug_assertions) {
+            // Migrations must be run manually during development.
+            // Therefore, only run migrations in release mode.
+            sqlx::migrate!()
+                .run(&pool)
+                .await
+                .context("Failed to run migrations!")?;
+
+            // Only check for connection in release mode to speed up the server starting process.
+            let callback_status = http_client
+                .get(tracked_origin_callback)
+                .send()
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed to connect to the tracked website {}!",
+                        tracked_origin_callback
+                    )
+                })?
+                .status();
+            if !callback_status.is_success() {
+                bail!(
+                    "The tracked website {} returned the non-successful status code {}!",
+                    tracked_origin_callback,
+                    callback_status,
+                );
+            }
         }
+
+        let visitor_states = VisitorStateStore::new(config.min_delay_secs);
 
         let base_url = config.base_url.leak();
 
