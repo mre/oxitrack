@@ -33,6 +33,26 @@ impl StartDatetime {
     }
 }
 
+struct OptionStartDateTime {
+    start: Option<OffsetDateTime>,
+    now: OffsetDateTime,
+}
+
+impl From<Option<StartDatetime>> for OptionStartDateTime {
+    fn from(opt: Option<StartDatetime>) -> Self {
+        match opt {
+            Some(StartDatetime { start, now }) => Self {
+                start: Some(start),
+                now,
+            },
+            None => Self {
+                start: None,
+                now: OffsetDateTime::now_utc(),
+            },
+        }
+    }
+}
+
 #[derive(Serialize)]
 pub struct DataPoint {
     x: String,
@@ -43,49 +63,27 @@ impl DataPoint {
     async fn all<D: ContiguousDatePart>(
         pool: &PgPool,
         path_id: i64,
-        start_date: Option<StartDatetime>,
+        start_datetime: Option<StartDatetime>,
     ) -> Result<Json<Vec<Self>>, RespErr> {
         let date_truncation = D::date_truncation();
 
-        let (rows, now) = match start_date {
-            Some(StartDatetime { start, now }) => {
-                let rows = sqlx::query_as!(
-                    TruncDateCount,
-                    r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
-                    COUNT(registered_at) AS "count!" FROM visits
-                    WHERE path_id = $2 AND registered_at > $3
-                    GROUP BY "trunc_registered_at!"
-                    ORDER BY "trunc_registered_at!""#,
-                    date_truncation,
-                    path_id,
-                    start,
-                )
-                .fetch_all(pool)
-                .await
-                .ctx(Status::Internal)
-                .log_msg("Failed to query chart data with a start date!")?;
+        let OptionStartDateTime { start, now } = start_datetime.into();
 
-                (rows, now)
-            }
-            None => {
-                let rows = sqlx::query_as!(
-                    TruncDateCount,
-                    r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
-                    COUNT(registered_at) AS "count!" FROM visits
-                    WHERE path_id = $2
-                    GROUP BY "trunc_registered_at!"
-                    ORDER BY "trunc_registered_at!""#,
-                    date_truncation,
-                    path_id,
-                )
-                .fetch_all(pool)
-                .await
-                .ctx(Status::Internal)
-                .log_msg("Failed to query chart data!")?;
-
-                (rows, OffsetDateTime::now_utc())
-            }
-        };
+        let rows = sqlx::query_as!(
+            TruncDateCount,
+            r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
+            COUNT(registered_at) AS "count!" FROM visits
+            WHERE path_id = $2 AND ($3::timestamptz IS NULL OR registered_at > $3)
+            GROUP BY "trunc_registered_at!"
+            ORDER BY "trunc_registered_at!""#,
+            date_truncation,
+            path_id,
+            start,
+        )
+        .fetch_all(pool)
+        .await
+        .ctx(Status::Internal)
+        .log_msg("Failed to query chart data!")?;
 
         let (first_date, last_date) = match rows.as_slice() {
             [] => return Ok(Json(Vec::new())),

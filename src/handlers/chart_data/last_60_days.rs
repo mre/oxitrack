@@ -15,7 +15,7 @@ pub async fn get(
 ) -> Result<Json<Vec<DataPoint>>, RespErr> {
     let (_, path_id) = path.normalized_with_id(&state.pool).await?;
 
-    let start_date = StartDatetime::from_sub_duration(Duration::days(59));
+    let start_datetime = StartDatetime::from_sub_duration(Duration::days(59));
 
-    DataPoint::all::<ContiguousDay>(&state.pool, path_id, Some(start_date)).await
+    DataPoint::all::<ContiguousDay>(&state.pool, path_id, Some(start_datetime)).await
 }
