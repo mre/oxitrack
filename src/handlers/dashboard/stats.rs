@@ -35,9 +35,9 @@ impl fmt::Display for Seconds {
     }
 }
 
-struct FullDateFormatter(OffsetDateTime);
+struct DateTimeVerboseFormatter(OffsetDateTime);
 
-impl fmt::Display for FullDateFormatter {
+impl fmt::Display for DateTimeVerboseFormatter {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -51,7 +51,7 @@ impl fmt::Display for FullDateFormatter {
 }
 
 struct Visits {
-    first: FullDateFormatter,
+    first: DateTimeVerboseFormatter,
     len: NonZeroU64,
     per_day: f64,
     average_time_spent: Option<Seconds>,
@@ -88,7 +88,7 @@ impl Visits {
         let first_visit = state.apply_utc_offset(first_visit)?;
 
         Ok(Self {
-            first: FullDateFormatter(first_visit),
+            first: DateTimeVerboseFormatter(first_visit),
             len: len.inner(),
             per_day: visits_per_day,
             average_time_spent,

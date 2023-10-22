@@ -24,7 +24,7 @@ pub struct InnerAppState {
     pub tracked_origin: &'static str,
     pub tracked_origin_callback: &'static str,
     pub visitor_states: VisitorStateStore,
-    utc_offset: UtcOffset,
+    pub utc_offset: UtcOffset,
     pub base_url: &'static str,
     pub count_js: &'static str,
     pub http_client: reqwest::Client,

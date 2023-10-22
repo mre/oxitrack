@@ -3,36 +3,121 @@ use axum::{
     Json,
 };
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
-use futures::{StreamExt, TryStreamExt};
-use time::format_description::well_known::Rfc3339;
+use serde::{
+    ser::{self, SerializeSeq},
+    Serialize, Serializer,
+};
+use time::{OffsetDateTime, UtcOffset};
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
+
+struct DatetimeFormatter(OffsetDateTime);
+
+impl Serialize for DatetimeFormatter {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&format_args!("{}T{}", self.0.date(), self.0.time()))
+    }
+}
+
+struct UtcOffsetFormatter(UtcOffset);
+
+impl Serialize for UtcOffsetFormatter {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&self.0)
+    }
+}
+
+struct Visit {
+    registered_at: OffsetDateTime,
+    referrer: Option<String>,
+    left_at: Option<OffsetDateTime>,
+}
+
+#[derive(Serialize)]
+struct FormattedVisit<'a> {
+    registered_at: DatetimeFormatter,
+    referrer: &'a Option<String>,
+    left_at: Option<DatetimeFormatter>,
+}
+
+struct VisitsFormatter {
+    utc_offset: UtcOffset,
+    visits: Vec<Visit>,
+}
+
+impl VisitsFormatter {
+    fn apply_utc_offset<S>(&self, datetime: OffsetDateTime) -> Result<DatetimeFormatter, S::Error>
+    where
+        S: Serializer,
+    {
+        match datetime.checked_to_offset(self.utc_offset) {
+            Some(t) => Ok(DatetimeFormatter(t)),
+            None => Err(ser::Error::custom("Failed UTC offset conversion")),
+        }
+    }
+}
+
+impl Serialize for VisitsFormatter {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.visits.len()))?;
+
+        for visit in &self.visits {
+            let element = FormattedVisit {
+                registered_at: self.apply_utc_offset::<S>(visit.registered_at)?,
+                referrer: &visit.referrer,
+                left_at: match visit.left_at {
+                    Some(t) => Some(self.apply_utc_offset::<S>(t)?),
+                    None => None,
+                },
+            };
+            seq.serialize_element(&element)?;
+        }
+
+        seq.end()
+    }
+}
+
+#[derive(Serialize)]
+pub struct History {
+    utc_offset: UtcOffsetFormatter,
+    visits: VisitsFormatter,
+}
 
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<Vec<String>>, RespErr> {
+) -> Result<Json<History>, RespErr> {
     let (path, path_id) = path.normalized_with_id(&state.pool).await?;
 
-    sqlx::query!(
-        "SELECT registered_at FROM visits
+    let visits = sqlx::query_as!(
+        Visit,
+        r#"SELECT registered_at, domain AS "referrer?", left_at FROM visits
+        LEFT JOIN referrers ON referrers.id = referrer_id
         WHERE path_id = $1
-        ORDER BY registered_at",
+        ORDER BY registered_at"#,
         path_id,
     )
-    .fetch(&state.pool)
-    .map(|row| {
-        let registered_at = row
-            .ctx(Status::Internal)
-            .log_msg(|| format!("History query failed for path {path}!"))?
-            .registered_at;
-        state
-            .apply_utc_offset(registered_at)?
-            .format(&Rfc3339)
-            .ctx(Status::Internal)
-            .log_msg("Failed to format datetime!")
-    })
-    .try_collect()
+    .fetch_all(&state.pool)
     .await
-    .map(Json)
+    .ctx(Status::Internal)
+    .log_msg(|| format!("History query failed for path {path}!"))?;
+
+    let history = History {
+        utc_offset: UtcOffsetFormatter(state.utc_offset),
+        visits: VisitsFormatter {
+            utc_offset: state.utc_offset,
+            visits,
+        },
+    };
+
+    Ok(Json(history))
 }
