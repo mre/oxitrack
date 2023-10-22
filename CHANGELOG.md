@@ -7,7 +7,7 @@
 - **Remove the visits line chart** because it causes huge performance hits when the number of visits grows.
 - Add a **filter to only show the last 60 days**. This filter is applied by default but one can choose the **"all time" filter** to display all visits over time, but these might be grouped into months or even years instead of days depending on the total number of days.
 - Add a filter for the last 2 days which groups into hours.
-- Change the return type of the API endpoint `/api/history?path=PATH` (see [README](README#json-api)).
+- Change the return type of the API endpoint `/api/history?path=PATH` (see [README](README.md#json-api)).
 
 ### Features
 
