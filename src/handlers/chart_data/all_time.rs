@@ -20,7 +20,7 @@ pub async fn get(
     let DaysSinceFirstVisit {
         days_since_first_visit,
         ..
-    } = DaysSinceFirstVisit::build(&state.pool, path_id).await?;
+    } = DaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
     if days_since_first_visit <= 2 {
         DataPoint::all::<ContiguousHour>(&state.pool, path_id, None).await

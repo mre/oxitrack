@@ -46,7 +46,7 @@ impl Visits {
             first_visit,
             days_since_first_visit,
             ..
-        } = DaysSinceFirstVisit::build(pool, path_id).await?;
+        } = DaysSinceFirstVisit::build(pool, path_id, None).await?;
 
         let first_visit_formatted = first_visit
             .format(&Rfc3339)

@@ -7,7 +7,10 @@ use time::Duration;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{contiguous_date_part::ContiguousDay, DataPoint, StartDatetime};
+use super::{
+    contiguous_date_part::{ContiguousDay, ContiguousHour},
+    DataPoint, DaysSinceFirstVisit, StartDatetime,
+};
 
 pub async fn get(
     State(state): AppState,
@@ -17,5 +20,14 @@ pub async fn get(
 
     let start_datetime = StartDatetime::from_sub_duration(Duration::days(59));
 
-    DataPoint::all::<ContiguousDay>(&state.pool, path_id, Some(start_datetime)).await
+    let DaysSinceFirstVisit {
+        days_since_first_visit,
+        ..
+    } = DaysSinceFirstVisit::build(&state.pool, path_id, Some(start_datetime.clone())).await?;
+
+    if days_since_first_visit <= 2 {
+        DataPoint::all::<ContiguousHour>(&state.pool, path_id, Some(start_datetime)).await
+    } else {
+        DataPoint::all::<ContiguousDay>(&state.pool, path_id, Some(start_datetime)).await
+    }
 }

@@ -17,13 +17,14 @@ struct TruncDateCount {
     count: i64,
 }
 
-struct StartDatetime {
+#[derive(Clone)]
+pub struct StartDatetime {
     start: OffsetDateTime,
     now: OffsetDateTime,
 }
 
 impl StartDatetime {
-    fn from_sub_duration(duration: Duration) -> Self {
+    pub fn from_sub_duration(duration: Duration) -> Self {
         let now = OffsetDateTime::now_utc();
 
         Self {
@@ -33,9 +34,9 @@ impl StartDatetime {
     }
 }
 
-struct OptionStartDateTime {
-    start: Option<OffsetDateTime>,
-    now: OffsetDateTime,
+pub struct OptionStartDateTime {
+    pub start: Option<OffsetDateTime>,
+    pub now: OffsetDateTime,
 }
 
 impl From<Option<StartDatetime>> for OptionStartDateTime {
@@ -188,13 +189,20 @@ pub struct DaysSinceFirstVisit {
 }
 
 impl DaysSinceFirstVisit {
-    pub async fn build(pool: &PgPool, path_id: i64) -> Result<Self, RespErr> {
+    pub async fn build(
+        pool: &PgPool,
+        path_id: i64,
+        start_datetime: Option<StartDatetime>,
+    ) -> Result<Self, RespErr> {
+        let OptionStartDateTime { start, now } = start_datetime.into();
+
         let first_visit = sqlx::query!(
             "SELECT registered_at FROM visits
-            WHERE path_id = $1
+            WHERE path_id = $1 AND ($2::timestamptz IS NULL OR registered_at > $2)
             ORDER BY registered_at
             LIMIT 1",
             path_id,
+            start,
         )
         .fetch_optional(pool)
         .await
@@ -204,7 +212,6 @@ impl DaysSinceFirstVisit {
         .user_msg("The requested path has no counted visits yet.")?
         .registered_at;
 
-        let now = time::OffsetDateTime::now_utc();
         let days_since_first_visit = (now - first_visit).whole_days();
 
         Ok(Self {
