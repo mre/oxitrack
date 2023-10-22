@@ -16,6 +16,7 @@
 ### Fixes
 
 - Fix the average spent time by considering the minimum delay.
+- Fix the chart visits stepsize (no more floats on the y-axis).
 
 ## 0.4.8
 
