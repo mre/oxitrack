@@ -38,7 +38,7 @@ pub async fn get(
             .send()
             .await
             .ctx(Status::NotFound)
-            .log_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
+            .user_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
             .status();
 
         if !status.is_success() {

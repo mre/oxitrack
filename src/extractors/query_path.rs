@@ -30,7 +30,7 @@ impl QueryPath {
         .fetch_one(pool)
         .await
         .ctx(Status::NotFound)
-        .log_msg(|| format!("Path {normalized} not found!"))?
+        .user_msg(|| format!("Path {normalized} not found!"))?
         .id;
 
         Ok((normalized, id))

@@ -209,7 +209,7 @@ impl DaysSinceFirstVisit {
         .fetch_optional(pool)
         .await
         .ctx(Status::Internal)
-        .user_msg("Failed to query the first visit")?
+        .log_msg("Failed to query the first visit!")?
         .ctx(Status::NotFound)
         .user_msg("The requested path has no counted visits yet.")?
         .registered_at;
