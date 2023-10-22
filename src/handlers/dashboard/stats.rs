@@ -18,6 +18,8 @@ use crate::{
     states::{AppState, InnerAppState},
 };
 
+use super::count_rows::{Count, CountRows};
+
 struct Seconds(u64);
 
 impl fmt::Display for Seconds {
@@ -85,13 +87,13 @@ impl Visits {
     }
 }
 
-struct Referrer {
+struct ReferrerCount {
     domain: String,
     count: i64,
 }
 
-impl Referrer {
-    async fn all(pool: &PgPool, path_id: i64) -> Result<Vec<Self>, RespErr> {
+impl ReferrerCount {
+    async fn all_sorted_by_count(pool: &PgPool, path_id: i64) -> Result<Vec<Self>, RespErr> {
         sqlx::query_as!(
             Self,
             r#"SELECT domain, COUNT(*) as "count!" FROM visits
@@ -108,6 +110,12 @@ impl Referrer {
     }
 }
 
+impl Count for ReferrerCount {
+    fn count(&self) -> i64 {
+        self.count
+    }
+}
+
 #[derive(Template)]
 #[template(path = "stats.html")]
 struct Stats<'a> {
@@ -116,7 +124,7 @@ struct Stats<'a> {
     pub tracked_origin: &'static str,
     pub path: &'a str,
     pub visits: Visits,
-    pub referrers: Vec<Referrer>,
+    pub referrer_count_rows: CountRows<ReferrerCount>,
 }
 
 pub async fn get(
@@ -128,7 +136,9 @@ pub async fn get(
     // Run queries concurrently.
     let visits_handler = tokio::spawn(Visits::build(state, path_id));
 
-    let referrers = Referrer::all(&state.pool, path_id).await?;
+    let referrer_counts = ReferrerCount::all_sorted_by_count(&state.pool, path_id).await?;
+    let referrer_count_rows = CountRows::from(referrer_counts);
+
     let visits = visits_handler
         .await
         .ctx(Status::Internal)
@@ -140,7 +150,7 @@ pub async fn get(
         tracked_origin: state.tracked_origin,
         path,
         visits,
-        referrers,
+        referrer_count_rows,
     }
     .try_into_resp()
 }

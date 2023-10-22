@@ -12,7 +12,7 @@
             <th class="text-right">%</th>
         </tr>
 
-        {% for (path_count, perc) in counts_rows %}
+        {% for (path_count, perc) in visit_count_rows %}
             <tr class="border-transparent border-b-[12px]">
                 <td class="pr-5">
                     <a href="/stats?path={{ path_count.path }}">{{ path_count.path }}</a>

@@ -48,19 +48,21 @@
         {% endfor %}
     </div>
 
-    {% if !referrers.is_empty() %}
+    {% if !referrer_count_rows.is_empty() %}
         <table class="w-full md:w-fit">
             <tr class="border-b-4">
                 <th class="pr-5 text-left">Referrer</th>
                 <th class="pr-5 text-left">Visits</th>
+                <th class="text-right">%</th>
             </tr>
 
-            {% for referrer in referrers %}
+            {% for (domain_count, perc) in referrer_count_rows %}
                 <tr class="border-transparent border-b-[12px]">
                     <td class="pr-5">
-                        <a href="https://{{ referrer.domain }}">{{ referrer.domain }}</a>
+                        <a href="https://{{ domain_count.domain }}">{{ domain_count.domain }}</a>
                     </td>
-                    <td class="pr-5">{{ referrer.count }}</td>
+                    <td class="pr-5">{{ domain_count.count }}</td>
+                    <td class="text-right">{{ "{:.1}"|format(perc) }}%</td>
                 </tr>
             {% endfor %}
         </table>

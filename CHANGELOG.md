@@ -12,6 +12,7 @@
 
 - Show the average spent time as a combosition of minutes and seconds instead of only seconds if the amount of seconds is more than 60.
 - Hide the referrer table if there are no referrers.
+- Add percentage to the referrer table.
 
 ### Fixes
 
