@@ -17,5 +17,5 @@ pub async fn get(
 
     let start_datetime = StartDatetime::from_sub_duration(Duration::days(2));
 
-    DataPoint::all::<ContiguousHour>(&state.pool, path_id, Some(start_datetime)).await
+    DataPoint::all::<ContiguousHour>(state, path_id, Some(start_datetime)).await
 }

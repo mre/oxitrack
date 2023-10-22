@@ -12,6 +12,8 @@ use time::{Duration, OffsetDateTime};
 
 use contiguous_date_part::ContiguousDatePart;
 
+use crate::states::InnerAppState;
+
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
     count: i64,
@@ -62,7 +64,7 @@ pub struct DataPoint {
 
 impl DataPoint {
     async fn all<D: ContiguousDatePart>(
-        pool: &PgPool,
+        state: &InnerAppState,
         path_id: i64,
         start_datetime: Option<StartDatetime>,
     ) -> Result<Json<Vec<Self>>, RespErr> {
@@ -83,7 +85,7 @@ impl DataPoint {
             path_id,
             start,
         )
-        .fetch_all(pool)
+        .fetch_all(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to query chart data!")?;
@@ -94,13 +96,13 @@ impl DataPoint {
             [first, .., last] => (first.trunc_registered_at, last.trunc_registered_at),
         };
 
-        let now_date_part = D::from(now);
-
         let mut chart_data = Vec::with_capacity(rows.len());
-        let mut iter_date_part = D::from(first_date);
+
+        let now_date_part = D::from(state.apply_utc_offset(now)?);
+        let mut iter_date_part = D::from(state.apply_utc_offset(first_date)?);
 
         for row in rows {
-            let row_date_part = D::from(row.trunc_registered_at);
+            let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
 
             if iter_date_part == row_date_part {
                 chart_data.push(DataPoint {
@@ -134,7 +136,7 @@ impl DataPoint {
             }
         }
 
-        if now_date_part != D::from(last_date) {
+        if now_date_part != D::from(state.apply_utc_offset(last_date)?) {
             loop {
                 chart_data.push(DataPoint {
                     x: iter_date_part.to_string(),

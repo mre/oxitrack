@@ -3,9 +3,10 @@ pub mod visitor_state;
 use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
+use axum_ctx::{RespErr, Status};
 use sqlx::PgPool;
 use std::time::Duration;
-use time::UtcOffset;
+use time::{OffsetDateTime, UtcOffset};
 
 use crate::config::Config;
 use visitor_state::VisitorStateStore;
@@ -23,7 +24,7 @@ pub struct InnerAppState {
     pub tracked_origin: &'static str,
     pub tracked_origin_callback: &'static str,
     pub visitor_states: VisitorStateStore,
-    pub utc_offset: UtcOffset,
+    utc_offset: UtcOffset,
     pub base_url: &'static str,
     pub count_js: &'static str,
     pub http_client: reqwest::Client,
@@ -103,6 +104,14 @@ impl InnerAppState {
         url.push_str(path);
 
         url
+    }
+
+    pub fn apply_utc_offset(&self, datetime: OffsetDateTime) -> Result<OffsetDateTime, RespErr> {
+        match datetime.checked_to_offset(self.utc_offset) {
+            Some(t) => Ok(t),
+            None => Err(RespErr::new(Status::Internal)
+                .log_msg("Failed to change the UTC offset of a datetime!")),
+        }
     }
 }
 

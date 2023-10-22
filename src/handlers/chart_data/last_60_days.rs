@@ -26,8 +26,8 @@ pub async fn get(
     } = DaysSinceFirstVisit::build(&state.pool, path_id, Some(start_datetime.clone())).await?;
 
     if days_since_first_visit <= 2 {
-        DataPoint::all::<ContiguousHour>(&state.pool, path_id, Some(start_datetime)).await
+        DataPoint::all::<ContiguousHour>(state, path_id, Some(start_datetime)).await
     } else {
-        DataPoint::all::<ContiguousDay>(&state.pool, path_id, Some(start_datetime)).await
+        DataPoint::all::<ContiguousDay>(state, path_id, Some(start_datetime)).await
     }
 }

@@ -22,10 +22,12 @@ pub async fn get(
     )
     .fetch(&state.pool)
     .map(|row| {
-        row.ctx(Status::Internal)
+        let registered_at = row
+            .ctx(Status::Internal)
             .log_msg(|| format!("History query failed for path {path}!"))?
-            .registered_at
-            .to_offset(state.utc_offset)
+            .registered_at;
+        state
+            .apply_utc_offset(registered_at)?
             .format(&Rfc3339)
             .ctx(Status::Internal)
             .log_msg("Failed to format datetime!")

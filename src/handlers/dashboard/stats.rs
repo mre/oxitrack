@@ -8,7 +8,6 @@ use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
 use std::{fmt, num::NonZeroU64};
-use time::format_description::well_known::Rfc3339;
 
 use crate::{
     extractors::query_path::QueryPath,
@@ -16,7 +15,7 @@ use crate::{
         base_template::Base,
         chart_data::{DaysSinceFirstVisit, TotalLen},
     },
-    states::AppState,
+    states::{AppState, InnerAppState},
 };
 
 struct Seconds(u64);
@@ -41,37 +40,41 @@ struct Visits {
 }
 
 impl Visits {
-    async fn build(pool: &PgPool, path_id: i64) -> Result<Self, RespErr> {
+    async fn build(state: &InnerAppState, path_id: i64) -> Result<Self, RespErr> {
         let DaysSinceFirstVisit {
             first_visit,
             days_since_first_visit,
             ..
-        } = DaysSinceFirstVisit::build(pool, path_id, None).await?;
-
-        let first_visit_formatted = first_visit
-            .format(&Rfc3339)
-            .ctx(Status::Internal)
-            .log_msg("Failed to format the datetime of the first visit!")?;
+        } = DaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
             WHERE path_id = $1",
             path_id
         )
-        .fetch_one(pool)
+        .fetch_one(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to run the average time spent query!")?
         .extract
         .and_then(|decimal| decimal.to_u64().map(Seconds));
 
-        let len = TotalLen::build(pool, path_id).await?;
+        let len = TotalLen::build(&state.pool, path_id).await?;
 
         let visits_per_day = if days_since_first_visit > 0 {
             len.inner().get() as f64 / days_since_first_visit as f64
         } else {
             len.inner().get() as f64
         };
+
+        let first_visit = state.apply_utc_offset(first_visit)?;
+        let first_visit_formatted = format!(
+            "{} {:02}:{:02} UTC{}",
+            first_visit.date(),
+            first_visit.hour(),
+            first_visit.minute(),
+            first_visit.offset(),
+        );
 
         Ok(Self {
             first: first_visit_formatted,
@@ -123,7 +126,7 @@ pub async fn get(
     let (path, path_id) = path.normalized_with_id(&state.pool).await?;
 
     // Run queries concurrently.
-    let visits_handler = tokio::spawn(Visits::build(&state.pool, path_id));
+    let visits_handler = tokio::spawn(Visits::build(state, path_id));
 
     let referrers = Referrer::all(&state.pool, path_id).await?;
     let visits = visits_handler
