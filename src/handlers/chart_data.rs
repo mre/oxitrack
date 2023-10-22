@@ -3,16 +3,17 @@ mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
 
-use axum::Json;
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
 use std::num::NonZeroU64;
 use time::{Duration, OffsetDateTime};
 
-use contiguous_date_part::ContiguousDatePart;
-
 use crate::states::InnerAppState;
+
+use contiguous_date_part::{
+    ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
+};
 
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
@@ -57,17 +58,23 @@ impl From<Option<StartDatetime>> for OptionStartDateTime {
 }
 
 #[derive(Serialize)]
-pub struct DataPoint {
-    x: String,
+pub struct DataPoint<T>
+where
+    T: Serialize,
+{
+    x: T,
     y: u64,
 }
 
-impl DataPoint {
-    async fn all<D: ContiguousDatePart>(
+impl<D> DataPoint<D>
+where
+    D: ContiguousDatePart,
+{
+    async fn all(
         state: &InnerAppState,
         path_id: i64,
         start_datetime: Option<StartDatetime>,
-    ) -> Result<Json<Vec<Self>>, RespErr> {
+    ) -> Result<Vec<Self>, RespErr> {
         let date_truncation = D::date_truncation();
 
         let OptionStartDateTime { start, now } = start_datetime.into();
@@ -91,7 +98,7 @@ impl DataPoint {
         .log_msg("Failed to query chart data!")?;
 
         let (first_date, last_date) = match rows.as_slice() {
-            [] => return Ok(Json(Vec::new())),
+            [] => return Ok(Vec::new()),
             [single] => (single.trunc_registered_at, single.trunc_registered_at),
             [first, .., last] => (first.trunc_registered_at, last.trunc_registered_at),
         };
@@ -106,7 +113,7 @@ impl DataPoint {
 
             if iter_date_part == row_date_part {
                 chart_data.push(DataPoint {
-                    x: iter_date_part.to_string(),
+                    x: iter_date_part,
                     y: row.count as u64,
                 });
 
@@ -117,7 +124,7 @@ impl DataPoint {
 
             loop {
                 chart_data.push(DataPoint {
-                    x: iter_date_part.to_string(),
+                    x: iter_date_part,
                     y: 0,
                 });
 
@@ -125,7 +132,7 @@ impl DataPoint {
 
                 if iter_date_part == row_date_part {
                     chart_data.push(DataPoint {
-                        x: iter_date_part.to_string(),
+                        x: iter_date_part,
                         y: row.count as u64,
                     });
 
@@ -139,7 +146,7 @@ impl DataPoint {
         if now_date_part != D::from(state.apply_utc_offset(last_date)?) {
             loop {
                 chart_data.push(DataPoint {
-                    x: iter_date_part.to_string(),
+                    x: iter_date_part,
                     y: 0,
                 });
 
@@ -151,8 +158,17 @@ impl DataPoint {
             }
         }
 
-        Ok(Json(chart_data))
+        Ok(chart_data)
     }
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum ChartData {
+    Year(Vec<DataPoint<ContiguousYear>>),
+    Month(Vec<DataPoint<ContiguousMonth>>),
+    Day(Vec<DataPoint<ContiguousDay>>),
+    Hour(Vec<DataPoint<ContiguousHour>>),
 }
 
 pub struct TotalLen(NonZeroU64);

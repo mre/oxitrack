@@ -1,14 +1,15 @@
 use axum_ctx::{RespErr, Status};
+use serde::{Serialize, Serializer};
 use std::fmt;
 use time::{Date, Month, OffsetDateTime};
 
-pub trait ContiguousDatePart: From<OffsetDateTime> + PartialEq + fmt::Display {
+pub trait ContiguousDatePart: From<OffsetDateTime> + Serialize + Copy + PartialEq {
     fn next(&mut self) -> Result<(), RespErr>;
 
     fn date_truncation() -> &'static str;
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ContiguousYear(i32);
 
 impl From<OffsetDateTime> for ContiguousYear {
@@ -17,9 +18,12 @@ impl From<OffsetDateTime> for ContiguousYear {
     }
 }
 
-impl fmt::Display for ContiguousYear {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+impl Serialize for ContiguousYear {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&self.0)
     }
 }
 
@@ -35,7 +39,7 @@ impl ContiguousDatePart for ContiguousYear {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ContiguousMonth {
     year: i32,
     month: Month,
@@ -50,9 +54,12 @@ impl From<OffsetDateTime> for ContiguousMonth {
     }
 }
 
-impl fmt::Display for ContiguousMonth {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.month.fmt(f)
+impl Serialize for ContiguousMonth {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&format_args!("{}.{:02}", self.year, self.month as u8))
     }
 }
 
@@ -84,12 +91,21 @@ impl ContiguousDatePart for ContiguousMonth {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ContiguousDay(Date);
 
 impl From<OffsetDateTime> for ContiguousDay {
     fn from(datetime: OffsetDateTime) -> Self {
         Self(datetime.date())
+    }
+}
+
+impl Serialize for ContiguousDay {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&self.0)
     }
 }
 
@@ -115,7 +131,7 @@ impl ContiguousDatePart for ContiguousDay {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ContiguousHour {
     day: ContiguousDay,
     hour: u8,
@@ -130,9 +146,12 @@ impl From<OffsetDateTime> for ContiguousHour {
     }
 }
 
-impl fmt::Display for ContiguousHour {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {:02}:00", self.day, self.hour)
+impl Serialize for ContiguousHour {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&format_args!("{} {:02}:00", self.day, self.hour))
     }
 }
 

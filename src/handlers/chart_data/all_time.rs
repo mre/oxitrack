@@ -6,15 +6,12 @@ use axum_ctx::RespErr;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{
-    contiguous_date_part::{ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear},
-    DataPoint, DaysSinceFirstVisit,
-};
+use super::{ChartData, DataPoint, DaysSinceFirstVisit};
 
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<Vec<DataPoint>>, RespErr> {
+) -> Result<Json<ChartData>, RespErr> {
     let (_, path_id) = path.normalized_with_id(&state.pool).await?;
 
     let DaysSinceFirstVisit {
@@ -22,14 +19,16 @@ pub async fn get(
         ..
     } = DaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
-    if days_since_first_visit <= 2 {
-        DataPoint::all::<ContiguousHour>(state, path_id, None).await
+    let chart_data = if days_since_first_visit <= 2 {
+        ChartData::Hour(DataPoint::all(state, path_id, None).await?)
     } else if days_since_first_visit <= 60 {
-        DataPoint::all::<ContiguousDay>(state, path_id, None).await
+        ChartData::Day(DataPoint::all(state, path_id, None).await?)
     } else if days_since_first_visit <= 1826 {
         // Less than 5 years (about 60 months).
-        DataPoint::all::<ContiguousMonth>(state, path_id, None).await
+        ChartData::Month(DataPoint::all(state, path_id, None).await?)
     } else {
-        DataPoint::all::<ContiguousYear>(state, path_id, None).await
-    }
+        ChartData::Year(DataPoint::all(state, path_id, None).await?)
+    };
+
+    Ok(Json(chart_data))
 }

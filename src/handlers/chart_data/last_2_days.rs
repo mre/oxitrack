@@ -7,15 +7,17 @@ use time::Duration;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{contiguous_date_part::ContiguousHour, DataPoint, StartDatetime};
+use super::{ChartData, DataPoint, StartDatetime};
 
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<Vec<DataPoint>>, RespErr> {
+) -> Result<Json<ChartData>, RespErr> {
     let (_, path_id) = path.normalized_with_id(&state.pool).await?;
 
     let start_datetime = StartDatetime::from_sub_duration(Duration::days(2));
 
-    DataPoint::all::<ContiguousHour>(state, path_id, Some(start_datetime)).await
+    let chart_data = ChartData::Hour(DataPoint::all(state, path_id, Some(start_datetime)).await?);
+
+    Ok(Json(chart_data))
 }
