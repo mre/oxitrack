@@ -69,6 +69,8 @@ impl DataPoint {
 
         let OptionStartDateTime { start, now } = start_datetime.into();
 
+        // Warning: The rows are assumed to be sorted after the registration date.
+        // Unsorted rows can lead to an endless loop below.
         let rows = sqlx::query_as!(
             TruncDateCount,
             r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
