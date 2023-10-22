@@ -18,7 +18,7 @@ Self-hosted, simple and privacy respecting website traffic tracker 🌐
 - Free & open source (AGPLv3) 🆓
 - Written in Rust (**oxi**dized) 🦀
 
-## Demonstration
+## Demo
 
 My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
 You can visit the OxiTraffic [dashboard](https://oxitraffic.mo8it.com) to see the visits history of each page on the website.
