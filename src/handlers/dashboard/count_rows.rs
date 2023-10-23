@@ -6,7 +6,7 @@ pub trait Count {
 
 pub struct CountRows<T> {
     counts: Vec<T>,
-    mult_factor: f64,
+    perc_factor: f64,
 }
 
 impl<T> CountRows<T> {
@@ -21,20 +21,20 @@ where
     T: Count,
 {
     fn from(counts: Vec<T>) -> Self {
-        let total_count = counts.iter().map(|c| c.count()).sum::<i64>();
         #[allow(clippy::cast_precision_loss)]
-        let mult_factor = 100.0 / total_count as f64;
+        let total_count = counts.iter().map(|c| c.count() as f64).sum::<f64>();
+        let perc_factor = 100.0 / total_count;
 
         Self {
             counts,
-            mult_factor,
+            perc_factor,
         }
     }
 }
 
 pub struct CountRowsIter<'a, T> {
     counts_iter: Iter<'a, T>,
-    mult_factor: f64,
+    perc_factor: f64,
 }
 
 impl<'a, T> Iterator for CountRowsIter<'a, T>
@@ -47,7 +47,7 @@ where
         #[allow(clippy::cast_precision_loss)]
         self.counts_iter
             .next()
-            .map(|path_count| (path_count, path_count.count() as f64 * self.mult_factor))
+            .map(|path_count| (path_count, path_count.count() as f64 * self.perc_factor))
     }
 }
 
@@ -61,7 +61,7 @@ where
     fn into_iter(self) -> Self::IntoIter {
         CountRowsIter {
             counts_iter: self.counts.iter(),
-            mult_factor: self.mult_factor,
+            perc_factor: self.perc_factor,
         }
     }
 }
