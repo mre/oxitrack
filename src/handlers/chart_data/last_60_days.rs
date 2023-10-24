@@ -7,7 +7,7 @@ use time::Duration;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{ChartData, DataPoint, DaysSinceFirstVisit, StartDatetime};
+use super::{ChartData, DataPoint, StartDatetime, WholeDaysSinceFirstVisit};
 
 pub async fn get(
     State(state): AppState,
@@ -17,12 +17,12 @@ pub async fn get(
 
     let start_datetime = StartDatetime::from_sub_duration(Duration::days(59));
 
-    let DaysSinceFirstVisit {
+    let WholeDaysSinceFirstVisit {
         days_since_first_visit,
         ..
-    } = DaysSinceFirstVisit::build(&state.pool, path_id, Some(start_datetime.clone())).await?;
+    } = WholeDaysSinceFirstVisit::build(&state.pool, path_id, Some(start_datetime.clone())).await?;
 
-    let chart_data = if days_since_first_visit <= 2 {
+    let chart_data = if days_since_first_visit < 2 {
         ChartData::Hour(DataPoint::all(state, path_id, Some(start_datetime)).await?)
     } else {
         ChartData::Day(DataPoint::all(state, path_id, Some(start_datetime)).await?)

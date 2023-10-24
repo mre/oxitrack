@@ -203,13 +203,13 @@ impl TotalLen {
     }
 }
 
-pub struct DaysSinceFirstVisit {
+pub struct WholeDaysSinceFirstVisit {
     pub now: OffsetDateTime,
     pub first_visit: OffsetDateTime,
     pub days_since_first_visit: i64,
 }
 
-impl DaysSinceFirstVisit {
+impl WholeDaysSinceFirstVisit {
     pub async fn build(
         pool: &PgPool,
         path_id: i64,

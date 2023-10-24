@@ -6,7 +6,7 @@ use axum_ctx::RespErr;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-use super::{ChartData, DataPoint, DaysSinceFirstVisit};
+use super::{ChartData, DataPoint, WholeDaysSinceFirstVisit};
 
 pub async fn get(
     State(state): AppState,
@@ -14,16 +14,16 @@ pub async fn get(
 ) -> Result<Json<ChartData>, RespErr> {
     let (_, path_id) = path.normalized_with_id(&state.pool).await?;
 
-    let DaysSinceFirstVisit {
+    let WholeDaysSinceFirstVisit {
         days_since_first_visit,
         ..
-    } = DaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
+    } = WholeDaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
-    let chart_data = if days_since_first_visit <= 2 {
+    let chart_data = if days_since_first_visit < 2 {
         ChartData::Hour(DataPoint::all(state, path_id, None).await?)
-    } else if days_since_first_visit <= 60 {
+    } else if days_since_first_visit < 60 {
         ChartData::Day(DataPoint::all(state, path_id, None).await?)
-    } else if days_since_first_visit <= 1826 {
+    } else if days_since_first_visit < 1826 {
         // Less than 5 years (about 60 months).
         ChartData::Month(DataPoint::all(state, path_id, None).await?)
     } else {

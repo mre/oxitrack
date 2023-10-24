@@ -14,7 +14,7 @@ use crate::{
     extractors::query_path::QueryPath,
     handlers::{
         base_template::Base,
-        chart_data::{DaysSinceFirstVisit, TotalLen},
+        chart_data::{TotalLen, WholeDaysSinceFirstVisit},
     },
     states::{AppState, InnerAppState},
 };
@@ -59,11 +59,11 @@ struct Visits {
 
 impl Visits {
     async fn build(state: &InnerAppState, path_id: i64) -> Result<Self, RespErr> {
-        let DaysSinceFirstVisit {
+        let WholeDaysSinceFirstVisit {
             first_visit,
             days_since_first_visit,
             ..
-        } = DaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
+        } = WholeDaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1
+
+### Fixes
+
+- Fix being off by one day with the time filters.
+
 ## 0.5.0
 
 ### Breaking
