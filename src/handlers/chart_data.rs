@@ -68,6 +68,7 @@ where
             Some(v) => v,
             None => match rows.first() {
                 Some(row) => row.trunc_registered_at,
+                // all-time without any rows.
                 None => return Ok(Vec::new()),
             },
         };
@@ -82,6 +83,7 @@ where
         for (row_ind, row) in rows.into_iter().enumerate() {
             let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
 
+            // Fill the gap until the row.
             if iter_date_part != row_date_part {
                 loop {
                     chart_data.push(Self {
@@ -97,20 +99,25 @@ where
                 }
             }
 
+            // Add row.
             #[allow(clippy::cast_sign_loss)]
             chart_data.push(Self {
                 x: iter_date_part,
                 y: row.count as u64,
             })?;
 
+            // Don't go to the next date part to be able to check
+            // if the date part of the last row is equal to that of now.
             if row_ind != last_row_ind {
                 iter_date_part.next()?;
             }
         }
 
         if iter_date_part != now_date_part {
+            // Run the skipped next().
             iter_date_part.next()?;
 
+            // Fill the gap between the last row and now.
             loop {
                 chart_data.push(Self {
                     x: iter_date_part,
