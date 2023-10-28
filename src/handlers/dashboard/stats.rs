@@ -60,8 +60,8 @@ struct Visits {
 impl Visits {
     async fn build(state: &InnerAppState, path_id: i64) -> Result<Self, RespErr> {
         let WholeDaysSinceFirstVisit {
+            whole_days_since_first_visit,
             first_visit,
-            days_since_first_visit,
             ..
         } = WholeDaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
 
@@ -80,8 +80,8 @@ impl Visits {
         let len = TotalLen::build(&state.pool, path_id).await?;
 
         #[allow(clippy::cast_precision_loss)]
-        let visits_per_day = if days_since_first_visit > 0 {
-            len.inner().get() as f64 / days_since_first_visit as f64
+        let visits_per_day = if whole_days_since_first_visit > 0 {
+            len.inner().get() as f64 / whole_days_since_first_visit as f64
         } else {
             len.inner().get() as f64
         };

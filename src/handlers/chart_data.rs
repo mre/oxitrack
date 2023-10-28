@@ -1,4 +1,5 @@
 pub mod all_time;
+mod chart_data_vec;
 mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
@@ -11,6 +12,7 @@ use time::{Duration, OffsetDateTime};
 
 use crate::states::InnerAppState;
 
+use chart_data_vec::ChartDataVec;
 use contiguous_date_part::{
     ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
 };
@@ -75,12 +77,11 @@ where
         path_id: i64,
         start_datetime: Option<StartDatetime>,
     ) -> Result<Vec<Self>, RespErr> {
-        let date_truncation = D::date_truncation();
+        let OptionStartDateTime {
+            start: start_datetime,
+            now,
+        } = start_datetime.into();
 
-        let OptionStartDateTime { start, now } = start_datetime.into();
-
-        // Warning: The rows are assumed to be sorted after the registration date.
-        // Unsorted rows can lead to an endless loop below.
         let rows = sqlx::query_as!(
             TruncDateCount,
             r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
@@ -88,69 +89,67 @@ where
             WHERE path_id = $2 AND ($3::timestamptz IS NULL OR registered_at > $3)
             GROUP BY "trunc_registered_at!"
             ORDER BY "trunc_registered_at!""#,
-            date_truncation,
+            D::date_truncation(),
             path_id,
-            start,
+            start_datetime,
         )
         .fetch_all(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to query chart data!")?;
 
-        let (first_date, last_date) = match rows.as_slice() {
-            [] => return Ok(Vec::new()),
-            [single] => (single.trunc_registered_at, single.trunc_registered_at),
-            [first, .., last] => (first.trunc_registered_at, last.trunc_registered_at),
+        let first_datetime = match start_datetime {
+            Some(v) => v,
+            None => match rows.first() {
+                Some(row) => row.trunc_registered_at,
+                None => return Ok(Vec::new()),
+            },
         };
 
-        let mut chart_data = Vec::with_capacity(rows.len());
+        let mut chart_data = ChartDataVec::default();
 
         let now_date_part = D::from(state.apply_utc_offset(now)?);
-        let mut iter_date_part = D::from(state.apply_utc_offset(first_date)?);
+        let mut iter_date_part = D::from(state.apply_utc_offset(first_datetime)?);
 
-        for row in rows {
+        let last_row_ind = rows.len() - 1;
+
+        for (row_ind, row) in rows.into_iter().enumerate() {
             let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
 
-            if iter_date_part == row_date_part {
-                #[allow(clippy::cast_sign_loss)]
-                chart_data.push(Self {
-                    x: iter_date_part,
-                    y: row.count as u64,
-                });
-
-                iter_date_part.next()?;
-
-                continue;
-            }
-
-            loop {
-                chart_data.push(Self {
-                    x: iter_date_part,
-                    y: 0,
-                });
-
-                iter_date_part.next()?;
-
-                if iter_date_part == row_date_part {
-                    #[allow(clippy::cast_sign_loss)]
+            if iter_date_part != row_date_part {
+                loop {
                     chart_data.push(Self {
                         x: iter_date_part,
-                        y: row.count as u64,
-                    });
+                        y: 0,
+                    })?;
 
                     iter_date_part.next()?;
 
-                    break;
+                    if iter_date_part == row_date_part {
+                        break;
+                    }
                 }
+            }
+
+            #[allow(clippy::cast_sign_loss)]
+            chart_data.push(Self {
+                x: iter_date_part,
+                y: row.count as u64,
+            })?;
+
+            if row_ind != last_row_ind {
+                iter_date_part.next()?;
             }
         }
 
-        if now_date_part != D::from(state.apply_utc_offset(last_date)?) {
+        if iter_date_part != now_date_part {
+            iter_date_part.next()?;
+
             loop {
                 chart_data.push(Self {
                     x: iter_date_part,
                     y: 0,
-                });
+                })?;
 
                 if iter_date_part == now_date_part {
                     break;
@@ -160,7 +159,7 @@ where
             }
         }
 
-        Ok(chart_data)
+        Ok(chart_data.into_inner())
     }
 }
 
@@ -204,9 +203,9 @@ impl TotalLen {
 }
 
 pub struct WholeDaysSinceFirstVisit {
+    pub whole_days_since_first_visit: i64,
     pub now: OffsetDateTime,
     pub first_visit: OffsetDateTime,
-    pub days_since_first_visit: i64,
 }
 
 impl WholeDaysSinceFirstVisit {
@@ -233,12 +232,12 @@ impl WholeDaysSinceFirstVisit {
         .user_msg("The requested path has no counted visits yet.")?
         .registered_at;
 
-        let days_since_first_visit = (now - first_visit).whole_days();
+        let whole_days_since_first_visit = (now - first_visit).whole_days();
 
         Ok(Self {
+            whole_days_since_first_visit,
             now,
             first_visit,
-            days_since_first_visit,
         })
     }
 }
