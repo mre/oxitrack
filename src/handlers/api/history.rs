@@ -9,29 +9,11 @@ use serde::{
 };
 use time::{OffsetDateTime, UtcOffset};
 
-use crate::{extractors::query_path::QueryPath, states::AppState};
-
-struct DatetimeFormatter(OffsetDateTime);
-
-impl Serialize for DatetimeFormatter {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&format_args!("{}T{}", self.0.date(), self.0.time()))
-    }
-}
-
-struct UtcOffsetFormatter(UtcOffset);
-
-impl Serialize for UtcOffsetFormatter {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&self.0)
-    }
-}
+use crate::{
+    extractors::query_path::QueryPath,
+    formatters::{DatetimeFormatter, UtcOffsetFormatter},
+    states::AppState,
+};
 
 struct Visit {
     registered_at: OffsetDateTime,

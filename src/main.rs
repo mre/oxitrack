@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod db;
 mod extractors;
+mod formatters;
 mod handlers;
 mod states;
 

@@ -7,51 +7,21 @@ use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
-use std::fmt;
-use time::OffsetDateTime;
 
 use crate::{
     extractors::query_path::QueryPath,
+    formatters::{DateTimeVerboseFormatter, SecondsFormatter},
     handlers::{base_template::Base, chart_data::WholeDaysSinceFirstVisit},
     states::{AppState, InnerAppState},
 };
 
 use super::count_rows::{Count, CountRows};
 
-struct Seconds(u64);
-
-impl fmt::Display for Seconds {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let minutes = self.0 / 60;
-
-        if minutes > 0 {
-            write!(f, "{}min {:02}s", self.0 / 60, self.0 % 60)
-        } else {
-            write!(f, "{:02}s", self.0 % 60)
-        }
-    }
-}
-
-struct DateTimeVerboseFormatter(OffsetDateTime);
-
-impl fmt::Display for DateTimeVerboseFormatter {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} {:02}:{:02} UTC{}",
-            self.0.date(),
-            self.0.hour(),
-            self.0.minute(),
-            self.0.offset(),
-        )
-    }
-}
-
 struct Visits {
     first: DateTimeVerboseFormatter,
     total_n: i64,
     per_day: f64,
-    average_time_spent: Option<Seconds>,
+    average_time_spent: Option<SecondsFormatter>,
 }
 
 impl Visits {
@@ -72,7 +42,7 @@ impl Visits {
         .ctx(Status::Internal)
         .log_msg("Failed to run the average time spent query!")?
         .extract
-        .and_then(|decimal| decimal.to_u64().map(Seconds));
+        .and_then(|decimal| decimal.to_u64().map(SecondsFormatter));
 
         #[allow(clippy::cast_sign_loss)]
         let total_n_visits = sqlx::query!(
