@@ -43,7 +43,7 @@ struct Visit {
 struct FormattedVisit<'a> {
     registered_at: DatetimeFormatter,
     referrer: &'a Option<String>,
-    left_at: Option<DatetimeFormatter>,
+    spent_time_secs: Option<i64>,
 }
 
 struct VisitsFormatter {
@@ -74,10 +74,9 @@ impl Serialize for VisitsFormatter {
             let element = FormattedVisit {
                 registered_at: self.apply_utc_offset::<S>(visit.registered_at)?,
                 referrer: &visit.referrer,
-                left_at: match visit.left_at {
-                    Some(t) => Some(self.apply_utc_offset::<S>(t)?),
-                    None => None,
-                },
+                spent_time_secs: visit
+                    .left_at
+                    .map(|left_at| (left_at - visit.registered_at).whole_seconds()),
             };
             seq.serialize_element(&element)?;
         }

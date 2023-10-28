@@ -135,10 +135,10 @@ minutes = 0
 
 ### JSON API
 
-| Endpoint                 | Description                                                                                                                                              | Return                                                                                                                       |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `/api/counts`            | The visits count for each registered path                                                                                                                | `JSON([{"path": String, "count": i64}])`                                                                                     |
-| `/api/history?path=PATH` | The visits datetimes for a specific path with the nullable referrer and global UTC offset. You can use this endpoint to make your own analysis and plots | `JSON({"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "left_at": Option<String>}]})` |
+| Endpoint                 | Description                                                                                                                                              | Return                                                                                                                               |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/api/counts`            | The visits count for each registered path                                                                                                                | `JSON([{"path": String, "count": i64}])`                                                                                             |
+| `/api/history?path=PATH` | The visits datetimes for a specific path with the nullable referrer and global UTC offset. You can use this endpoint to make your own analysis and plots | `JSON({"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "spent_time_seconds": Option<i64>}]})` |
 
 ### Script
 

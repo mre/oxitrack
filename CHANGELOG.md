@@ -2,6 +2,10 @@
 
 ## 0.5.1
 
+### Breaking
+
+- Include the spent time in seconds `spent_time_secs` instead of `left_at` in the API endpoint `/api/history?path=PATH`.
+
 ### Fixes
 
 - Fix being off by one day with the time filters.
