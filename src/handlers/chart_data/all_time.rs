@@ -33,8 +33,8 @@ pub async fn get(
             now,
         };
         ChartData::Day(DataPoint::all(state, path_id, Some(start_datetime)).await?)
-    } else if whole_days_since_first_visit < 1826 {
-        // Less than 5 years (about 60 months).
+    } else if whole_days_since_first_visit < 1461 {
+        // Less than 4 years (48 months).
         ChartData::Month(DataPoint::all(state, path_id, None).await?)
     } else {
         ChartData::Year(DataPoint::all(state, path_id, None).await?)
