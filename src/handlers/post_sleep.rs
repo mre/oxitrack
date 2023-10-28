@@ -14,6 +14,7 @@ use crate::states::{
 const MAX_DOMAIN_LEN: usize = 255;
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Params {
     referrer_origin: Option<String>,
 }
