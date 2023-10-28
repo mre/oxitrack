@@ -7,15 +7,12 @@ use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
-use std::{fmt, num::NonZeroU64};
+use std::fmt;
 use time::OffsetDateTime;
 
 use crate::{
     extractors::query_path::QueryPath,
-    handlers::{
-        base_template::Base,
-        chart_data::{TotalLen, WholeDaysSinceFirstVisit},
-    },
+    handlers::{base_template::Base, chart_data::WholeDaysSinceFirstVisit},
     states::{AppState, InnerAppState},
 };
 
@@ -52,7 +49,7 @@ impl fmt::Display for DateTimeVerboseFormatter {
 
 struct Visits {
     first: DateTimeVerboseFormatter,
-    len: NonZeroU64,
+    total_n: i64,
     per_day: f64,
     average_time_spent: Option<Seconds>,
 }
@@ -77,20 +74,30 @@ impl Visits {
         .extract
         .and_then(|decimal| decimal.to_u64().map(Seconds));
 
-        let len = TotalLen::build(&state.pool, path_id).await?;
+        #[allow(clippy::cast_sign_loss)]
+        let total_n_visits = sqlx::query!(
+            r#"SELECT COUNT(*) AS "count!" FROM visits
+            WHERE path_id = $1"#,
+            path_id,
+        )
+        .fetch_one(&state.pool)
+        .await
+        .ctx(Status::Internal)
+        .log_msg("Failed to query the count of visits")?
+        .count;
 
         #[allow(clippy::cast_precision_loss)]
         let visits_per_day = if whole_days_since_first_visit > 0 {
-            len.inner().get() as f64 / whole_days_since_first_visit as f64
+            total_n_visits as f64 / whole_days_since_first_visit as f64
         } else {
-            len.inner().get() as f64
+            total_n_visits as f64
         };
 
         let first_visit = state.apply_utc_offset(first_visit)?;
 
         Ok(Self {
             first: DateTimeVerboseFormatter(first_visit),
-            len: len.inner(),
+            total_n: total_n_visits,
             per_day: visits_per_day,
             average_time_spent,
         })

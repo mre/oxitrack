@@ -7,7 +7,6 @@ pub mod last_60_days;
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use sqlx::PgPool;
-use std::num::NonZeroU64;
 use time::{Duration, OffsetDateTime};
 
 use crate::states::InnerAppState;
@@ -170,36 +169,6 @@ pub enum ChartData {
     Month(Vec<DataPoint<ContiguousMonth>>),
     Day(Vec<DataPoint<ContiguousDay>>),
     Hour(Vec<DataPoint<ContiguousHour>>),
-}
-
-pub struct TotalLen(NonZeroU64);
-
-impl TotalLen {
-    pub async fn build(pool: &PgPool, path_id: i64) -> Result<Self, RespErr> {
-        #[allow(clippy::cast_sign_loss)]
-        let len = sqlx::query!(
-            r#"SELECT COUNT(*) AS "count!" FROM visits
-            WHERE path_id = $1"#,
-            path_id,
-        )
-        .fetch_one(pool)
-        .await
-        .ctx(Status::Internal)
-        .log_msg("Failed to query the count of visits")?
-        .count as u64;
-
-        match NonZeroU64::new(len) {
-            Some(len) => Ok(Self(len)),
-            None => Err(RespErr::new(Status::NotFound)
-                .user_msg("The requested path has no counted visits yet.")),
-        }
-    }
-
-    #[inline]
-    #[must_use]
-    pub const fn inner(&self) -> NonZeroU64 {
-        self.0
-    }
 }
 
 pub struct WholeDaysSinceFirstVisit {
