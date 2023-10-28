@@ -3,11 +3,15 @@ mod chart_data_vec;
 mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
+mod start_datetime;
+mod whole_days_since_first_visit;
+
+pub use start_datetime::{OptionStartDateTime, StartDatetime};
+pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
-use sqlx::PgPool;
-use time::{Duration, OffsetDateTime};
+use time::OffsetDateTime;
 
 use crate::states::InnerAppState;
 
@@ -19,43 +23,6 @@ use contiguous_date_part::{
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
     count: i64,
-}
-
-#[derive(Clone)]
-pub struct StartDatetime {
-    start: OffsetDateTime,
-    now: OffsetDateTime,
-}
-
-impl StartDatetime {
-    pub fn from_sub_duration(duration: Duration) -> Self {
-        let now = OffsetDateTime::now_utc();
-
-        Self {
-            start: now - duration,
-            now,
-        }
-    }
-}
-
-pub struct OptionStartDateTime {
-    pub start: Option<OffsetDateTime>,
-    pub now: OffsetDateTime,
-}
-
-impl From<Option<StartDatetime>> for OptionStartDateTime {
-    fn from(opt: Option<StartDatetime>) -> Self {
-        match opt {
-            Some(StartDatetime { start, now }) => Self {
-                start: Some(start),
-                now,
-            },
-            None => Self {
-                start: None,
-                now: OffsetDateTime::now_utc(),
-            },
-        }
-    }
 }
 
 #[derive(Serialize)]
@@ -169,44 +136,4 @@ pub enum ChartData {
     Month(Vec<DataPoint<ContiguousMonth>>),
     Day(Vec<DataPoint<ContiguousDay>>),
     Hour(Vec<DataPoint<ContiguousHour>>),
-}
-
-pub struct WholeDaysSinceFirstVisit {
-    pub whole_days_since_first_visit: i64,
-    pub now: OffsetDateTime,
-    pub first_visit: OffsetDateTime,
-}
-
-impl WholeDaysSinceFirstVisit {
-    pub async fn build(
-        pool: &PgPool,
-        path_id: i64,
-        start_datetime: Option<StartDatetime>,
-    ) -> Result<Self, RespErr> {
-        let OptionStartDateTime { start, now } = start_datetime.into();
-
-        let first_visit = sqlx::query!(
-            "SELECT registered_at FROM visits
-            WHERE path_id = $1 AND ($2::timestamptz IS NULL OR registered_at > $2)
-            ORDER BY registered_at
-            LIMIT 1",
-            path_id,
-            start,
-        )
-        .fetch_optional(pool)
-        .await
-        .ctx(Status::Internal)
-        .log_msg("Failed to query the first visit!")?
-        .ctx(Status::NotFound)
-        .user_msg("The requested path has no counted visits yet.")?
-        .registered_at;
-
-        let whole_days_since_first_visit = (now - first_visit).whole_days();
-
-        Ok(Self {
-            whole_days_since_first_visit,
-            now,
-            first_visit,
-        })
-    }
 }
