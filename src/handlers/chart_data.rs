@@ -73,15 +73,30 @@ where
             },
         };
 
-        let mut chart_data = ChartDataVec::default();
+        let additional_now_row = match rows.last() {
+            Some(last_row) => {
+                let now_date_part = D::from(state.apply_utc_offset(now)?);
+                let last_row_date_part =
+                    D::from(state.apply_utc_offset(last_row.trunc_registered_at)?);
 
-        let now_date_part = D::from(state.apply_utc_offset(now)?);
+                (now_date_part != last_row_date_part).then_some(Ok((now_date_part, 0)))
+            }
+            None => None,
+        };
+
+        let rows_iter = rows
+            .into_iter()
+            .map(|row| {
+                let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
+                Ok((row_date_part, row.count))
+            })
+            .chain(additional_now_row);
+
+        let mut chart_data = ChartDataVec::default();
         let mut iter_date_part = D::from(state.apply_utc_offset(first_datetime)?);
 
-        let last_row_ind = rows.len() - 1;
-
-        for (row_ind, row) in rows.into_iter().enumerate() {
-            let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
+        for result in rows_iter {
+            let (row_date_part, count) = result?;
 
             // Fill the gap until the row.
             if iter_date_part != row_date_part {
@@ -103,33 +118,10 @@ where
             #[allow(clippy::cast_sign_loss)]
             chart_data.push(Self {
                 x: iter_date_part,
-                y: row.count as u64,
+                y: count as u64,
             })?;
 
-            // Don't go to the next date part to be able to check
-            // if the date part of the last row is equal to that of now.
-            if row_ind != last_row_ind {
-                iter_date_part.next()?;
-            }
-        }
-
-        if iter_date_part != now_date_part {
-            // Run the skipped next().
             iter_date_part.next()?;
-
-            // Fill the gap between the last row and now.
-            loop {
-                chart_data.push(Self {
-                    x: iter_date_part,
-                    y: 0,
-                })?;
-
-                if iter_date_part == now_date_part {
-                    break;
-                }
-
-                iter_date_part.next()?;
-            }
         }
 
         Ok(chart_data.into_inner())
