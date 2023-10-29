@@ -82,9 +82,8 @@ impl FromRequestParts<&'static InnerAppState> for OptionalPathId {
         parts: &mut Parts,
         state: &&'static InnerAppState,
     ) -> Result<Self, Self::Rejection> {
-        let query = match parts.uri.query() {
-            Some(v) => v,
-            None => return Ok(Self(None)),
+        let Some(query) = parts.uri.query() else {
+            return Ok(Self(None));
         };
 
         let path = serde_urlencoded::from_str::<QueryPath>(query)

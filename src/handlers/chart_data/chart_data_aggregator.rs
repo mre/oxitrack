@@ -27,7 +27,7 @@ where
         self.inner
     }
 
-    pub fn next_date_part(&self) -> D {
+    pub const fn next_date_part(&self) -> D {
         self.next_date_part
     }
 
