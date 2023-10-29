@@ -1,10 +1,15 @@
 # Changelog
 
-## 0.5.1
+## 0.6.0
 
 ### Breaking
 
 - Include the spent time in seconds `spent_time_secs` instead of `left_at` in the API endpoint `/api/history?path=PATH`.
+
+### Features
+
+- Add a visits chart to the homepage which shows visits over time from all pages.
+- Couple the visits table on the homepage to the datetime filters of the chart (e.g. The "Last 60 days" filter would show the visits in the table from the last 60 days).
 
 ### Fixes
 
