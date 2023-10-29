@@ -1,7 +1,7 @@
 import { Chart } from "chart.js/auto";
 
-export async function render_bar_chart(base_url: string, path: string) {
-  const query_params = "?path=" + encodeURIComponent(path);
+export async function render_bar_chart(base_url: string, path?: string) {
+  const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
   const chart_data_url = base_url + "/chart-data/";
 
   async function chart_data(filter: string): Promise<Array<{ x: string, y: number }>> {

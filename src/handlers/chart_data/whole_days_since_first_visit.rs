@@ -13,14 +13,14 @@ pub struct WholeDaysSinceFirstVisit {
 impl WholeDaysSinceFirstVisit {
     pub async fn build(
         pool: &PgPool,
-        path_id: i64,
+        path_id: Option<i64>,
         start_datetime: Option<StartDatetime>,
     ) -> Result<Self, RespErr> {
         let OptionStartDateTime { start, now } = start_datetime.into();
 
         let first_visit = sqlx::query!(
             "SELECT registered_at FROM visits
-            WHERE path_id = $1 AND ($2::timestamptz IS NULL OR registered_at > $2)
+            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamptz IS NULL OR registered_at > $2)
             ORDER BY registered_at
             LIMIT 1",
             path_id,

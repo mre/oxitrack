@@ -77,7 +77,7 @@ pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
 ) -> Result<Json<History>, RespErr> {
-    let (path, path_id) = path.normalized_with_id(&state.pool).await?;
+    let path_id = path.normalized_with_id(&state.pool).await?.path_id;
 
     let visits = sqlx::query_as!(
         Visit,
@@ -90,7 +90,7 @@ pub async fn get(
     .fetch_all(&state.pool)
     .await
     .ctx(Status::Internal)
-    .log_msg(|| format!("History query failed for path {path}!"))?;
+    .log_msg("History query failed!")?;
 
     let history = History {
         utc_offset: UtcOffsetFormatter(state.utc_offset),

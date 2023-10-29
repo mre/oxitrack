@@ -9,7 +9,7 @@ use oxi_axum_helpers::TryIntoTemplResp;
 use sqlx::PgPool;
 
 use crate::{
-    extractors::query_path::QueryPath,
+    extractors::query_path::{PathId, QueryPath},
     formatters::{DateTimeVerboseFormatter, SecondsFormatter},
     handlers::{base_template::Base, chart_data::WholeDaysSinceFirstVisit},
     states::{AppState, InnerAppState},
@@ -30,7 +30,7 @@ impl Visits {
             whole_days_since_first_visit,
             first_visit,
             ..
-        } = WholeDaysSinceFirstVisit::build(&state.pool, path_id, None).await?;
+        } = WholeDaysSinceFirstVisit::build(&state.pool, Some(path_id), None).await?;
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
@@ -118,7 +118,7 @@ pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
 ) -> Result<Response, RespErr> {
-    let (path, path_id) = path.normalized_with_id(&state.pool).await?;
+    let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
     // Run queries concurrently.
     let visits_handler = tokio::spawn(Visits::build(state, path_id));
