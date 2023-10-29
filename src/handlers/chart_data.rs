@@ -73,6 +73,7 @@ where
             },
         };
 
+        // Fill from the last row until now if the date part of the last row is not now.
         let now_date_part = D::from(state.apply_utc_offset(now)?);
         let additional_now_row = match rows.last() {
             Some(last_row) => {
@@ -93,8 +94,10 @@ where
             })
             .chain(additional_now_row);
 
-        let next_date_part = D::from(state.apply_utc_offset(first_datetime)?);
-        let mut aggregator = ChartDataAggregator::new(next_date_part);
+        let mut aggregator = {
+            let first_date_part = D::from(state.apply_utc_offset(first_datetime)?);
+            ChartDataAggregator::new(first_date_part)
+        };
 
         for result in rows_iter {
             let (row_date_part, count) = result?;
