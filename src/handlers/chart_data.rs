@@ -75,7 +75,7 @@ where
 
         // Fill from the last row until now if the date part of the last row is not now.
         let now_date_part = D::from(state.apply_utc_offset(now)?);
-        let additional_now_row = match rows.last() {
+        let additional_given_point = match rows.last() {
             Some(last_row) => {
                 let last_row_date_part =
                     D::from(state.apply_utc_offset(last_row.trunc_registered_at)?);
@@ -86,21 +86,21 @@ where
         };
 
         #[allow(clippy::cast_sign_loss)]
-        let rows_iter = rows
+        let given_points = rows
             .into_iter()
             .map(|row| {
                 let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
                 Ok((row_date_part, row.count as u64))
             })
-            .chain(additional_now_row);
+            .chain(additional_given_point);
 
         let mut aggregator = {
             let first_date_part = D::from(state.apply_utc_offset(first_datetime)?);
             ChartDataAggregator::new(first_date_part)
         };
 
-        for result in rows_iter {
-            let (row_date_part, count) = result?;
+        for given_point in given_points {
+            let (row_date_part, count) = given_point?;
 
             // Fill the gap until the row.
             if aggregator.next_date_part() != row_date_part {
