@@ -12,6 +12,8 @@ include = [
   "/migrations/",
   "/src/",
   "/static/main.css.gz",
+  "/static/index.js.gz",
+  "/static/index.js.map.gz",
   "/static/stats.js.gz",
   "/static/stats.js.map.gz",
   "/templates/",

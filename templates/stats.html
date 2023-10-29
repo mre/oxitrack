@@ -57,5 +57,5 @@
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}", "{{ path }}");</script>
+    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}", { path: "{{ path }}" });</script>
 {% endblock %}
