@@ -28,9 +28,9 @@ pub async fn get(
             start: now - Duration::days(2),
             now,
         };
-        ChartData::Hour(DataPoint::all(state, path_id, Some(start_datetime)).await?)
+        ChartData::Hour(DataPoint::all(state, Some(path_id), Some(start_datetime)).await?)
     } else {
-        ChartData::Day(DataPoint::all(state, path_id, Some(start_datetime)).await?)
+        ChartData::Day(DataPoint::all(state, Some(path_id), Some(start_datetime)).await?)
     };
 
     Ok(Json(chart_data))

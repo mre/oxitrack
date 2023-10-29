@@ -26,18 +26,18 @@ pub async fn get(
             start: now - Duration::days(2),
             now,
         };
-        ChartData::Hour(DataPoint::all(state, path_id, Some(start_datetime)).await?)
+        ChartData::Hour(DataPoint::all(state, Some(path_id), Some(start_datetime)).await?)
     } else if whole_days_since_first_visit < 60 {
         let start_datetime = StartDatetime {
             start: now - Duration::days(59),
             now,
         };
-        ChartData::Day(DataPoint::all(state, path_id, Some(start_datetime)).await?)
+        ChartData::Day(DataPoint::all(state, Some(path_id), Some(start_datetime)).await?)
     } else if whole_days_since_first_visit < 1461 {
         // Less than 4 years (48 months).
-        ChartData::Month(DataPoint::all(state, path_id, None).await?)
+        ChartData::Month(DataPoint::all(state, Some(path_id), None).await?)
     } else {
-        ChartData::Year(DataPoint::all(state, path_id, None).await?)
+        ChartData::Year(DataPoint::all(state, Some(path_id), None).await?)
     };
 
     Ok(Json(chart_data))

@@ -40,7 +40,7 @@ where
 {
     async fn all(
         state: &InnerAppState,
-        path_id: i64,
+        path_id: Option<i64>,
         start_datetime: Option<StartDatetime>,
     ) -> Result<Vec<Self>, RespErr> {
         let OptionStartDateTime {
@@ -52,7 +52,7 @@ where
             TruncDateCount,
             r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
             COUNT(registered_at) AS "count!" FROM visits
-            WHERE path_id = $2 AND ($3::timestamptz IS NULL OR registered_at > $3)
+            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamptz IS NULL OR registered_at > $3)
             GROUP BY "trunc_registered_at!"
             ORDER BY "trunc_registered_at!""#,
             D::date_truncation(),

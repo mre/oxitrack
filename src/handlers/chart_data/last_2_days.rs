@@ -17,7 +17,8 @@ pub async fn get(
 
     let start_datetime = StartDatetime::from_sub_duration(Duration::days(2));
 
-    let chart_data = ChartData::Hour(DataPoint::all(state, path_id, Some(start_datetime)).await?);
+    let chart_data =
+        ChartData::Hour(DataPoint::all(state, Some(path_id), Some(start_datetime)).await?);
 
     Ok(Json(chart_data))
 }
