@@ -73,15 +73,15 @@ where
             },
         };
 
+        let now_date_part = D::from(state.apply_utc_offset(now)?);
         let additional_now_row = match rows.last() {
             Some(last_row) => {
-                let now_date_part = D::from(state.apply_utc_offset(now)?);
                 let last_row_date_part =
                     D::from(state.apply_utc_offset(last_row.trunc_registered_at)?);
 
                 (now_date_part != last_row_date_part).then_some(Ok((now_date_part, 0)))
             }
-            None => None,
+            None => Some(Ok((now_date_part, 0))),
         };
 
         let rows_iter = rows
