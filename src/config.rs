@@ -1,8 +1,3 @@
-use std::{
-    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::Path,
-};
-
 use anyhow::{Context, Result};
 use figment::{
     providers::{Env, Format, Toml},
@@ -10,6 +5,10 @@ use figment::{
 };
 use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, PgConfig};
 use serde::Deserialize;
+use std::{
+    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
+    path::Path,
+};
 
 /// Configuration.
 #[derive(Deserialize)]
