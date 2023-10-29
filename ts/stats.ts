@@ -53,6 +53,9 @@ export async function render_bar_chart(base_url: string, params: Params = {}) {
             minRotation: 60,
             maxRotation: 60,
             includeBounds: false
+          },
+          grid: {
+            display: false
           }
         },
         y: {
