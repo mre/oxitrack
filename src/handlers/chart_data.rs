@@ -1,5 +1,5 @@
 pub mod all_time;
-mod chart_data_vec;
+mod chart_data_aggregator;
 mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
@@ -15,7 +15,7 @@ use time::OffsetDateTime;
 
 use crate::states::InnerAppState;
 
-use chart_data_vec::ChartDataVec;
+use chart_data_aggregator::ChartDataAggregator;
 use contiguous_date_part::{
     ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
 };
@@ -84,47 +84,37 @@ where
             None => Some(Ok((now_date_part, 0))),
         };
 
+        #[allow(clippy::cast_sign_loss)]
         let rows_iter = rows
             .into_iter()
             .map(|row| {
                 let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
-                Ok((row_date_part, row.count))
+                Ok((row_date_part, row.count as u64))
             })
             .chain(additional_now_row);
 
-        let mut chart_data = ChartDataVec::default();
-        let mut iter_date_part = D::from(state.apply_utc_offset(first_datetime)?);
+        let next_date_part = D::from(state.apply_utc_offset(first_datetime)?);
+        let mut aggregator = ChartDataAggregator::new(next_date_part);
 
         for result in rows_iter {
             let (row_date_part, count) = result?;
 
             // Fill the gap until the row.
-            if iter_date_part != row_date_part {
+            if aggregator.next_date_part() != row_date_part {
                 loop {
-                    chart_data.push(Self {
-                        x: iter_date_part,
-                        y: 0,
-                    })?;
+                    aggregator.push(0)?;
 
-                    iter_date_part.next()?;
-
-                    if iter_date_part == row_date_part {
+                    if aggregator.next_date_part() == row_date_part {
                         break;
                     }
                 }
             }
 
             // Add row.
-            #[allow(clippy::cast_sign_loss)]
-            chart_data.push(Self {
-                x: iter_date_part,
-                y: count as u64,
-            })?;
-
-            iter_date_part.next()?;
+            aggregator.push(count)?;
         }
 
-        Ok(chart_data.into_inner())
+        Ok(aggregator.into_inner())
     }
 }
 
