@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 
+{%- import "bar_chart.html" as bar_chart_macros -%}
+
 {% block content %}
     <h4 class="mb-4">
         Website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
     </h4>
+
+    {% call bar_chart_macros::bar_chart() %}
 
     <table class="w-full md:w-fit">
         <tr class="border-b-4">
@@ -22,4 +26,9 @@
             </tr>
         {% endfor %}
     </table>
+{% endblock %}
+
+{% block scripts %}
+    <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
+    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}");</script>
 {% endblock %}

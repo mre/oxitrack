@@ -11,6 +11,7 @@ use super::count_rows::CountRows;
 #[template(path = "index.html")]
 struct Index<'a> {
     pub base: Base<'a>,
+    pub base_url: &'static str,
     pub tracked_origin: &'static str,
     pub visit_count_rows: CountRows<VisitCount>,
 }
@@ -21,6 +22,7 @@ pub async fn get(State(state): AppState) -> Result<Response, RespErr> {
 
     Index {
         base: Base::new("Dashboard"),
+        base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         visit_count_rows,
     }
