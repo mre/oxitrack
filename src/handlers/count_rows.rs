@@ -1,5 +1,7 @@
 use std::slice::Iter;
 
+use crate::formatters::PercentageFormatter;
+
 pub trait Count {
     fn count(&self) -> i64;
 }
@@ -41,13 +43,16 @@ impl<'a, T> Iterator for CountRowsIter<'a, T>
 where
     T: Count,
 {
-    type Item = (&'a T, f64);
+    type Item = (&'a T, PercentageFormatter);
 
     fn next(&mut self) -> Option<Self::Item> {
         #[allow(clippy::cast_precision_loss)]
-        self.counts_iter
-            .next()
-            .map(|path_count| (path_count, path_count.count() as f64 * self.perc_factor))
+        self.counts_iter.next().map(|path_count| {
+            (
+                path_count,
+                PercentageFormatter(path_count.count() as f64 * self.perc_factor),
+            )
+        })
     }
 }
 
