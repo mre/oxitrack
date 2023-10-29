@@ -1,7 +1,7 @@
 use askama::Template;
 use axum::{
     extract::{Query, State},
-    response::Response,
+    response::Html,
 };
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use bigdecimal::ToPrimitive;
@@ -11,11 +11,13 @@ use sqlx::PgPool;
 use crate::{
     extractors::query_path::{PathId, QueryPath},
     formatters::{DateTimeVerboseFormatter, SecondsFormatter},
-    handlers::{base_template::Base, chart_data::WholeDaysSinceFirstVisit},
+    handlers::{
+        base_template::Base,
+        chart_data::WholeDaysSinceFirstVisit,
+        count_rows::{Count, CountRows},
+    },
     states::{AppState, InnerAppState},
 };
-
-use super::count_rows::{Count, CountRows};
 
 struct Visits {
     first: DateTimeVerboseFormatter,
@@ -117,7 +119,7 @@ struct Stats<'a> {
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Response, RespErr> {
+) -> Result<Html<String>, RespErr> {
     let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
     // Run queries concurrently.

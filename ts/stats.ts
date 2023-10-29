@@ -1,7 +1,12 @@
 import { Chart } from "chart.js/auto";
 
-export async function render_bar_chart(base_url: string, path?: string) {
-  const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
+interface Params {
+  path?: string;
+  on_filter_update?: (base_url: string, filter: string) => Promise<void>;
+}
+
+export async function render_bar_chart(base_url: string, params: Params = {}) {
+  const query_params = (params.path !== undefined) ? "?path=" + encodeURIComponent(params.path) : "";
   const chart_data_url = base_url + "/chart-data/";
 
   async function chart_data(filter: string): Promise<Array<{ x: string, y: number }>> {
@@ -11,7 +16,12 @@ export async function render_bar_chart(base_url: string, path?: string) {
   }
 
   const checked_filter = document.querySelector("input[name='filter']:checked") as HTMLInputElement;
+
   const data = await chart_data(checked_filter.value);
+
+  if (params.on_filter_update !== undefined) {
+    await params.on_filter_update(base_url, checked_filter.value);
+  }
 
   const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
@@ -66,6 +76,10 @@ export async function render_bar_chart(base_url: string, path?: string) {
 
       chart.data.datasets[0]!.data = data;
       chart.update();
+
+      if (params.on_filter_update !== undefined) {
+        await params.on_filter_update(base_url, filter);
+      }
     })
   }
 }
