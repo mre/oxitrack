@@ -3,6 +3,7 @@
 </p>
 <h1 align="center">OxiTraffic</h1>
 <p align="center">Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
+<h2 align="center">➡️ <a href="https://oxitraffic.mo8it.com">Demo<a/> ⬅️</h2>
 
 ## Features
 
@@ -22,14 +23,7 @@
 
 ## Demo
 
-My website [mo8it.com](https://mo8it.com) is an example website that uses OxiTraffic.
-You can visit the OxiTraffic [dashboard](https://oxitraffic.mo8it.com) to see the visits history of each page on the website.
-Here is an [example](https://oxitraffic.mo8it.com/stats?path=/blog/rust-vs-julia) for a specific blog post.
-
-Try out the following API endpoints (with `curl` for example):
-
-- `https://oxitraffic.mo8it.com/api/counts`
-- `https://oxitraffic.mo8it.com/api/history?path=/blog/rust-vs-julia`
+[Here is a demo](https://oxitraffic.mo8it.com) which tracks my own website (mo8it.com).
 
 ## How it works
 
