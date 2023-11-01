@@ -1,8 +1,8 @@
 <p align="center">
   <img height="100" src="https://codeberg.org/mo8it/oxitraffic/raw/branch/main/static/logo.svg" />
-  <h1>OxiTraffic</h1>
-  <p>Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
 </p>
+<h1 align="center">OxiTraffic</h1>
+<p align="center">Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
 
 ## Features
 
