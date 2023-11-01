@@ -134,7 +134,7 @@ pub async fn get(
         .log_msg("Visits task panicked!")??;
 
     Stats {
-        base: Base::new(path),
+        base: Base::new(state, path),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         path,

@@ -31,7 +31,8 @@
             {% block content %}{% endblock %}
         </main>
 
-        <footer class="py-2 mt-auto text-sm text-center bg-gray-100 rounded-full">
+        <footer class="py-2 mt-auto text-sm text-center bg-gray-100 rounded-xl">
+            <p>All datetimes have the UTC offset {{ base.utc_offset }}</p>
             <p>
                 v{{ env!("CARGO_PKG_VERSION") }} - <a href="https://codeberg.org/mo8it/oxitraffic"
     target="_blank"

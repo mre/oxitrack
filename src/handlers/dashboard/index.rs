@@ -15,7 +15,7 @@ struct Index<'a> {
 
 pub async fn get(State(state): AppState) -> Result<Html<String>, RespErr> {
     Index {
-        base: Base::new("Dashboard"),
+        base: Base::new(state, "Dashboard"),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
     }
