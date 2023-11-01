@@ -66,8 +66,27 @@ The log file `oxitraffic.log` will be also placed in that directory.
 
 ## Hosting
 
-If you want to host OxiTraffic in a container, check [`Containerfile`](Containerfile) and [`compose.yaml`](compose.yaml) as a starting point.
-The container expects the data directory to be mounted as a **volume** at `/volumes/data`.
+### Containerized
+
+You can use the container image published on [Docker Hub](https://hub.docker.com/r/mo8it/oxitraffic).
+
+You can pull that image using Docker:
+
+```fish
+docker pull mo8it/oxitraffic:latest
+```
+
+Or using Podman:
+
+```fish
+podman pull docker.io/mo8it/oxitraffic:latest
+```
+
+The container expects the data directory to be mounted as a **volume** at `/volumes/data` inside the container.
+
+By default, the container listens on **port** `80`.
+
+### Not containerized
 
 You can also host OxiTraffic directly with the binary that you can install with Cargo:
 
@@ -76,6 +95,8 @@ cargo install oxitraffic --locked
 ```
 
 Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
+
+### Database
 
 In both cases (container or binary), you need a PostgreSQL database.
 There are many guides in the internet that explain how to host one either in a container or directly on the host.
