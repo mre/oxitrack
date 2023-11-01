@@ -75,6 +75,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         ("stats.js.map", "application/json"),
         ("index.js", "application/javascript"),
         ("index.js.map", "application/json"),
+        ("logo.svg", "image/svg+xml"),
     );
 
     let app = Router::new()

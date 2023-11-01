@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient15">
+      <stop
+         style="stop-color:#2966eb;stop-opacity:1;"
+         offset="0"
+         id="stop15" />
+      <stop
+         style="stop-color:#2966eb;stop-opacity:0.1;"
+         offset="1"
+         id="stop16" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient15"
+       id="linearGradient16"
+       x1="360.80737"
+       y1="83.815384"
+       x2="160.83536"
+       y2="430.17709"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.2155013,0,0,1.2153576,-61.105911,-56.389335)" />
+  </defs>
+  <g
+     id="layer1">
+    <ellipse
+       style="opacity:1;fill:none;stroke:url(#linearGradient16);stroke-width:25.9543;stroke-dasharray:25.9543, 23.3589;stroke-dashoffset:0;stroke-opacity:1"
+       id="path1"
+       cx="255.92265"
+       cy="255.95258"
+       rx="243.1002"
+       ry="243.07149" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:453.333px;font-family:Z003;-inkscape-font-specification:Z003;fill:#2966eb;fill-opacity:1;stroke:#2966eb;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       x="80.106659"
+       y="403.10657"
+       id="text21"><tspan
+         id="tspan21"
+         x="80.106659"
+         y="403.10657"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:453.333px;font-family:Z003;-inkscape-font-specification:Z003;fill:#2966eb;fill-opacity:1;stroke:#2966eb;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1">T</tspan></text>
+  </g>
+</svg>

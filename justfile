@@ -1,5 +1,5 @@
 tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
-gzip_options := "-kf static/{main.css,{index,stats}.js{,.map}}"
+gzip_options := "-kf static/{logo.svg,main.css,{index,stats}.js{,.map}}"
 
 build-static-dev:
 	{{tailwind_cmd}}
