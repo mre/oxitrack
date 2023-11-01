@@ -29,9 +29,16 @@ publish:
 	typos
 	cargo sqlx prepare --check
 	cargo test
+
 	{{tailwind_cmd}} -m
 	npx rspack
 	gzip --best {{gzip_options}}
+
 	cargo publish --allow-dirty
+
 	git tag -a -m "release" "v$(cargo read-manifest | jaq -r '.version')"
 	git push --follow-tags origin main
+
+	buildah build -t oxitraffic:latest .
+	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:v$(cargo read-manifest | jaq -r '.version')
+	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:latest
