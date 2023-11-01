@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+### Fixes
+
+- Fix the logo on devices that are missing the used font.
+
 ## 0.6.0
 
 ### Breaking
