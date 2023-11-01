@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT date_trunc($1, registered_at) AS \"trunc_registered_at!\",\n            COUNT(registered_at) AS \"count!\" FROM visits\n            WHERE path_id = $2 AND ($3::timestamptz IS NULL OR registered_at > $3)\n            GROUP BY \"trunc_registered_at!\"\n            ORDER BY \"trunc_registered_at!\"",
+  "query": "SELECT date_trunc($1, registered_at) AS \"trunc_registered_at!\",\n            COUNT(registered_at) AS \"count!\" FROM visits\n            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamptz IS NULL OR registered_at > $3)\n            GROUP BY \"trunc_registered_at!\"\n            ORDER BY \"trunc_registered_at!\"",
   "describe": {
     "columns": [
       {
@@ -26,5 +26,5 @@
       null
     ]
   },
-  "hash": "4e52fd1af21f35a318beacd51cb35961fb82e98f2fdb1593039b3d757b46ecd8"
+  "hash": "efce0370c7ee56fe101d2de6a8cccc0ab55f8b43abf5f4342812732638db5d56"
 }

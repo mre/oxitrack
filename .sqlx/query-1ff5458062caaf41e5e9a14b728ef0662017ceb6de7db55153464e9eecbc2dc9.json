@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT registered_at FROM visits\n            WHERE path_id = $1 AND ($2::timestamptz IS NULL OR registered_at > $2)\n            ORDER BY registered_at\n            LIMIT 1",
+  "query": "SELECT registered_at FROM visits\n            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamptz IS NULL OR registered_at > $2)\n            ORDER BY registered_at\n            LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -19,5 +19,5 @@
       false
     ]
   },
-  "hash": "24f65ed4e97df1a700ce09e3ccc5f3a3b996a7ada1df56f7390b34d2b0d60f0e"
+  "hash": "1ff5458062caaf41e5e9a14b728ef0662017ceb6de7db55153464e9eecbc2dc9"
 }
