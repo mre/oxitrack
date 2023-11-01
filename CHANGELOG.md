@@ -10,6 +10,7 @@
 
 - Add a visits chart to the homepage which shows visits over time from all pages.
 - Couple the visits table on the homepage to the datetime filters of the chart (e.g. The "Last 60 days" filter would show the visits in the table from the last 60 days).
+- Add logo
 
 ### Fixes
 
