@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+### Features
+
+- Add the API endpoint `/api/count?path=PATH` to get the visits count for a specific path.
+
 ## 0.6.1
 
 ### Fixes

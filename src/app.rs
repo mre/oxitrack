@@ -61,6 +61,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     let api_router = Router::new()
         .route("/history", get(handlers::api::history::get))
         .route("/counts", get(handlers::api::counts::get))
+        .route("/count", get(handlers::api::count::get))
         .layer(compression_layer.clone());
 
     let dashboard_router = Router::new()
