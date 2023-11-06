@@ -1,8 +1,8 @@
 import { Chart } from "chart.js/auto";
 
-interface Params {
-  path?: string;
-  on_filter_update?: (base_url: string, filter: string) => Promise<void>;
+type Params = {
+  path?: string
+  on_filter_update?: (base_url: string, filter: string) => Promise<void>
 }
 
 export async function render_bar_chart(base_url: string, params: Params = {}) {
