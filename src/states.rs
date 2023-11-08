@@ -49,6 +49,7 @@ impl InnerAppState {
             // Migrations must be run manually during development.
             // Therefore, only run migrations in release mode.
             sqlx::migrate!()
+                .set_ignore_missing(true)
                 .run(&pool)
                 .await
                 .context("Failed to run migrations!")?;
