@@ -4,7 +4,7 @@
 
 ### Breaking
 
-- **If you already use OxiTraffic, you have to be at least on version 0.5 before updating to 0.7!** If you update from a version below 0.5, database issues will occur. Please update to 0.6.1 and then to 0.7. If you are using OxiTraffic for the first time or having a version >= 0.5, you can direclty use 0.7.
+- **If you already use OxiTraffic, you have to be at least on version 0.5 before updating to 0.7!** If you update from a version below 0.5, database issues will occur. Please update to 0.6.1 and then to 0.7. If you are using OxiTraffic for the first time or having a version >= 0.5, you can directly use 0.7.
 
 ### Features
 
