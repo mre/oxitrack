@@ -1,10 +1,18 @@
 # Changelog
 
-## 0.6.2
+## 0.7.0
+
+### Breaking
+
+- **If you already use OxiTraffic, you have to be at least on version 0.5 before updating to 0.7!** If you update from a version below 0.5, database issues will occur. Please update to 0.6.1 and then to 0.7. If you are using OxiTraffic for the first time or having a version >= 0.5, you can direclty use 0.7.
 
 ### Features
 
 - Add the API endpoint `/api/count?path=PATH` to get the visits count for a specific path.
+
+### Fixes
+
+- Fix a potential problem with PostgreSQL permissions on the table `pg_depend` while running migrations. This table is not touched anymore.
 
 ## 0.6.1
 
