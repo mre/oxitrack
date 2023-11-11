@@ -7,19 +7,19 @@
 
 ## Features
 
-- Short visits are not counted ❌
-  - Only meaningful visits are counted ✅
-  - Makes it less likely to count visits by web bots 🤖
-- Respects privacy (no personal data or IP is logged) 🥷🏼
-- Self-hosted 🕊️
-- Visualization of visits history 📈
-- API for visits history and count 💻️
-- Low memory usage (about 12 MB) 🏅
-- First class container support 📦️
-- Asynchronous and multithreaded 🔀
-- Informative tracing (logging) to stdout and to a log file 📜
-- Free & open source (AGPLv3) 🆓
-- Written in Rust (**oxi**dized) 🦀
+- ❌ Short visits are not counted
+  - ✅ Only meaningful visits are counted
+  - 🤖 Makes it less likely to count visits by web bots
+- 🥷🏼 Respects privacy (no personal data or IP is logged)
+- 🕊️ Self-hosted
+- 📈 Visualization of visits history
+- 💻️ API for visits history and count
+- 🏅 Low memory usage (about 12 MB)
+- 📦️ First class container support
+- 🔀 Asynchronous and multithreaded
+- 📜 Informative tracing (logging) to stdout and to a log file
+- 🆓 Free & open source (AGPLv3)
+- 🦀 Written in Rust (**oxi**dized)
 
 ## Demo
 
