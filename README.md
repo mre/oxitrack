@@ -11,6 +11,7 @@
   - ✅ Only meaningful visits are counted
   - 🤖 Makes it less likely to count visits by web bots
 - 🥷🏼 Respects privacy (no personal data or IP is logged)
+- 🍪 No cookies
 - 🕊️ Self-hosted
 - 📈 Visualization of visits history
 - 💻️ API for visits history and count
