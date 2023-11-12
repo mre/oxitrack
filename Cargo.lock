@@ -1099,9 +1099,9 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.25"
+version = "0.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17cf5e0724abcf2b8e61f4968a14d4f172538d839767165764a7944c269b7527"
+checksum = "6725fa24b4c481a89a029f222c80e0d557157006c5d8e95ffb6df6e9a17b62ff"
 dependencies = [
  "anyhow",
  "askama",

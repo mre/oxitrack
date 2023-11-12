@@ -75,20 +75,23 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         ("logo.svg", "image/svg+xml"),
     );
 
+    let trace_layer = TraceLayer::new_for_http()
+        .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+        .on_request(())
+        .on_response(())
+        .on_body_chunk(())
+        .on_eos(())
+        .on_failure(());
+
+    #[cfg(debug_assertions)]
+    let trace_layer = trace_layer.on_request(DefaultOnRequest::new().level(Level::DEBUG));
+
     let app = Router::new()
         .merge(static_router)
         .merge(cors_router)
         .merge(dashboard_router)
         .nest("/api", api_router)
-        .layer(
-            TraceLayer::new_for_http()
-                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                .on_request(DefaultOnRequest::new().level(Level::INFO))
-                .on_response(())
-                .on_body_chunk(())
-                .on_eos(())
-                .on_failure(()),
-        )
+        .layer(trace_layer)
         .with_state(app_state);
 
     Ok((app, socket_address))
