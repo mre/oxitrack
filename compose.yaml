@@ -2,14 +2,14 @@
 services:
   oxitraffic:
     container_name: oxitraffic
-    build:
-      context: .
-      dockerfile: Containerfile
+    image: docker.io/mo8it/oxitraffic:latest
     restart: unless-stopped
     volumes:
-      # You can change the source directory from ./data.
-      - ./data:/volumes/data:Z
-    # You can remove the ports section and add a networks one if you use an internal Traefik network.
+      # You can change the source to point to your configuration file.
+      - ./config.toml:/volumes/config.toml:Z,ro
+      # You can change the source to point to a specific logs directory.
+      - ./logs:/var/log/oxitraffic:Z
+    # You can replace the ports section with an internal network for a reverse proxy (like Traefik).
     ports:
       # You can change the source port from 8080.
       - 8080:80

@@ -53,14 +53,6 @@ Otherwise, the request is rejected.
 
 ## Setup
 
-### Data directory
-
-The binary expects the environment variable `OXITRAFFIC_DATA_DIR` to point to a directory that stores the TOML configuration file `config.toml`.
-
-The log file `oxitraffic.log` will be also placed in that directory.
-
-## Hosting
-
 ### Containerized
 
 You can use the container image published on [Docker Hub](https://hub.docker.com/r/mo8it/oxitraffic).
@@ -77,7 +69,9 @@ Or using Podman:
 podman pull docker.io/mo8it/oxitraffic:latest
 ```
 
-The container expects the data directory to be mounted as a **volume** at `/volumes/data` inside the container.
+The container image expects the config file to be mounted as a (read-only) **volume** at `/volumes/config.toml` inside the container (a volume doesn't have to be a directory, it can be a file).
+
+You should mount an additional **volume** at `/var/log/oxitraffic` if you want to persist the logs.
 
 By default, the container listens on **port** `80`.
 
@@ -89,7 +83,7 @@ You can also host OxiTraffic directly with the binary that you can install with 
 cargo install oxitraffic --locked
 ```
 
-Make sure to provide the environment variable `OXITRAFFIC_DATA_DIR` when using the binary directly.
+Make sure to provide the environment variable `OXITRAFFIC_CONFIG_FILE` when using the binary directly (see the configuration section below).
 
 ### Database
 
@@ -99,20 +93,27 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 ### Configuration
 
-| Parameter                 | Description                                                                                                                                                                                                                                                                                       | Default          |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `socket_address`          | Use `127.0.0.1:8080` for local testing. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                                                           | `"0.0.0.0:80"`   |
-| `base_url`                | The base URL of your OxiTraffic instance. Used to build the [`count.js`](templates/count.js) script.                                                                                                                                                                                              |                  |
-| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [`count.js`](templates/count.js) script to OxiTraffic.       |                  |
-| `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                                     | `tracked_origin` |
-| `min_delay_secs`          | Minimum delay in seconds between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts. | 19               |
-| `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                                   |                  |
-| `db.port`                 | PostgreSQL port                                                                                                                                                                                                                                                                                   |                  |
-| `db.username`             | PostgreSQL username                                                                                                                                                                                                                                                                               |                  |
-| `db.password`             | PostgreSQL password                                                                                                                                                                                                                                                                               |                  |
-| `db.database`             | PostgreSQL database                                                                                                                                                                                                                                                                               |                  |
-| `utc_offset.hours`        | The hours of your UTC offset                                                                                                                                                                                                                                                                      | 0                |
-| `utc_offset.minutes`      | The minutes of your UTC offset                                                                                                                                                                                                                                                                    | 0                |
+The binary expects the environment variable `OXITRAFFIC_CONFIG_FILE` to point to the TOML configuration file `config.toml`.
+This environment variable is set to `/volumes/config.toml` in the container image.
+
+The table below shows the configuration parameters for the configuration file.
+You can use environment variables to either set or overwrite parameters from the config file.
+
+| Parameter                 | Description                                                                                                                                                                                                                                                                                       | Default               | Environment variable                 |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------ |
+| `socket_address`          | Use `127.0.0.1:8080` for local testing. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                                                           | `"0.0.0.0:80"`        | `OXITRAFFIC_SOCKET_ADDRESS`          |
+| `base_url`                | The base URL of your OxiTraffic instance. Used to build the [`count.js`](templates/count.js) script.                                                                                                                                                                                              |                       | `OXITRAFFIC_BASE_URL`                |
+| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [`count.js`](templates/count.js) script to OxiTraffic.       |                       | `OXITRAFFIC_TRACKED_ORIGIN`          |
+| `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                                     | `tracked_origin`      | `OXITRAFFIC_TRACKED_ORIGIN_CALLBACK` |
+| `logs_dir`                | The directory where log files will be placed in. You need to change the default value if OxiTraffic doesn't have write permission for the default directory.                                                                                                                                      | `/var/log/oxitraffic` | `OXITRAFFIC_LOGS_DIR`                |
+| `min_delay_secs`          | Minimum delay in seconds between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts. | 19                    | `OXITRAFFIC_MIN_DELAY_SECS`          |
+| `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                                   |                       | `OXITRAFFIC_DB__HOST`                |
+| `db.port`                 | PostgreSQL port                                                                                                                                                                                                                                                                                   |                       | `OXITRAFFIC_DB__PORT`                |
+| `db.username`             | PostgreSQL username                                                                                                                                                                                                                                                                               |                       | `OXITRAFFIC_DB__USERNAME`            |
+| `db.password`             | PostgreSQL password                                                                                                                                                                                                                                                                               |                       | `OXITRAFFIC_DB__PASSWORD`            |
+| `db.database`             | PostgreSQL database                                                                                                                                                                                                                                                                               |                       | `OXITRAFFIC_DB__DATABASE`            |
+| `utc_offset.hours`        | The hours of your UTC offset                                                                                                                                                                                                                                                                      | 0                     | `OXITRAFFIC_UTC_OFFSET__HOURS`       |
+| `utc_offset.minutes`      | The minutes of your UTC offset                                                                                                                                                                                                                                                                    | 0                     | `OXITRAFFIC_UTC_OFFSET__MINUTES`     |
 
 #### Example configuration
 
@@ -128,6 +129,9 @@ tracked_origin = "https://your_domain.com"
 # In case both OxiTraffic and your website are in a local network and `website` can be resolved to the local IP address of the your website.
 # Omit this option to use the value of `tracked_origin` instead.
 tracked_origin_callback = "http://website"
+
+# You should omit this option when using the container image and mount a volume at the default directory `/var/log/oxitraffic` to persist logs.
+logs_dir = "/home/USERNAME/oxitraffic_logs"
 
 [db]
 host = "127.0.0.1"

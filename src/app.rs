@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use axum::{http::header::HeaderValue, routing::get, Router};
-use oxi_axum_helpers::{static_router, PreTracer};
+use oxi_axum_helpers::{static_router, Initialization};
 use std::net::SocketAddr;
 use tower_http::{
     compression::CompressionLayer,
@@ -11,12 +11,8 @@ use tracing::Level;
 
 use crate::{config::Config, handlers, states::InnerAppState};
 
-pub const DATA_DIR_ENV_VAR: &str = "OXITRAFFIC_DATA_DIR";
-
 pub async fn app() -> Result<(Router, SocketAddr)> {
-    let PreTracer {
-        config, utc_offset, ..
-    } = PreTracer::<Config>::init(DATA_DIR_ENV_VAR, "oxitraffic");
+    let Initialization { config, utc_offset } = Initialization::<Config>::try_init("oxitraffic")?;
 
     let socket_address = config.socket_address;
 
@@ -100,7 +96,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{app, DATA_DIR_ENV_VAR};
+    use super::app;
     use axum::{
         body::Body,
         http::{header, Request, StatusCode},
@@ -179,7 +175,7 @@ mod tests {
     #[test]
     fn simple_requests() {
         Jail::expect_with(|jail| {
-            jail.set_env(DATA_DIR_ENV_VAR, ".");
+            jail.set_env("OXITRAFFIC_CONFIG_FILE", "config.toml");
 
             jail.create_file(
                 "config.toml",
@@ -187,6 +183,7 @@ mod tests {
                 socket_address = "127.0.0.1:8080"
                 base_url = "http://127.0.0.1:8080"
                 tracked_origin = "https://mo8it.com"
+                logs_dir = "logs"
 
                 min_delay_secs = 0
 

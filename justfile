@@ -10,7 +10,7 @@ alias r := run
 
 # Run the binary
 run: build-static-dev
-	OXITRAFFIC_DATA_DIR=dev cargo r
+	OXITRAFFIC_CONFIG_FILE=dev/config.toml cargo r
 
 alias w := watch
 

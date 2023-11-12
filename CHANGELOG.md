@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0
+
+### Breaking
+
+- There is no data directory anymore. Require the environment variable **`OXITRAFFIC_CONFIG_FILE`** to point to the config file. The environment variable `OXITRAFFIC_DATA_DIR` is deprecated. The **container image** expects the config file at the path **`/volumes/config.toml`**. You should mount the config file as a read only volume (a volume doesn't have to be a directory, it can be a file).
+- Add the **config value `logs_dir`** where log files will be placed in. The default is `/var/log/oxitraffic`, but you can change it (you need to change it if OxiTraffic doesn't have write permission for that directory). For the **container image**, you should mount a volume at `/var/log/oxitraffic` if you want to persist the logs. You can delete the old log file `oxitraffic.log`.
+
 ## 0.7.0
 
 ### Breaking

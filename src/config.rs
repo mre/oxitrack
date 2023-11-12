@@ -7,7 +7,7 @@ use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, PgConfig};
 use serde::Deserialize;
 use std::{
     net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 /// Configuration.
@@ -26,6 +26,8 @@ pub struct Config {
     pub db: PgConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
+    #[serde(default = "default_logs_dir")]
+    pub logs_dir: PathBuf,
 }
 const fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
@@ -34,18 +36,19 @@ const fn default_socket_address() -> SocketAddr {
 const fn default_min_delay_secs() -> u64 {
     19
 }
+fn default_logs_dir() -> PathBuf {
+    PathBuf::from("/var/log/oxitraffic")
+}
 
 impl ConfigBuilder for Config {
-    fn build(data_dir: &Path) -> Result<Self> {
-        let config_file_path = data_dir.join("config.toml");
-
+    fn build(config_file: &Path) -> Result<Self> {
         Figment::new()
             .merge(
                 Env::prefixed("OXITRAFFIC_")
                     .split("__")
-                    .ignore(&["data_dir"]),
+                    .ignore(&["config_file"]),
             )
-            .join(Toml::file(config_file_path))
+            .join(Toml::file(config_file))
             .extract()
             .context("Failed to parse the configuration!")
     }
@@ -53,23 +56,26 @@ impl ConfigBuilder for Config {
     fn hm_utc_offset(&self) -> &HMUtcOffset {
         &self.utc_offset
     }
+
+    fn logs_dir(&self) -> &Path {
+        &self.logs_dir
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Config;
-    use crate::app::DATA_DIR_ENV_VAR;
     use figment::Jail;
     use oxi_axum_helpers::ConfigBuilder;
     use std::path::Path;
 
     fn test_config(config_file_content: &str) {
         Jail::expect_with(|jail| {
-            jail.set_env(DATA_DIR_ENV_VAR, ".");
+            jail.set_env("OXITRAFFIC_CONFIG_FILE", "config.toml");
 
             jail.create_file("config.toml", config_file_content)?;
 
-            Config::build(Path::new(".")).unwrap();
+            Config::build(Path::new("config.toml")).unwrap();
 
             Ok(())
         });
@@ -100,6 +106,7 @@ mod tests {
             base_url = "http://127.0.0.1:8080"
             tracked_origin = "https://mo8it.com"
             tracked_origin_callback = "http://mo8it_com"
+            logs_dir = "logs"
 
             min_delay_secs = 20
 
