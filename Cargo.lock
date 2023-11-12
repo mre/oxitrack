@@ -1099,14 +1099,15 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.23"
+version = "0.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bf2e86c65dc6d41c0fa9502fdd7dbf246338ecec0387de032429327bcd540c9"
+checksum = "17cf5e0724abcf2b8e61f4968a14d4f172538d839767165764a7944c269b7527"
 dependencies = [
  "anyhow",
  "askama",
  "axum",
  "axum-ctx",
+ "figment",
  "logs-wheel",
  "serde",
  "sqlx",

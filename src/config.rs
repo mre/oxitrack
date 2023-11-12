@@ -1,8 +1,3 @@
-use anyhow::{Context, Result};
-use figment::{
-    providers::{Env, Format, Toml},
-    Figment,
-};
 use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, PgConfig};
 use serde::Deserialize;
 use std::{
@@ -41,18 +36,6 @@ fn default_logs_dir() -> PathBuf {
 }
 
 impl ConfigBuilder for Config {
-    fn build(config_file: &Path) -> Result<Self> {
-        Figment::new()
-            .merge(
-                Env::prefixed("OXITRAFFIC_")
-                    .split("__")
-                    .ignore(&["config_file"]),
-            )
-            .join(Toml::file(config_file))
-            .extract()
-            .context("Failed to parse the configuration!")
-    }
-
     fn hm_utc_offset(&self) -> &HMUtcOffset {
         &self.utc_offset
     }
