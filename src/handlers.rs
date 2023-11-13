@@ -7,4 +7,3 @@ pub mod page_left;
 pub mod post_sleep;
 pub mod register;
 pub mod stats_data;
-pub mod visits_table_body;

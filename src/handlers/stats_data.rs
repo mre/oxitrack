@@ -3,9 +3,14 @@ mod chart_data_aggregator;
 mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
+pub mod referrer_count;
 mod start_datetime;
+pub mod table_body_templates;
 mod whole_days_since_first_visit;
 
+use askama::Template;
+use axum::Json;
+use sqlx::PgPool;
 pub use start_datetime::{OptionStartDateTime, StartDatetime};
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
@@ -13,12 +18,19 @@ use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
 use time::OffsetDateTime;
 
-use crate::states::InnerAppState;
+use crate::{db::VisitCount, states::InnerAppState};
 
 use chart_data_aggregator::ChartDataAggregator;
 use contiguous_date_part::{
     ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
 };
+
+use self::{
+    referrer_count::ReferrerCount,
+    table_body_templates::{ReferrersTableBody, VisitsTableBody},
+};
+
+use super::count_rows::CountRows;
 
 struct TruncDateCount {
     trunc_registered_at: OffsetDateTime,
@@ -134,4 +146,36 @@ pub enum ChartData {
 pub struct StatsData {
     chart_data: ChartData,
     table_body: String,
+}
+
+impl StatsData {
+    pub async fn build_response(
+        chart_data: ChartData,
+        pool: &PgPool,
+        path_id: Option<i64>,
+        start_datetime: Option<OffsetDateTime>,
+    ) -> Result<Json<Self>, RespErr> {
+        let table_body = if let Some(path_id) = path_id {
+            let referrer_counts =
+                ReferrerCount::all_sorted_by_count(pool, path_id, start_datetime).await?;
+            let referrer_count_rows = CountRows::from(referrer_counts);
+
+            ReferrersTableBody {
+                referrer_count_rows,
+            }
+            .render()
+        } else {
+            let visits_counts = VisitCount::all_sorted_by_count(pool, start_datetime).await?;
+            let visit_count_rows = CountRows::from(visits_counts);
+
+            VisitsTableBody { visit_count_rows }.render()
+        }
+        .ctx(Status::Internal)
+        .log_msg("Failed to render the table body template!")?;
+
+        Ok(Json(Self {
+            chart_data,
+            table_body,
+        }))
+    }
 }

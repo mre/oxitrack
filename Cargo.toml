@@ -11,8 +11,6 @@ include = [
   "/.sqlx/",
   "/migrations/",
   "/src/",
-  "/static/index.js.gz",
-  "/static/index.js.map.gz",
   "/static/logo.svg.gz",
   "/static/main.css.gz",
   "/static/stats.js.gz",

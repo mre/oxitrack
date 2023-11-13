@@ -1,15 +1,15 @@
 import { Chart } from "chart.js/auto";
 
-type Params = {
-  path?: string
-  on_filter_update?: (base_url: string, filter: string) => Promise<void>
-}
+type StatsData = {
+  chart_data: Array<{ x: string, y: number }>;
+  table_body: string;
+};
 
-export async function render_bar_chart(base_url: string, params: Params = {}) {
-  const query_params = (params.path !== undefined) ? "?path=" + encodeURIComponent(params.path) : "";
+export async function render_bar_chart(base_url: string, path?: string) {
+  const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
   const chart_data_url = base_url + "/stats-data/";
 
-  async function chart_data(filter: string): Promise<Array<{ x: string, y: number }>> {
+  async function chart_data(filter: string): Promise<StatsData> {
     return fetch(chart_data_url + filter + query_params).then((response) => {
       return response.json();
     });
@@ -19,9 +19,8 @@ export async function render_bar_chart(base_url: string, params: Params = {}) {
 
   const data = await chart_data(checked_filter.value);
 
-  if (params.on_filter_update !== undefined) {
-    await params.on_filter_update(base_url, checked_filter.value);
-  }
+  const table_body_element = document.getElementById("table_body")!;
+  table_body_element.innerHTML = data.table_body;
 
   const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
@@ -29,7 +28,7 @@ export async function render_bar_chart(base_url: string, params: Params = {}) {
     data: {
       datasets: [{
         label: 'Visits',
-        data: data
+        data: data.chart_data
       }]
     },
     options: {
@@ -77,12 +76,10 @@ export async function render_bar_chart(base_url: string, params: Params = {}) {
     btn.addEventListener("change", async () => {
       const data = await chart_data(filter);
 
-      chart.data.datasets[0]!.data = data;
+      chart.data.datasets[0]!.data = data.chart_data;
       chart.update();
 
-      if (params.on_filter_update !== undefined) {
-        await params.on_filter_update(base_url, filter);
-      }
+      table_body_element.innerHTML = data.table_body;
     })
   }
 }

@@ -1,0 +1,15 @@
+{% for (domain_count, perc) in referrer_count_rows -%}
+    <tr class="border-transparent border-b-[12px]">
+        {#--#}
+        <td class="pr-5">
+            {#--#}
+            <a href="https://{{ domain_count.domain }}">{{ domain_count.domain }}</a>
+            {#--#}
+        </td>
+        {#--#}
+        <td class="pr-5">{{ domain_count.count }}</td>
+        {#--#}
+        <td class="text-right">{{ perc }}%</td>
+        {#--#}
+    </tr>
+{%- endfor %}

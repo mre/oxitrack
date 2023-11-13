@@ -38,19 +38,11 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .route("/count.js", get(handlers::count_js::get))
         .layer(compression_layer.clone());
 
-    let visits_table_body_router = Router::new()
-        .route(
-            "/visits-table-body/:filter",
-            get(handlers::visits_table_body::get),
-        )
-        .layer(compression_layer.clone());
-
     let cors_router = Router::new()
         .route("/register", get(handlers::register::get))
         .route("/post-sleep/:visitor_id", get(handlers::post_sleep::get))
         .route("/page-left/:visitor_id", get(handlers::page_left::get))
         .merge(count_js_router)
-        .merge(visits_table_body_router)
         .nest("/stats-data", chart_data_router)
         .layer(CorsLayer::new().allow_origin(allowed_origin));
 
@@ -70,8 +62,6 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         ("main.css", "text/css"),
         ("stats.js", "application/javascript"),
         ("stats.js.map", "application/json"),
-        ("index.js", "application/javascript"),
-        ("index.js.map", "application/json"),
         ("logo.svg", "image/svg+xml"),
     );
 

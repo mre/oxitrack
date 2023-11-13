@@ -12,8 +12,6 @@ target/
 
 # Auto-generated
 /static/main.css
-/static/index.js
-/static/index.js.map
 /static/stats.js
 /static/stats.js.map
 /static/*.gz

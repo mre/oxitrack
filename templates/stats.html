@@ -34,28 +34,21 @@
 
     {% call bar_chart_macros::bar_chart() %}
 
-    {% if !referrer_count_rows.is_empty() %}
-        <table class="w-full md:w-fit">
+    <table class="w-full md:w-fit">
+        <thead>
             <tr class="border-b-4">
                 <th class="pr-5 text-left">Referrer</th>
                 <th class="pr-5 text-left">Visits</th>
                 <th class="text-right">%</th>
             </tr>
+        </thead>
 
-            {% for (domain_count, perc) in referrer_count_rows %}
-                <tr class="border-transparent border-b-[12px]">
-                    <td class="pr-5">
-                        <a href="https://{{ domain_count.domain }}">{{ domain_count.domain }}</a>
-                    </td>
-                    <td class="pr-5">{{ domain_count.count }}</td>
-                    <td class="text-right">{{ perc }}%</td>
-                </tr>
-            {% endfor %}
-        </table>
-    {% endif %}
+        <tbody id="table_body">
+        </tbody>
+    </table>
 {% endblock %}
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}", { path: "{{ path }}" });</script>
+    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}", "{{ path }}");</script>
 {% endblock %}

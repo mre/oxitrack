@@ -6,16 +6,11 @@ use axum::{
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
-use sqlx::PgPool;
 
 use crate::{
     extractors::query_path::{PathId, QueryPath},
     formatters::{DateTimeVerboseFormatter, SecondsFormatter},
-    handlers::{
-        base_template::Base,
-        count_rows::{Count, CountRows},
-        stats_data::WholeDaysSinceFirstVisit,
-    },
+    handlers::{base_template::Base, stats_data::WholeDaysSinceFirstVisit},
     states::{AppState, InnerAppState},
 };
 
@@ -76,35 +71,6 @@ impl Visits {
     }
 }
 
-struct ReferrerCount {
-    domain: String,
-    count: i64,
-}
-
-impl ReferrerCount {
-    async fn all_sorted_by_count(pool: &PgPool, path_id: i64) -> Result<Vec<Self>, RespErr> {
-        sqlx::query_as!(
-            Self,
-            r#"SELECT domain, COUNT(*) as "count!" FROM visits
-            INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE path_id = $1
-            GROUP BY domain
-            ORDER BY "count!" DESC"#,
-            path_id
-        )
-        .fetch_all(pool)
-        .await
-        .ctx(Status::Internal)
-        .log_msg("Failed to query referrers!")
-    }
-}
-
-impl Count for ReferrerCount {
-    fn count(&self) -> i64 {
-        self.count
-    }
-}
-
 #[derive(Template)]
 #[template(path = "stats.html")]
 struct Stats<'a> {
@@ -113,7 +79,6 @@ struct Stats<'a> {
     pub tracked_origin: &'static str,
     pub path: &'a str,
     pub visits: Visits,
-    pub referrer_count_rows: CountRows<ReferrerCount>,
 }
 
 pub async fn get(
@@ -122,16 +87,7 @@ pub async fn get(
 ) -> Result<Html<String>, RespErr> {
     let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
-    // Run queries concurrently.
-    let visits_handler = tokio::spawn(Visits::build(state, path_id));
-
-    let referrer_counts = ReferrerCount::all_sorted_by_count(&state.pool, path_id).await?;
-    let referrer_count_rows = CountRows::from(referrer_counts);
-
-    let visits = visits_handler
-        .await
-        .ctx(Status::Internal)
-        .log_msg("Visits task panicked!")??;
+    let visits = Visits::build(state, path_id).await?;
 
     Stats {
         base: Base::new(state, path),
@@ -139,7 +95,6 @@ pub async fn get(
         tracked_origin: state.tracked_origin,
         path,
         visits,
-        referrer_count_rows,
     }
     .try_into_resp()
 }

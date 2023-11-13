@@ -5,7 +5,6 @@ const dir = dirname(fileURLToPath(import.meta.url));
 
 export default {
   entry: {
-    index: "./ts/index.ts",
     stats: "./ts/stats.ts",
   },
   output: {

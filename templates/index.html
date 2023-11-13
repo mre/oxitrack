@@ -18,13 +18,12 @@
             </tr>
         </thead>
 
-        <tbody id="visits_table_body">
+        <tbody id="table_body">
         </tbody>
     </table>
 {% endblock %}
 
 {% block scripts %}
     <script src='/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script src='/static/index.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}", { on_filter_update: oxitraffic.index.on_filter_update });</script>
+    <script>oxitraffic.stats.render_bar_chart("{{ base_url }}");</script>
 {% endblock %}
