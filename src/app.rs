@@ -28,10 +28,10 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     let chart_data_router = Router::new()
         .route(
             "/last-60-days",
-            get(handlers::chart_data::last_60_days::get),
+            get(handlers::stats_data::last_60_days::get),
         )
-        .route("/last-2-days", get(handlers::chart_data::last_2_days::get))
-        .route("/all-time", get(handlers::chart_data::all_time::get))
+        .route("/last-2-days", get(handlers::stats_data::last_2_days::get))
+        .route("/all-time", get(handlers::stats_data::all_time::get))
         .layer(compression_layer.clone());
 
     let count_js_router = Router::new()
@@ -51,7 +51,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .route("/page-left/:visitor_id", get(handlers::page_left::get))
         .merge(count_js_router)
         .merge(visits_table_body_router)
-        .nest("/chart-data", chart_data_router)
+        .nest("/stats-data", chart_data_router)
         .layer(CorsLayer::new().allow_origin(allowed_origin));
 
     let api_router = Router::new()

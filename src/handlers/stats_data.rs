@@ -129,3 +129,9 @@ pub enum ChartData {
     Day(Vec<DataPoint<ContiguousDay>>),
     Hour(Vec<DataPoint<ContiguousHour>>),
 }
+
+#[derive(Serialize)]
+pub struct StatsData {
+    chart_data: ChartData,
+    table_body: String,
+}

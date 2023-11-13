@@ -7,7 +7,7 @@ type Params = {
 
 export async function render_bar_chart(base_url: string, params: Params = {}) {
   const query_params = (params.path !== undefined) ? "?path=" + encodeURIComponent(params.path) : "";
-  const chart_data_url = base_url + "/chart-data/";
+  const chart_data_url = base_url + "/stats-data/";
 
   async function chart_data(filter: string): Promise<Array<{ x: string, y: number }>> {
     return fetch(chart_data_url + filter + query_params).then((response) => {

@@ -13,8 +13,8 @@ use crate::{
     formatters::{DateTimeVerboseFormatter, SecondsFormatter},
     handlers::{
         base_template::Base,
-        chart_data::WholeDaysSinceFirstVisit,
         count_rows::{Count, CountRows},
+        stats_data::WholeDaysSinceFirstVisit,
     },
     states::{AppState, InnerAppState},
 };
