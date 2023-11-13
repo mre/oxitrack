@@ -19,7 +19,7 @@ pub async fn get(
 
     let path = path.normalized();
 
-    let path_id = sqlx::query!(
+    let path_row = sqlx::query!(
         "SELECT id FROM paths
         WHERE path = $1",
         path
@@ -27,10 +27,10 @@ pub async fn get(
     .fetch_optional(&state.pool)
     .await
     .ctx(Status::Internal)
-    .log_msg(|| format!("Failed to run path query for path {path}!"))?;
+    .log_msg(|| format!("Failed to run the path query for the path {path}!"))?;
 
-    let path_id = if let Some(id) = path_id {
-        id.id
+    let path_id = if let Some(row) = path_row {
+        row.id
     } else {
         let status = state
             .http_client
@@ -42,15 +42,16 @@ pub async fn get(
             .status();
 
         if !status.is_success() {
-            return Err(RespErr::new(Status::NotFound)
-                .log_msg(format!("Path {path} not found on tracked website!")));
+            return Err(RespErr::new(Status::NotFound).user_msg(format!(
+                "The path {path} was not found on the tracked website!"
+            )));
         }
 
         // There is a possible race condition here.
-        // If two requests to the same new path try to insert it at the same time,
+        // If two requests try to insert at the same time,
         // then only one insertion will be succussful.
         // If the insertion fails because of the constraint, we will try to select.
-        let inserted_id = sqlx::query!(
+        let inserted_row = sqlx::query!(
             "INSERT INTO paths(path) VALUES ($1)
             ON CONFLICT ON CONSTRAINT unique_path DO NOTHING
             RETURNING id",
@@ -59,12 +60,12 @@ pub async fn get(
         .fetch_optional(&state.pool)
         .await
         .ctx(Status::Internal)
-        .log_msg(|| format!("Failed to insert path {path}!"))?;
+        .log_msg(|| format!("Failed to insert the path {path}!"))?;
 
-        if let Some(id) = inserted_id {
-            id.id
+        if let Some(row) = inserted_row {
+            row.id
         } else {
-            // Other request did insert the path first.
+            // A concurrent request inserted first.
             sqlx::query!(
                 "SELECT id FROM paths
                 WHERE path = $1",
@@ -73,7 +74,7 @@ pub async fn get(
             .fetch_one(&state.pool)
             .await
             .ctx(Status::Internal)
-            .log_msg(|| format!("Failed to insert path {path}!"))?
+            .log_msg(|| format!("Failed to insert the path {path}!"))?
             .id
         }
     };

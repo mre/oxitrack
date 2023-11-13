@@ -4,11 +4,12 @@ use axum::{
 };
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Deserialize;
+use sqlx::PgConnection;
 use url::Url;
 
 use crate::states::{
     visitor_state::{SleepingState, VisitorId},
-    AppState,
+    AppState, InnerAppState,
 };
 
 const MAX_DOMAIN_LEN: usize = 255;
@@ -20,30 +21,82 @@ pub struct Params {
 }
 
 impl Params {
-    fn referrer_origin(&self, tracked_origin: &'static str) -> Option<Url> {
-        let referrer_origin = self.referrer_origin.as_ref()?;
-
-        if referrer_origin.starts_with(tracked_origin) {
+    async fn referrer_id(
+        &self,
+        state: &'static InnerAppState,
+        tx: &mut PgConnection,
+    ) -> Option<i64> {
+        let referrer_origin = self.referrer_origin.as_deref()?;
+        if referrer_origin.starts_with(state.tracked_origin) {
             // Don't count the tracked domain as a referrer domain.
             return None;
         }
 
-        Url::parse(referrer_origin).ok()
+        let url = Url::parse(referrer_origin).ok()?;
+        if url.scheme() != "https" {
+            return None;
+        }
+
+        let domain = url.domain()?;
+        if domain.len() > MAX_DOMAIN_LEN || !domain.contains('.') {
+            return None;
+        }
+
+        let referrer_row = sqlx::query!(
+            "SELECT id FROM referrers
+            WHERE domain = $1",
+            domain,
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .ok()?;
+
+        if let Some(row) = referrer_row {
+            return Some(row.id);
+        }
+
+        // Check that the referrer domain actually exists to prevent submitting random domains.
+        let status = state
+            .http_client
+            .get(url.clone())
+            .send()
+            .await
+            .ok()?
+            .status();
+
+        if !status.is_success() {
+            return None;
+        }
+
+        // There is a possible race condition here.
+        // If two requests try to insert at the same time,
+        // then only one insertion will be succussful.
+        // If the insertion fails because of the constraint, we will try to select.
+        let inserted_row = sqlx::query!(
+            "INSERT INTO referrers(domain) VALUES ($1)
+            ON CONFLICT ON CONSTRAINT unique_domain DO NOTHING
+            RETURNING id",
+            domain,
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .ok()?;
+
+        if let Some(row) = inserted_row {
+            return Some(row.id);
+        }
+
+        // A concurrent request inserted first.
+        sqlx::query!(
+            "SELECT id FROM referrers
+            WHERE domain = $1",
+            domain,
+        )
+        .fetch_one(&mut *tx)
+        .await
+        .ok()
+        .map(|row| row.id)
     }
-}
-
-fn referrer_domain(url: &Url) -> Option<&str> {
-    if url.scheme() != "https" {
-        return None;
-    }
-
-    let domain = url.domain()?;
-
-    if domain.len() > MAX_DOMAIN_LEN || !domain.contains('.') {
-        return None;
-    }
-
-    Some(domain)
 }
 
 pub async fn get(
@@ -60,77 +113,31 @@ pub async fn get(
         .ctx(Status::BadRequest)
         .user_msg("The visitor ID is invalid or has expired!")?;
 
-    let referrer_origin = params.referrer_origin(state.tracked_origin);
-    let referrer_domain = referrer_origin.as_ref().and_then(referrer_domain);
-
-    let visit_id = if let Some(referrer_domain) = referrer_domain {
-        let mut tx = state
-            .pool
-            .begin()
-            .await
-            .ctx(Status::Internal)
-            .log_msg("Failed to begin a transaction!")?;
-
-        // Try to insert if the referrer doesn't already exist.
-        let referrer_id = sqlx::query!(
-            "INSERT INTO referrers(domain) VALUES ($1)
-            ON CONFLICT DO NOTHING
-            RETURNING id",
-            referrer_domain
-        )
-        .fetch_optional(&mut *tx)
+    let mut tx = state
+        .pool
+        .begin()
         .await
         .ctx(Status::Internal)
-        .log_msg("Failed to insert a referrer!")?;
+        .log_msg("Failed to begin a transaction!")?;
 
-        let referrer_id = if let Some(id) = referrer_id {
-            id.id
-        } else {
-            // Insertion had a conflict, therefore the referrer must already exist.
-            sqlx::query!(
-                "SELECT id FROM referrers
-                WHERE domain = $1",
-                referrer_domain,
-            )
-            .fetch_one(&mut *tx)
-            .await
-            .ctx(Status::Internal)
-            .log_msg("Referrer not found although its insertion had a conflict!")?
-            .id
-        };
+    let referrer_id = params.referrer_id(state, &mut tx).await;
 
-        let visit_id = sqlx::query!(
-            "INSERT INTO visits(path_id, registered_at, referrer_id) VALUES ($1, $2, $3)
-            RETURNING id",
-            path_id,
-            registered_at,
-            referrer_id,
-        )
-        .fetch_one(&mut *tx)
-        .await
-        .ctx(Status::Internal)
-        .log_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
-        .id;
+    let visit_id = sqlx::query!(
+        "INSERT INTO visits(path_id, registered_at, referrer_id) VALUES ($1, $2, $3)
+        RETURNING id",
+        path_id,
+        registered_at,
+        referrer_id,
+    )
+    .fetch_one(&mut *tx)
+    .await
+    .ctx(Status::Internal)
+    .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
+    .id;
 
-        tx.commit()
-            .await
-            .ctx(Status::Internal)
-            .log_msg("Failed to commit the post sleep transaction with referrer.")?;
-
-        visit_id
-    } else {
-        sqlx::query!(
-            "INSERT INTO visits(path_id, registered_at) VALUES ($1, $2)
-            RETURNING id",
-            path_id,
-            registered_at,
-        )
-        .fetch_one(&state.pool)
-        .await
-        .ctx(Status::Internal)
-        .log_msg(|| format!("Failed to insert a visit for path_id {path_id}!"))?
-        .id
-    };
+    tx.commit().await.ctx(Status::Internal).log_msg(|| {
+        format!("Failed to commit the post-sleep transaction for the path_id {path_id}!")
+    })?;
 
     state
         .visitor_states

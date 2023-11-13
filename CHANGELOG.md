@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.1
+
+### Features
+
+- Verify that a referrer domain exists before inserting it to prevent submitting random domains.
+
 ## 0.8.0
 
 ### Breaking
