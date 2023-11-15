@@ -15,7 +15,7 @@
 - 🕊️ Self-hosted
 - 📈 Visualization of visits history
 - 💻️ API for visits history and count
-- 🏅 Low memory usage (about 12 MB)
+- 🏅 Low memory usage (about 12 MiB)
 - 📦️ First class container support
 - 🔀 Asynchronous and multithreaded
 - 📜 Informative tracing (logging) to stdout and to a log file
