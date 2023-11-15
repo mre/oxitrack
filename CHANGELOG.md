@@ -5,6 +5,7 @@
 ### Features
 
 - Verify that a referrer domain exists before inserting it to prevent submitting random domains.
+- Couple the referrers table to the time filter buttons in the stats page for a specific path. Just like in on the homepage with the visits table.
 
 ## 0.8.0
 
