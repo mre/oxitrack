@@ -19,8 +19,19 @@ export async function render_bar_chart(base_url: string, path?: string) {
 
   const data = await chart_data(checked_filter.value);
 
+  const table = document.getElementById("table")!;
   const table_body_element = document.getElementById("table_body")!;
-  table_body_element.innerHTML = data.table_body;
+
+  function update_table(data: StatsData) {
+    if (data.table_body.length > 0) {
+      table_body_element.innerHTML = data.table_body;
+      table.hidden = false;
+    } else {
+      table.hidden = true;
+    }
+  }
+
+  update_table(data);
 
   const chart = new Chart(
     document.getElementById('bar_chart') as HTMLCanvasElement, {
@@ -79,7 +90,7 @@ export async function render_bar_chart(base_url: string, path?: string) {
       chart.data.datasets[0]!.data = data.chart_data;
       chart.update();
 
-      table_body_element.innerHTML = data.table_body;
+      update_table(data);
     })
   }
 }
