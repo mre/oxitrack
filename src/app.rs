@@ -5,7 +5,7 @@ use std::net::SocketAddr;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
-    trace::{DefaultMakeSpan, DefaultOnRequest, TraceLayer},
+    trace::{DefaultMakeSpan, TraceLayer},
 };
 use tracing::Level;
 
@@ -74,7 +74,8 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .on_failure(());
 
     #[cfg(debug_assertions)]
-    let trace_layer = trace_layer.on_request(DefaultOnRequest::new().level(Level::DEBUG));
+    let trace_layer =
+        trace_layer.on_request(tower_http::trace::DefaultOnRequest::new().level(Level::DEBUG));
 
     let app = Router::new()
         .merge(static_router)
