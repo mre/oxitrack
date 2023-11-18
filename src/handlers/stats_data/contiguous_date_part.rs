@@ -1,9 +1,11 @@
 use axum_ctx::{RespErr, Status};
 use serde::{Serialize, Serializer};
 use std::fmt;
-use time::{Date, Month, OffsetDateTime};
+use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
 
-pub trait ContiguousDatePart: From<OffsetDateTime> + Serialize + Copy + PartialEq {
+pub trait ContiguousDatePart:
+    From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + PartialEq
+{
     fn next(&mut self) -> Result<(), RespErr>;
 
     fn date_truncation() -> &'static str;
@@ -14,6 +16,12 @@ pub struct ContiguousYear(i32);
 
 impl From<OffsetDateTime> for ContiguousYear {
     fn from(datetime: OffsetDateTime) -> Self {
+        Self(datetime.year())
+    }
+}
+
+impl From<PrimitiveDateTime> for ContiguousYear {
+    fn from(datetime: PrimitiveDateTime) -> Self {
         Self(datetime.year())
     }
 }
@@ -47,6 +55,15 @@ pub struct ContiguousMonth {
 
 impl From<OffsetDateTime> for ContiguousMonth {
     fn from(datetime: OffsetDateTime) -> Self {
+        Self {
+            year: datetime.year(),
+            month: datetime.month(),
+        }
+    }
+}
+
+impl From<PrimitiveDateTime> for ContiguousMonth {
+    fn from(datetime: PrimitiveDateTime) -> Self {
         Self {
             year: datetime.year(),
             month: datetime.month(),
@@ -100,6 +117,12 @@ impl From<OffsetDateTime> for ContiguousDay {
     }
 }
 
+impl From<PrimitiveDateTime> for ContiguousDay {
+    fn from(datetime: PrimitiveDateTime) -> Self {
+        Self(datetime.date())
+    }
+}
+
 impl Serialize for ContiguousDay {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -138,10 +161,19 @@ pub struct ContiguousHour {
 }
 
 impl From<OffsetDateTime> for ContiguousHour {
-    fn from(date: OffsetDateTime) -> Self {
+    fn from(datetime: OffsetDateTime) -> Self {
         Self {
-            day: ContiguousDay::from(date),
-            hour: date.hour(),
+            day: ContiguousDay::from(datetime),
+            hour: datetime.hour(),
+        }
+    }
+}
+
+impl From<PrimitiveDateTime> for ContiguousHour {
+    fn from(datetime: PrimitiveDateTime) -> Self {
+        Self {
+            day: ContiguousDay::from(datetime),
+            hour: datetime.hour(),
         }
     }
 }

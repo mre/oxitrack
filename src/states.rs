@@ -25,6 +25,8 @@ pub struct InnerAppState {
     pub tracked_origin_callback: &'static str,
     pub visitor_states: VisitorStateStore,
     pub utc_offset: UtcOffset,
+    pub utc_offset_str: &'static str,
+    pub posix_utc_offset_str: &'static str,
     pub base_url: &'static str,
     pub count_js: &'static str,
     pub http_client: reqwest::Client,
@@ -84,12 +86,25 @@ impl InnerAppState {
         .context("Failed to build the count.js script!")?
         .leak();
 
+        let (utc_offset_h, utc_offset_m, _) = utc_offset.as_hms();
+        let utc_offset_str = {
+            let sign = if utc_offset.is_negative() { '-' } else { '+' };
+            format!("{sign}{utc_offset_h:02}:{utc_offset_m:02}").leak()
+        };
+        let posix_utc_offset_str = {
+            // The opposite sign is important since this is POSIX!
+            let posix_sign = if utc_offset.is_negative() { '+' } else { '-' };
+            format!("{posix_sign}{utc_offset_h:02}:{utc_offset_m:02}").leak()
+        };
+
         Ok(Self {
             pool,
             tracked_origin,
             tracked_origin_callback,
             visitor_states,
             utc_offset,
+            utc_offset_str,
+            posix_utc_offset_str,
             base_url,
             count_js,
             http_client,
@@ -110,6 +125,10 @@ impl InnerAppState {
             None => Err(RespErr::new(Status::Internal)
                 .log_msg("Failed to change the UTC offset of a datetime!")),
         }
+    }
+
+    pub fn now_tz(&self) -> Result<OffsetDateTime, RespErr> {
+        self.apply_utc_offset(OffsetDateTime::now_utc())
     }
 }
 

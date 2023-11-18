@@ -1,10 +1,9 @@
 use anyhow::Result;
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
-use sqlx::PgPool;
-use time::OffsetDateTime;
+use time::PrimitiveDateTime;
 
-use crate::handlers::count_rows::Count;
+use crate::{handlers::count_rows::Count, states::InnerAppState};
 
 #[derive(Serialize)]
 pub struct VisitCount {
@@ -14,19 +13,20 @@ pub struct VisitCount {
 
 impl VisitCount {
     pub async fn all_sorted_by_count(
-        pool: &PgPool,
-        start_datetime: Option<OffsetDateTime>,
+        state: &'static InnerAppState,
+        start_datetime: Option<PrimitiveDateTime>,
     ) -> Result<Vec<Self>, RespErr> {
         sqlx::query_as!(
             Self,
             r#"SELECT path, COUNT(*) AS "count!" FROM paths
             INNER JOIN visits ON visits.path_id = paths.id
-            WHERE $1::timestamptz IS NULL OR registered_at > $1
+            WHERE $1::timestamp IS NULL OR timezone($2, registered_at) >= $1
             GROUP BY path
             ORDER BY "count!" DESC"#,
             start_datetime,
+            state.posix_utc_offset_str,
         )
-        .fetch_all(pool)
+        .fetch_all(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Counts query failed!")

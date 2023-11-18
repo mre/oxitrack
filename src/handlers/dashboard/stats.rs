@@ -22,12 +22,13 @@ struct Visits {
 }
 
 impl Visits {
-    async fn build(state: &InnerAppState, path_id: i64) -> Result<Self, RespErr> {
+    async fn build(state: &'static InnerAppState, path_id: i64) -> Result<Self, RespErr> {
+        let now = state.now_tz()?;
+
         let WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             first_visit,
-            ..
-        } = WholeDaysSinceFirstVisit::build(&state.pool, Some(path_id), None).await?;
+        } = WholeDaysSinceFirstVisit::build(state, Some(path_id), now, None).await?;
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits

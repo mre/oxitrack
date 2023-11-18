@@ -4,19 +4,16 @@ mod contiguous_date_part;
 pub mod last_2_days;
 pub mod last_60_days;
 pub mod referrer_count;
-mod start_datetime;
 pub mod table_body_templates;
 mod whole_days_since_first_visit;
 
 use askama::Template;
 use axum::Json;
-use sqlx::PgPool;
-pub use start_datetime::{OptionStartDateTime, StartDatetime};
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
-use time::OffsetDateTime;
+use time::{OffsetDateTime, PrimitiveDateTime};
 
 use crate::{db::VisitCount, states::InnerAppState};
 
@@ -33,7 +30,7 @@ use self::{
 use super::count_rows::CountRows;
 
 struct TruncDateCount {
-    trunc_registered_at: OffsetDateTime,
+    trunc_registered_at: PrimitiveDateTime,
     count: i64,
 }
 
@@ -53,44 +50,47 @@ where
     async fn all(
         state: &InnerAppState,
         path_id: Option<i64>,
-        start_datetime: Option<StartDatetime>,
+        now: OffsetDateTime,
+        start_datetime: Option<PrimitiveDateTime>,
     ) -> Result<Vec<Self>, RespErr> {
-        let OptionStartDateTime {
-            start: start_datetime,
-            now,
-        } = start_datetime.into();
-
         let rows = sqlx::query_as!(
             TruncDateCount,
-            r#"SELECT date_trunc($1, registered_at) AS "trunc_registered_at!",
+            r#"SELECT date_trunc($1, timezone($4, registered_at)) AS "trunc_registered_at!",
             COUNT(registered_at) AS "count!" FROM visits
-            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamptz IS NULL OR registered_at > $3)
+            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamp IS NULL OR timezone($4, registered_at) >= $3)
             GROUP BY "trunc_registered_at!"
             ORDER BY "trunc_registered_at!""#,
             D::date_truncation(),
             path_id,
             start_datetime,
+            state.posix_utc_offset_str,
         )
         .fetch_all(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to query chart data!")?;
 
-        let first_datetime = match start_datetime {
-            Some(v) => v,
+        let now_date_part = D::from(now);
+
+        let first_date_part = match start_datetime {
+            Some(v) => D::from(v),
             None => match rows.first() {
-                Some(row) => row.trunc_registered_at,
+                Some(row) => D::from(row.trunc_registered_at),
                 // all-time without any rows.
-                None => return Ok(Vec::new()),
+                None => {
+                    let datapoints = vec![Self {
+                        x: now_date_part,
+                        y: 0,
+                    }];
+                    return Ok(datapoints);
+                }
             },
         };
 
         // Fill from the last row until now if the date part of the last row is not now.
-        let now_date_part = D::from(state.apply_utc_offset(now)?);
         let additional_given_point = match rows.last() {
             Some(last_row) => {
-                let last_row_date_part =
-                    D::from(state.apply_utc_offset(last_row.trunc_registered_at)?);
+                let last_row_date_part = D::from(last_row.trunc_registered_at);
 
                 (now_date_part != last_row_date_part).then_some(Ok((now_date_part, 0)))
             }
@@ -101,15 +101,12 @@ where
         let given_points = rows
             .into_iter()
             .map(|row| {
-                let row_date_part = D::from(state.apply_utc_offset(row.trunc_registered_at)?);
+                let row_date_part = D::from(row.trunc_registered_at);
                 Ok((row_date_part, row.count as u64))
             })
             .chain(additional_given_point);
 
-        let mut aggregator = {
-            let first_date_part = D::from(state.apply_utc_offset(first_datetime)?);
-            ChartDataAggregator::new(first_date_part)
-        };
+        let mut aggregator = ChartDataAggregator::new(first_date_part);
 
         for given_point in given_points {
             let (row_date_part, count) = given_point?;
@@ -151,13 +148,13 @@ pub struct StatsData {
 impl StatsData {
     pub async fn build_response(
         chart_data: ChartData,
-        pool: &PgPool,
+        state: &'static InnerAppState,
         path_id: Option<i64>,
-        start_datetime: Option<OffsetDateTime>,
+        start_datetime: Option<PrimitiveDateTime>,
     ) -> Result<Json<Self>, RespErr> {
         let table_body = if let Some(path_id) = path_id {
             let referrer_counts =
-                ReferrerCount::all_sorted_by_count(pool, path_id, start_datetime).await?;
+                ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
             let referrer_count_rows = CountRows::from(referrer_counts);
 
             ReferrersTableBody {
@@ -165,7 +162,7 @@ impl StatsData {
             }
             .render()
         } else {
-            let visits_counts = VisitCount::all_sorted_by_count(pool, start_datetime).await?;
+            let visits_counts = VisitCount::all_sorted_by_count(state, start_datetime).await?;
             let visit_count_rows = CountRows::from(visits_counts);
 
             VisitsTableBody { visit_count_rows }.render()

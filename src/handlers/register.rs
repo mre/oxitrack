@@ -22,7 +22,7 @@ pub async fn get(
     let path_row = sqlx::query!(
         "SELECT id FROM paths
         WHERE path = $1",
-        path
+        path,
     )
     .fetch_optional(&state.pool)
     .await

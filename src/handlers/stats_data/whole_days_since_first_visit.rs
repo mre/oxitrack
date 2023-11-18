@@ -1,32 +1,30 @@
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
-use sqlx::PgPool;
-use time::OffsetDateTime;
+use time::{OffsetDateTime, PrimitiveDateTime};
 
-use super::{OptionStartDateTime, StartDatetime};
+use crate::states::InnerAppState;
 
 pub struct WholeDaysSinceFirstVisit {
     pub whole_days_since_first_visit: i64,
-    pub now: OffsetDateTime,
     pub first_visit: OffsetDateTime,
 }
 
 impl WholeDaysSinceFirstVisit {
     pub async fn build(
-        pool: &PgPool,
+        state: &'static InnerAppState,
         path_id: Option<i64>,
-        start_datetime: Option<StartDatetime>,
+        now: OffsetDateTime,
+        start_datetime: Option<PrimitiveDateTime>,
     ) -> Result<Self, RespErr> {
-        let OptionStartDateTime { start, now } = start_datetime.into();
-
         let first_visit = sqlx::query!(
             "SELECT registered_at FROM visits
-            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamptz IS NULL OR registered_at > $2)
+            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamp IS NULL OR timezone($3, registered_at) >= $2)
             ORDER BY registered_at
             LIMIT 1",
             path_id,
-            start,
+            start_datetime,
+            state.posix_utc_offset_str,
         )
-        .fetch_optional(pool)
+        .fetch_optional(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to query the first visit!")?
@@ -38,7 +36,6 @@ impl WholeDaysSinceFirstVisit {
 
         Ok(Self {
             whole_days_since_first_visit,
-            now,
             first_visit,
         })
     }

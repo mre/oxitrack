@@ -1,8 +1,7 @@
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
-use sqlx::PgPool;
-use time::OffsetDateTime;
+use time::PrimitiveDateTime;
 
-use crate::handlers::count_rows::Count;
+use crate::{handlers::count_rows::Count, states::InnerAppState};
 
 pub struct ReferrerCount {
     pub domain: String,
@@ -11,21 +10,22 @@ pub struct ReferrerCount {
 
 impl ReferrerCount {
     pub async fn all_sorted_by_count(
-        pool: &PgPool,
+        state: &'static InnerAppState,
         path_id: i64,
-        start_datetime: Option<OffsetDateTime>,
+        start_datetime: Option<PrimitiveDateTime>,
     ) -> Result<Vec<Self>, RespErr> {
         sqlx::query_as!(
             Self,
             r#"SELECT domain, COUNT(*) as "count!" FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE path_id = $1 AND ($2::timestamptz IS NULL OR registered_at > $2)
+            WHERE path_id = $1 AND ($2::timestamp IS NULL OR timezone($3, registered_at) >= $2)
             GROUP BY domain
             ORDER BY "count!" DESC"#,
             path_id,
             start_datetime,
+            state.posix_utc_offset_str,
         )
-        .fetch_all(pool)
+        .fetch_all(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to query referrers!")
