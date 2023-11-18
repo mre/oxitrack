@@ -92,7 +92,7 @@ where
             Some(last_row) => {
                 let last_row_date_part = D::from(last_row.trunc_registered_at);
 
-                (now_date_part != last_row_date_part).then_some(Ok((now_date_part, 0)))
+                (now_date_part > last_row_date_part).then_some(Ok((now_date_part, 0)))
             }
             None => Some(Ok((now_date_part, 0))),
         };
@@ -112,11 +112,11 @@ where
             let (row_date_part, count) = given_point?;
 
             // Fill the gap until the row.
-            if aggregator.next_date_part() != row_date_part {
+            if aggregator.next_date_part() < row_date_part {
                 loop {
                     aggregator.push(0)?;
 
-                    if aggregator.next_date_part() == row_date_part {
+                    if aggregator.next_date_part() >= row_date_part {
                         break;
                     }
                 }

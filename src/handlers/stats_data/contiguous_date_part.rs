@@ -1,17 +1,17 @@
 use axum_ctx::{RespErr, Status};
 use serde::{Serialize, Serializer};
-use std::fmt;
+use std::{cmp::Ordering, fmt};
 use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
 
 pub trait ContiguousDatePart:
-    From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + PartialEq
+    From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord
 {
     fn next(&mut self) -> Result<(), RespErr>;
 
     fn date_truncation() -> &'static str;
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContiguousYear(i32);
 
 impl From<OffsetDateTime> for ContiguousYear {
@@ -47,10 +47,31 @@ impl ContiguousDatePart for ContiguousYear {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ContiguousMonth {
     year: i32,
     month: Month,
+}
+
+impl Ord for ContiguousMonth {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let self_m = self.month as u8;
+        let self_y = self.year as u8;
+
+        let other_m = other.month as u8;
+        let other_y = other.year as u8;
+
+        match self_y.cmp(&other_y) {
+            Ordering::Equal => self_m.cmp(&other_m),
+            o => o,
+        }
+    }
+}
+
+impl PartialOrd for ContiguousMonth {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl From<OffsetDateTime> for ContiguousMonth {
@@ -108,7 +129,7 @@ impl ContiguousDatePart for ContiguousMonth {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContiguousDay(Date);
 
 impl From<OffsetDateTime> for ContiguousDay {
@@ -154,7 +175,7 @@ impl ContiguousDatePart for ContiguousDay {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ContiguousHour {
     day: ContiguousDay,
     hour: u8,
