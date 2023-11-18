@@ -171,6 +171,19 @@ minutes = 0
 | `/post-sleep/VISITOR_ID` | Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.                            | Only status code 200 on success |
 | `/page-left/VISITOR_ID`  | Use the visitor ID on leaving the page to record the total spent time.                                              | Only status code 200 on success |
 
+## Limitations
+
+Counting will fail if your website has more than `2^16 = 65536` concurrent visitors.
+
+The cause of this is that the registration ID is assigned periodically.
+This means that the visitor `65537` will get the ID of visitor `1`.
+When the old visitor tries to communicate with OxiTraffic with that ID,
+the communication will either fail or will be interpreted as if it was from the new visitor.
+
+This limitation can be avoided, but it would lead to higher RAM usage and slightly worse performance.
+
+That being said, if you really have more than `65536` concurrent visitors, contact me 😉
+
 ## Questions?
 
 Don't hesitate to open an issue ^^
