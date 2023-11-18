@@ -25,10 +25,14 @@ impl Visits {
     async fn build(state: &'static InnerAppState, path_id: i64) -> Result<Self, RespErr> {
         let now = state.now_tz()?;
 
-        let WholeDaysSinceFirstVisit {
+        let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             first_visit,
-        } = WholeDaysSinceFirstVisit::build(state, Some(path_id), now, None).await?;
+        }) = WholeDaysSinceFirstVisit::build(state, Some(path_id), now, None).await?
+        else {
+            return Err(RespErr::new(Status::NotFound)
+                .user_msg("The requested path has no counted visits yet."));
+        };
 
         let average_time_spent = sqlx::query!(
             "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits

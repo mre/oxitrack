@@ -14,18 +14,18 @@ pub async fn get(
 
     let start_datetime = PrimitiveDateTime::new(now.date() - Duration::days(59), Time::MIDNIGHT);
 
-    let WholeDaysSinceFirstVisit {
-        whole_days_since_first_visit,
-        ..
-    } = WholeDaysSinceFirstVisit::build(state, path_id, now, Some(start_datetime)).await?;
+    let hour_filter = WholeDaysSinceFirstVisit::build(state, path_id, now, Some(start_datetime))
+        .await?
+        .is_some_and(|v| v.whole_days_since_first_visit < 2);
 
-    let (chart_data, start_datetime) = if whole_days_since_first_visit < 2 {
+    let (chart_data, start_datetime) = if hour_filter {
         let start_datetime = PrimitiveDateTime::new(
             now.date() - Duration::days(2),
             Time::from_hms(now.hour(), 0, 0)
                 .ctx(Status::Internal)
                 .log_msg("Failed to create Time for hour data!")?,
         );
+
         (
             ChartData::Hour(DataPoint::all(state, path_id, now, Some(start_datetime)).await?),
             start_datetime,

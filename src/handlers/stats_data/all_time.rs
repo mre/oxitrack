@@ -12,10 +12,14 @@ pub async fn get(
 ) -> Result<Json<StatsData>, RespErr> {
     let now = state.now_tz()?;
 
-    let WholeDaysSinceFirstVisit {
+    let Some(WholeDaysSinceFirstVisit {
         whole_days_since_first_visit,
         ..
-    } = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?;
+    }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
+    else {
+        return Err(RespErr::new(Status::NotFound)
+            .user_msg("The requested path has no counted visits yet."));
+    };
 
     let (chart_data, start_datetime) = if whole_days_since_first_visit < 2 {
         let start_datetime = PrimitiveDateTime::new(
