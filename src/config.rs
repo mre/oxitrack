@@ -17,7 +17,7 @@ pub struct Config {
     #[serde(default)]
     pub tracked_origin_callback: Option<String>,
     #[serde(default = "default_min_delay_secs")]
-    pub min_delay_secs: u64,
+    pub min_delay_secs: u16,
     pub db: PgConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
@@ -28,7 +28,7 @@ const fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
     SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 80))
 }
-const fn default_min_delay_secs() -> u64 {
+const fn default_min_delay_secs() -> u16 {
     19
 }
 fn default_logs_dir() -> PathBuf {

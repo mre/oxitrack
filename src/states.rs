@@ -15,7 +15,7 @@ use visitor_state::VisitorStateStore;
 #[template(path = "count.js", escape = "none")]
 pub struct CountJs {
     pub base_url: &'static str,
-    pub sleep_secs: u64,
+    pub sleep_secs: u16,
 }
 
 /// The application state.

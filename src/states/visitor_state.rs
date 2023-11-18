@@ -1,8 +1,8 @@
+use rand::{seq::SliceRandom, thread_rng};
 use std::{
     mem, process,
     sync::{Mutex, MutexGuard},
 };
-
 use time::OffsetDateTime;
 use tracing::error;
 
@@ -40,7 +40,7 @@ enum VisitorState {
 }
 
 struct VisitorStateStoreInner {
-    last_id: VisitorId,
+    last_id_ind: VisitorId,
     visitor_states: Box<[VisitorState; MAX_N_CONCURRENT_VISITORS]>,
 }
 
@@ -54,27 +54,40 @@ impl VisitorStateStoreInner {
 
 pub struct VisitorStateStore {
     inner: Mutex<VisitorStateStoreInner>,
+    ind_to_id_map: Box<[VisitorId; MAX_N_CONCURRENT_VISITORS]>,
     min_secs: i64,
 }
 
 impl VisitorStateStore {
     #[must_use]
-    pub fn new(min_secs: u64) -> Self {
-        let visitors = (0..MAX_N_CONCURRENT_VISITORS)
+    pub fn new(min_secs: u16) -> Self {
+        let visitor_states = (0..MAX_N_CONCURRENT_VISITORS)
             .map(|_| VisitorState::None)
             .collect::<Vec<_>>()
             .try_into()
             .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
 
+        let inner = Mutex::new(VisitorStateStoreInner {
+            last_id_ind: 0,
+            visitor_states,
+        });
+
+        let mut ind_to_id_map: Box<[VisitorId; MAX_N_CONCURRENT_VISITORS]> = (VisitorId::MIN
+            ..=VisitorId::MAX)
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
+
+        // No protection needed during development.
+        if !cfg!(debug_assertions) {
+            let mut rng = thread_rng();
+            ind_to_id_map.shuffle(&mut rng);
+        }
+
         Self {
-            min_secs: i64::try_from(min_secs).unwrap_or_else(|_| {
-                error!("The value of minimum delay is too big!");
-                process::exit(1);
-            }),
-            inner: Mutex::new(VisitorStateStoreInner {
-                last_id: 0,
-                visitor_states: visitors,
-            }),
+            inner,
+            ind_to_id_map,
+            min_secs: i64::from(min_secs),
         }
     }
 
@@ -90,10 +103,14 @@ impl VisitorStateStore {
         let state = VisitorState::Sleeping(sleeping_state);
 
         let mut inner = self.locked();
-        let id = inner.last_id;
+        // Safety: Valid index since `ind_to_id_map` has length `VisitorIdType::MAX + 1` with `VisitorIdType::MIN = 0`.
+        let id = *unsafe {
+            self.ind_to_id_map
+                .get_unchecked(usize::from(inner.last_id_ind))
+        };
 
         *inner.get_mut(id) = state;
-        inner.last_id = inner.last_id.wrapping_add(1);
+        inner.last_id_ind = inner.last_id_ind.wrapping_add(1);
 
         id
     }
@@ -145,7 +162,7 @@ mod tests {
         assert_eq!(store.register(sleeping_state.clone()), 0);
         assert_eq!(store.register(sleeping_state.clone()), 1);
 
-        store.locked().last_id = VisitorId::MAX;
+        store.locked().last_id_ind = VisitorId::MAX;
 
         assert_eq!(store.register(sleeping_state.clone()), VisitorId::MAX);
         assert_eq!(store.register(sleeping_state), 0);
@@ -180,7 +197,7 @@ mod tests {
 
         let id = store.register(sleeping_state.clone());
 
-        std::thread::sleep(std::time::Duration::new(min_delay, 1));
+        std::thread::sleep(std::time::Duration::new(u64::from(min_delay), 1));
 
         assert_eq!(store.post_sleep(id), Some(sleeping_state));
         assert_eq!(store.post_sleep(id), None);
