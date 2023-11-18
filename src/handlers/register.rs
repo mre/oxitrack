@@ -7,13 +7,16 @@ use time::OffsetDateTime;
 
 use crate::{
     extractors::query_path::QueryPath,
-    states::{visitor_state::SleepingState, AppState},
+    states::{
+        visitor_state::{SleepingState, VisitorId},
+        AppState,
+    },
 };
 
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<u16>, RespErr> {
+) -> Result<Json<VisitorId>, RespErr> {
     // As early as possible for a correct time measurement.
     let registered_at = OffsetDateTime::now_utc();
 
