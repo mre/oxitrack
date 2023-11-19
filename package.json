@@ -4,7 +4,7 @@
     "chart.js": "^4.4.0"
   },
   "devDependencies": {
-    "@rspack/cli": "^0.3.13",
+    "@rspack/cli": "^0.3.14",
     "rustywind": "^0.20.0",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.2.2",
