@@ -17,7 +17,7 @@ impl WholeDaysSinceFirstVisit {
     ) -> Result<Option<Self>, RespErr> {
         let first_visit = sqlx::query!(
             "SELECT registered_at FROM visits
-            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamp IS NULL OR timezone($3, registered_at) >= $2)
+            WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamp IS NULL OR TIMEZONE($3, registered_at) >= $2)
             ORDER BY registered_at
             LIMIT 1",
             path_id,

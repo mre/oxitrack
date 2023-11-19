@@ -18,7 +18,7 @@ impl ReferrerCount {
             Self,
             r#"SELECT domain, COUNT(*) as "count!" FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE path_id = $1 AND ($2::timestamp IS NULL OR timezone($3, registered_at) >= $2)
+            WHERE path_id = $1 AND ($2::timestamp IS NULL OR TIMEZONE($3, registered_at) >= $2)
             GROUP BY domain
             ORDER BY "count!" DESC"#,
             path_id,

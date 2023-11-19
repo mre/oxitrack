@@ -50,7 +50,7 @@ pub async fn get(
 
     let visits = sqlx::query_as!(
         Visit,
-        r#"SELECT timezone($1, registered_at) AS "registered_at_tz!", domain AS "referrer?", time_s FROM visits
+        r#"SELECT TIMEZONE($1, registered_at) AS "registered_at_tz!", domain AS "referrer?", time_s FROM visits
         LEFT JOIN referrers ON referrers.id = referrer_id
         WHERE path_id = $2
         ORDER BY "registered_at_tz!""#,

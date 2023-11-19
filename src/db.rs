@@ -20,7 +20,7 @@ impl VisitCount {
             Self,
             r#"SELECT path, COUNT(*) AS "count!" FROM paths
             INNER JOIN visits ON visits.path_id = paths.id
-            WHERE $1::timestamp IS NULL OR timezone($2, registered_at) >= $1
+            WHERE $1::timestamp IS NULL OR TIMEZONE($2, registered_at) >= $1
             GROUP BY path
             ORDER BY "count!" DESC"#,
             start_datetime,

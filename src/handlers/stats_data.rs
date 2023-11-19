@@ -55,9 +55,9 @@ where
     ) -> Result<Vec<Self>, RespErr> {
         let rows = sqlx::query_as!(
             TruncDateCount,
-            r#"SELECT date_trunc($1, timezone($4, registered_at)) AS "trunc_registered_at!",
+            r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS "trunc_registered_at!",
             COUNT(registered_at) AS "count!" FROM visits
-            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamp IS NULL OR timezone($4, registered_at) >= $3)
+            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamp IS NULL OR TIMEZONE($4, registered_at) >= $3)
             GROUP BY "trunc_registered_at!"
             ORDER BY "trunc_registered_at!""#,
             D::date_truncation(),
