@@ -165,11 +165,11 @@ minutes = 0
 
 ### Script
 
-| Endpoint                 | Description                                                                                                         | Return                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `/register?path=PATH`    | Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting. | `JSON(u16)`                     |
-| `/post-sleep/VISITOR_ID` | Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.                            | Only status code 200 on success |
-| `/page-left/VISITOR_ID`  | Use the visitor ID on leaving the page to record the total spent time.                                              | Only status code 200 on success |
+| Endpoint                                 | Description                                                                                                         | Return                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| `/register?path=PATH`                    | Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting. | `JSON(u16)`                     |
+| `/post-sleep/VISITOR_ID`                 | Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.                            | Only status code 200 on success |
+| `/page-left/VISITOR_ID/TIME_ON_PAGE_SEC` | Use the visitor ID on leaving the page to report the total spent time on the page in seconds (`TIME_ON_PAGE_SEC`).  | Only status code 200 on success |
 
 ## Limitations
 
