@@ -13,7 +13,7 @@ pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
 use serde::Serialize;
-use time::{OffsetDateTime, PrimitiveDateTime};
+use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
 use crate::{db::VisitCount, states::InnerAppState};
 
@@ -175,4 +175,17 @@ impl StatsData {
             table_body,
         }))
     }
+}
+
+fn hour_data_start_datetime(now: OffsetDateTime) -> Result<PrimitiveDateTime, RespErr> {
+    let date = now.date() - Duration::days(2);
+    let time = Time::from_hms(now.hour(), 0, 0)
+        .ctx(Status::Internal)
+        .log_msg("Failed to create Time for hour data!")?;
+
+    Ok(PrimitiveDateTime::new(date, time))
+}
+
+fn day_data_start_datetime(now: OffsetDateTime) -> PrimitiveDateTime {
+    PrimitiveDateTime::new(now.date() - Duration::days(59), Time::MIDNIGHT)
 }

@@ -1,10 +1,12 @@
 use axum::{extract::State, Json};
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
-use time::{Duration, PrimitiveDateTime, Time};
+use axum_ctx::RespErr;
 
 use crate::{extractors::query_path::OptionalPathId, states::AppState};
 
-use super::{ChartData, DataPoint, StatsData, WholeDaysSinceFirstVisit};
+use super::{
+    day_data_start_datetime, hour_data_start_datetime, ChartData, DataPoint, StatsData,
+    WholeDaysSinceFirstVisit,
+};
 
 pub async fn get(
     State(state): AppState,
@@ -12,19 +14,14 @@ pub async fn get(
 ) -> Result<Json<StatsData>, RespErr> {
     let now = state.now_tz()?;
 
-    let start_datetime = PrimitiveDateTime::new(now.date() - Duration::days(59), Time::MIDNIGHT);
+    let start_datetime = day_data_start_datetime(now);
 
     let hour_filter = WholeDaysSinceFirstVisit::build(state, path_id, now, Some(start_datetime))
         .await?
         .is_some_and(|v| v.whole_days_since_first_visit < 2);
 
     let (chart_data, start_datetime) = if hour_filter {
-        let start_datetime = PrimitiveDateTime::new(
-            now.date() - Duration::days(2),
-            Time::from_hms(now.hour(), 0, 0)
-                .ctx(Status::Internal)
-                .log_msg("Failed to create Time for hour data!")?,
-        );
+        let start_datetime = hour_data_start_datetime(now)?;
 
         (
             ChartData::Hour(DataPoint::all(state, path_id, now, Some(start_datetime)).await?),
