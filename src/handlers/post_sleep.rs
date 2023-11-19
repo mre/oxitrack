@@ -56,17 +56,7 @@ impl Params {
         }
 
         // Check that the referrer domain actually exists to prevent submitting random domains.
-        let status = state
-            .http_client
-            .get(url.clone())
-            .send()
-            .await
-            .ok()?
-            .status();
-
-        if !status.is_success() {
-            return None;
-        }
+        state.http_client.get(url.clone()).send().await.ok()?;
 
         // There is a possible race condition here.
         // If two requests try to insert at the same time,
