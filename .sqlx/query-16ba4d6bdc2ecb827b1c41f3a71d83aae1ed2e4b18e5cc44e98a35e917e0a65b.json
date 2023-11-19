@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT domain, COUNT(*) as \"count!\" FROM visits\n            INNER JOIN referrers ON referrers.id = referrer_id\n            WHERE path_id = $1 AND ($2::timestamp IS NULL OR TIMEZONE($3, registered_at) >= $2)\n            GROUP BY domain\n            ORDER BY \"count!\" DESC",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "domain",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Timestamp",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "16ba4d6bdc2ecb827b1c41f3a71d83aae1ed2e4b18e5cc44e98a35e917e0a65b"
+}

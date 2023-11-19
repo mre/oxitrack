@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS \"trunc_registered_at!\",\n            COUNT(registered_at) AS \"count!\" FROM visits\n            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamp IS NULL OR TIMEZONE($4, registered_at) >= $3)\n            GROUP BY \"trunc_registered_at!\"\n            ORDER BY \"trunc_registered_at!\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "trunc_registered_at!",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Timestamp",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "25c4967127ecd3fe0798f5c22279c1373ecf4f556f0a3595450e29307335b794"
+}
