@@ -3,73 +3,42 @@ use axum::{
     Json,
 };
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
-use serde::{
-    ser::{self, SerializeSeq},
-    Serialize, Serializer,
-};
-use time::{OffsetDateTime, UtcOffset};
+use serde::{Serialize, Serializer};
+use time::PrimitiveDateTime;
 
-use crate::{
-    extractors::query_path::QueryPath,
-    formatters::{DatetimeFormatter, UtcOffsetFormatter},
-    states::AppState,
-};
+use crate::{extractors::query_path::QueryPath, formatters::DateTimeFormatter, states::AppState};
 
 struct Visit {
-    registered_at: OffsetDateTime,
+    registered_at_tz: PrimitiveDateTime,
     referrer: Option<String>,
-    left_at: Option<OffsetDateTime>,
+    time_s: Option<i32>,
 }
 
 #[derive(Serialize)]
 struct FormattedVisit<'a> {
-    registered_at: DatetimeFormatter,
+    registered_at: DateTimeFormatter,
     referrer: &'a Option<String>,
-    spent_time_secs: Option<i64>,
+    spent_time_secs: Option<i32>,
 }
 
-struct VisitsFormatter {
-    utc_offset: UtcOffset,
-    visits: Vec<Visit>,
-}
-
-impl VisitsFormatter {
-    fn apply_utc_offset<S>(&self, datetime: OffsetDateTime) -> Result<DatetimeFormatter, S::Error>
-    where
-        S: Serializer,
-    {
-        match datetime.checked_to_offset(self.utc_offset) {
-            Some(t) => Ok(DatetimeFormatter(t)),
-            None => Err(ser::Error::custom("Failed UTC offset conversion")),
-        }
-    }
-}
+struct VisitsFormatter(Vec<Visit>);
 
 impl Serialize for VisitsFormatter {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let mut seq = serializer.serialize_seq(Some(self.visits.len()))?;
-
-        for visit in &self.visits {
-            let element = FormattedVisit {
-                registered_at: self.apply_utc_offset::<S>(visit.registered_at)?,
-                referrer: &visit.referrer,
-                spent_time_secs: visit
-                    .left_at
-                    .map(|left_at| (left_at - visit.registered_at).whole_seconds()),
-            };
-            seq.serialize_element(&element)?;
-        }
-
-        seq.end()
+        serializer.collect_seq(self.0.iter().map(|visit| FormattedVisit {
+            registered_at: DateTimeFormatter(visit.registered_at_tz),
+            referrer: &visit.referrer,
+            spent_time_secs: visit.time_s,
+        }))
     }
 }
 
 #[derive(Serialize)]
 pub struct History {
-    utc_offset: UtcOffsetFormatter,
+    utc_offset: &'static str,
     visits: VisitsFormatter,
 }
 
@@ -81,10 +50,11 @@ pub async fn get(
 
     let visits = sqlx::query_as!(
         Visit,
-        r#"SELECT registered_at, domain AS "referrer?", left_at FROM visits
+        r#"SELECT timezone($1, registered_at) AS "registered_at_tz!", domain AS "referrer?", time_s FROM visits
         LEFT JOIN referrers ON referrers.id = referrer_id
-        WHERE path_id = $1
-        ORDER BY registered_at"#,
+        WHERE path_id = $2
+        ORDER BY "registered_at_tz!""#,
+        state.posix_utc_offset_str,
         path_id,
     )
     .fetch_all(&state.pool)
@@ -93,11 +63,8 @@ pub async fn get(
     .log_msg("History query failed!")?;
 
     let history = History {
-        utc_offset: UtcOffsetFormatter(state.utc_offset),
-        visits: VisitsFormatter {
-            utc_offset: state.utc_offset,
-            visits,
-        },
+        utc_offset: state.utc_offset_str,
+        visits: VisitsFormatter(visits),
     };
 
     Ok(Json(history))

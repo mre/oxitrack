@@ -41,7 +41,10 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     let cors_router = Router::new()
         .route("/register", get(handlers::register::get))
         .route("/post-sleep/:visitor_id", get(handlers::post_sleep::get))
-        .route("/page-left/:visitor_id", get(handlers::page_left::get))
+        .route(
+            "/page-left/:visitor_id/:time_on_page_sec",
+            get(handlers::page_left::get),
+        )
         .merge(count_js_router)
         .nest("/stats-data", chart_data_router)
         .layer(CorsLayer::new().allow_origin(allowed_origin));

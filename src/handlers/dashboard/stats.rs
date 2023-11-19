@@ -35,15 +35,15 @@ impl Visits {
         };
 
         let average_time_spent = sqlx::query!(
-            "SELECT EXTRACT(EPOCH FROM AVG(left_at - registered_at)) FROM visits
+            "SELECT AVG(time_s) FROM visits
             WHERE path_id = $1",
-            path_id
+            path_id,
         )
         .fetch_one(&state.pool)
         .await
         .ctx(Status::Internal)
         .log_msg("Failed to run the average time spent query!")?
-        .extract
+        .avg
         .and_then(|decimal| decimal.to_u64().map(SecondsFormatter));
 
         #[allow(clippy::cast_sign_loss)]

@@ -8,7 +8,7 @@ use crate::states::{visitor_state::VisitorId, AppState};
 
 pub async fn get(
     State(state): AppState,
-    Path(visitor_id): Path<VisitorId>,
+    Path((visitor_id, time_on_page_sec)): Path<(VisitorId, u16)>,
 ) -> Result<StatusCode, RespErr> {
     let visit_id = state
         .visitor_states
@@ -16,16 +16,24 @@ pub async fn get(
         .ctx(Status::BadRequest)
         .user_msg("The visitor ID is invalid or has expired!")?;
 
+    if time_on_page_sec < state.min_delay_sec {
+        return Err(RespErr::new(Status::BadRequest)
+            .user_msg("The reported time on page is less than the minimum delay!"));
+    }
+
+    let time_on_page_sec = i32::from(time_on_page_sec);
+
     sqlx::query!(
         "UPDATE visits
-        SET left_at = CURRENT_TIMESTAMP
-        WHERE id = $1",
-        visit_id
+        SET time_s = $1
+        WHERE id = $2",
+        time_on_page_sec,
+        visit_id,
     )
     .execute(&state.pool)
     .await
     .ctx(Status::Internal)
-    .log_msg(|| format!("Failed to set left_at for visit_id {visit_id}"))?;
+    .log_msg(|| format!("Failed to set time_s for visit_id {visit_id}"))?;
 
     Ok(StatusCode::OK)
 }

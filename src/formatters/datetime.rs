@@ -1,9 +1,9 @@
 use serde::{Serialize, Serializer};
-use time::OffsetDateTime;
+use time::PrimitiveDateTime;
 
-pub struct DatetimeFormatter(pub OffsetDateTime);
+pub struct DateTimeFormatter(pub PrimitiveDateTime);
 
-impl Serialize for DatetimeFormatter {
+impl Serialize for DateTimeFormatter {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
