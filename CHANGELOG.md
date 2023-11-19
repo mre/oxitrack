@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.0
+
+### BREAKING CHANGES
+
+- Require a second parameter for the endpoint `/page-left` which is the amount of time spent on the page in seconds (see the first feature below). This is not a breaking change for you if you don't use a custom JS script. You should be using the `count.js` script.
+
+### Features
+
+- Only report the spent time on page when the page is not hidden. If a visitor opens the page and leaves the tab open in the background for a while, the time measurement will stop.
+- Hide the table when its body is empty. This feature was removed when the tables were made responsive to time filter buttons. But it is back now.
+- Add protection against spam that uses registration IDs. Registration IDs are no longer serial. Before that, the first visitor got the ID 0, the next ID was 1 and so on. An evil person could send random requests to the first couple of IDs which leads to incorrect counting. This is not that easy anymore since IDs are random now.
+- The UTC offset is now displayed as `+/-HH:MM` instead of `+/-HH:MM:SS`.
+
+### Fixes
+
+- Fix bugs related to timezones.
+- Fix error when using a time filter without visits inside the related time interval.
+
 ## 0.8.1
 
 ### Features
@@ -9,7 +27,7 @@
 
 ## 0.8.0
 
-### Breaking
+### BREAKING CHANGES
 
 - There is no data directory anymore. Require the environment variable **`OXITRAFFIC_CONFIG_FILE`** to point to the config file. The environment variable `OXITRAFFIC_DATA_DIR` is deprecated. The **container image** expects the config file at the path **`/volumes/config.toml`**. You should mount the config file as a read only volume (a volume doesn't have to be a directory, it can be a file).
 - Add the **config value `logs_dir`** where log files will be placed in. The default is `/var/log/oxitraffic`, but you can change it (you need to change it if OxiTraffic doesn't have write permission for that directory). For the **container image**, you should mount a volume at `/var/log/oxitraffic` if you want to persist the logs. You can delete the old log file `oxitraffic.log`.
@@ -20,7 +38,7 @@
 
 ## 0.7.0
 
-### Breaking
+### BREAKING CHANGES
 
 - **If you already use OxiTraffic, you have to be at least on version 0.5 before updating to 0.7!** If you update from a version below 0.5, database issues will occur. Please update to 0.6.1 and then to 0.7. If you are using OxiTraffic for the first time or having a version >= 0.5, you can directly use 0.7.
 
@@ -40,7 +58,7 @@
 
 ## 0.6.0
 
-### Breaking
+### BREAKING CHANGES
 
 - Include the spent time in seconds `spent_time_secs` instead of `left_at` in the API endpoint `/api/history?path=PATH`.
 
@@ -58,7 +76,7 @@
 
 ## 0.5.0
 
-### Breaking
+### BREAKING CHANGES
 
 - **Remove the visits line chart** because it causes huge performance hits when the number of visits grows.
 - Add a **filter to only show the last 60 days**. This filter is applied by default but one can choose the **"all time" filter** to display all visits over time, but these might be grouped into months or even years instead of days depending on the total number of days.
@@ -102,7 +120,7 @@
 
 ## 0.4.0 - 0.4.5
 
-### Breaking
+### BREAKING CHANGES
 
 - **The configuration format changed from YAML to [TOML](https://toml.io)**. YAML is better than TOML for deep nestings and lists. But these are not used in the configuration and TOML is simpler and less error prone. For the migration, rename your `config.yaml` file to `config.toml` and adjust the content with inspiration from the configuration example in the [`README`](README).
 - A new configuration value `base_url` has to be added to the `config.toml` file. You have to set it to the base URL of your OxiTraffic instance.
@@ -210,7 +228,7 @@
 
 ## 0.3.0
 
-### Breaking
+### BREAKING CHANGES
 
 - Rename `DATA_DIR_OXITRAFFIC` to `OXITRAFFIC_DATA_DIR` to be consistent with other environment variables.
 - Remove the `/dashboard` nesting.
