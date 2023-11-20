@@ -55,14 +55,11 @@ pub struct ContiguousMonth {
 
 impl Ord for ContiguousMonth {
     fn cmp(&self, other: &Self) -> Ordering {
-        let self_m = self.month as u8;
-        let self_y = self.year as u8;
+        let self_month = self.month as u8;
+        let other_month = other.month as u8;
 
-        let other_m = other.month as u8;
-        let other_y = other.year as u8;
-
-        match self_y.cmp(&other_y) {
-            Ordering::Equal => self_m.cmp(&other_m),
+        match self.year.cmp(&other.year) {
+            Ordering::Equal => self_month.cmp(&other_month),
             o => o,
         }
     }
