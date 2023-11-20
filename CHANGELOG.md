@@ -6,6 +6,10 @@
 
 - Call `post-sleep` only after spending the minimum required amount on the page. The time while the tab is hidden is not counted anymore.
 
+### Fixes
+
+- Fix a bug related to the comparison of years.
+
 ## 0.9.0
 
 ### BREAKING CHANGES
