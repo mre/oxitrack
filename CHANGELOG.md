@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1
+
+### Features
+
+- Call `post-sleep` only after spending the minimum required amount on the page. The time while the tab is hidden is not counted anymore.
+
 ## 0.9.0
 
 ### BREAKING CHANGES

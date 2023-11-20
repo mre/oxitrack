@@ -15,7 +15,7 @@ use visitor_state::VisitorStateStore;
 #[template(path = "count.js", escape = "none")]
 pub struct CountJs {
     pub base_url: &'static str,
-    pub sleep_secs: u16,
+    pub min_delay_secs: u16,
 }
 
 /// The application state.
@@ -81,7 +81,7 @@ impl InnerAppState {
 
         let count_js = CountJs {
             base_url,
-            sleep_secs: config.min_delay_secs + 1,
+            min_delay_secs: config.min_delay_secs + 1,
         }
         .render()
         .context("Failed to build the count.js script!")?

@@ -4,11 +4,10 @@ async function count() {
     return;
   }
 
+  // Register, get an ID and start time measurement
+  const registrationResp = await fetch("{{ base_url }}/register?path=" + encodeURIComponent(window.location.pathname));
   let startTime = new Date();
   let timeOnPageMs = 0;
-
-  // Register and get an ID
-  const registrationResp = await fetch("{{ base_url }}/register?path=" + encodeURIComponent(window.location.pathname));
   const visitorId = await registrationResp.json();
 
   // Measure time only while the page is visible
@@ -20,8 +19,15 @@ async function count() {
     }
   });
 
-  // Sleep the required amount before being able to call `/post-sleep`
-  await new Promise(r => setTimeout(r, 1000 * parseInt("{{ sleep_secs }}")));
+  // Sleep the required amount before calling `/post-sleep`
+  const minDelayMs = 1000 * parseInt("{{ min_delay_secs }}");
+  do {
+    await new Promise(r => setTimeout(r, minDelayMs));
+
+    const newStartTime = new Date();
+    timeOnPageMs += newStartTime.getTime() - startTime.getTime();
+    startTime = newStartTime;
+  } while (timeOnPageMs < minDelayMs);
 
   // Prepare query parameters
   let queryParams = "";
