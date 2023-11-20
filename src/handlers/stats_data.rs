@@ -72,19 +72,17 @@ where
 
         let now_date_part = D::from(now);
 
-        let first_date_part = match start_datetime {
-            Some(v) => D::from(v),
-            None => match rows.first() {
-                Some(row) => D::from(row.trunc_registered_at),
-                // all-time without any rows.
-                None => {
-                    let datapoints = vec![Self {
-                        x: now_date_part,
-                        y: 0,
-                    }];
-                    return Ok(datapoints);
-                }
-            },
+        let first_date_part = if let Some(start_datetime) = start_datetime {
+            D::from(start_datetime)
+        } else if let Some(row) = rows.first() {
+            D::from(row.trunc_registered_at)
+        } else {
+            // `all-time` in month or year aggregation without any rows.
+            let datapoints = vec![Self {
+                x: now_date_part,
+                y: 0,
+            }];
+            return Ok(datapoints);
         };
 
         // Fill from the last row until now if the date part of the last row is not now.
