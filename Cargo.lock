@@ -915,9 +915,9 @@ checksum = "b5e6163cb8c49088c2c36f57875e58ccd8c87c7427f7fbd50ea6710b2f3f2e8f"
 
 [[package]]
 name = "logs-wheel"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63fa81e1df0576818ff2dd01610feddf5e04090cd6f1ce161b9be497a28c2ab1"
+checksum = "9bf058e2b219c9452744722a9270e8c9c70ed3e389ccce8ccf08a7f099ce94b6"
 dependencies = [
  "flate2",
  "time",
@@ -1083,9 +1083,9 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.27"
+version = "0.0.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a33a7cb4b4161e79249046638ea523459676454aa53d2cda5afd277ee634c5b"
+checksum = "1b051cadc316838130c838af31440a586d7b7341a00d3edd0e60b79355b6bae4"
 dependencies = [
  "anyhow",
  "askama",
