@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id FROM referrers\n            WHERE domain = $1",
+  "query": "INSERT INTO paths(path)\n            VALUES ($1)\n            ON CONFLICT ON CONSTRAINT unique_path DO NOTHING\n            RETURNING id",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       false
     ]
   },
-  "hash": "2cb44470c3678f21008b0c1df67cb72244c8ea9f2c1007a8b4af4ff3c0aea76c"
+  "hash": "89230a0f149d2db936f1bfe96a8247d2dea2c83e0492d809003158300e9c5202"
 }

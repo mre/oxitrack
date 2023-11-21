@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id FROM paths\n            WHERE path = $1",
+  "query": "SELECT id FROM referrers\n            WHERE domain = $1\n            LIMIT 1",
   "describe": {
     "columns": [
       {
@@ -18,5 +18,5 @@
       false
     ]
   },
-  "hash": "580e03dceecba898ad4cf292cb1ebaeaebb69b646d01909de45002adcf375d6f"
+  "hash": "ff6f60da0e85070dedb2d2591cd81bcc37cdc2b9d0cc00447c9f11a22af039a5"
 }

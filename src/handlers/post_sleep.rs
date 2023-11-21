@@ -44,7 +44,8 @@ impl Params {
 
         let referrer_row = sqlx::query!(
             "SELECT id FROM referrers
-            WHERE domain = $1",
+            WHERE domain = $1
+            LIMIT 1",
             domain,
         )
         .fetch_optional(&mut *tx)
@@ -63,7 +64,8 @@ impl Params {
         // then only one insertion will be succussful.
         // If the insertion fails because of the constraint, we will try to select.
         let inserted_row = sqlx::query!(
-            "INSERT INTO referrers(domain) VALUES ($1)
+            "INSERT INTO referrers(domain)
+            VALUES ($1)
             ON CONFLICT ON CONSTRAINT unique_domain DO NOTHING
             RETURNING id",
             domain,
@@ -79,7 +81,8 @@ impl Params {
         // A concurrent request inserted first.
         sqlx::query!(
             "SELECT id FROM referrers
-            WHERE domain = $1",
+            WHERE domain = $1
+            LIMIT 1",
             domain,
         )
         .fetch_one(&mut *tx)
@@ -113,7 +116,8 @@ pub async fn get(
     let referrer_id = params.referrer_id(state, &mut tx).await;
 
     let visit_id = sqlx::query!(
-        "INSERT INTO visits(path_id, registered_at, referrer_id) VALUES ($1, $2, $3)
+        "INSERT INTO visits(path_id, registered_at, referrer_id)
+        VALUES ($1, $2, $3)
         RETURNING id",
         path_id,
         registered_at,

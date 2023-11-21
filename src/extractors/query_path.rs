@@ -32,7 +32,8 @@ impl QueryPath {
 
         let id = sqlx::query!(
             "SELECT id FROM paths
-            WHERE path = $1",
+            WHERE path = $1
+            LIMIT 1",
             normalized,
         )
         .fetch_one(pool)

@@ -24,7 +24,8 @@ pub async fn get(
 
     let path_row = sqlx::query!(
         "SELECT id FROM paths
-        WHERE path = $1",
+        WHERE path = $1
+        LIMIT 1",
         path,
     )
     .fetch_optional(&state.pool)
@@ -55,10 +56,11 @@ pub async fn get(
         // then only one insertion will be succussful.
         // If the insertion fails because of the constraint, we will try to select.
         let inserted_row = sqlx::query!(
-            "INSERT INTO paths(path) VALUES ($1)
+            "INSERT INTO paths(path)
+            VALUES ($1)
             ON CONFLICT ON CONSTRAINT unique_path DO NOTHING
             RETURNING id",
-            path
+            path,
         )
         .fetch_optional(&state.pool)
         .await
@@ -71,8 +73,9 @@ pub async fn get(
             // A concurrent request inserted first.
             sqlx::query!(
                 "SELECT id FROM paths
-                WHERE path = $1",
-                path
+                WHERE path = $1
+                LIMIT 1",
+                path,
             )
             .fetch_one(&state.pool)
             .await
