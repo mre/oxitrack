@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.2
+
+### Features
+
+- Don't count the domain of OxiTraffic as a referrer.
+
 ## 0.9.1
 
 ### Features

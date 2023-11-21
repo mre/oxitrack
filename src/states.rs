@@ -7,6 +7,7 @@ use axum_ctx::{RespErr, Status};
 use sqlx::PgPool;
 use std::time::Duration;
 use time::{OffsetDateTime, UtcOffset};
+use url::Url;
 
 use crate::config::Config;
 use visitor_state::VisitorStateStore;
@@ -29,6 +30,7 @@ pub struct InnerAppState {
     pub utc_offset_str: &'static str,
     pub posix_utc_offset_str: &'static str,
     pub base_url: &'static str,
+    pub base_origin: &'static str,
     pub count_js: &'static str,
     pub http_client: reqwest::Client,
 }
@@ -78,6 +80,13 @@ impl InnerAppState {
         let visitor_states = VisitorStateStore::new(config.min_delay_secs);
 
         let base_url = config.base_url.leak();
+        let base_origin = Url::parse(base_url)
+            .context("Failed to parse the base URL configuration value!")?
+            .origin();
+        if !base_origin.is_tuple() {
+            bail!("Failed to parse the origin of the base URL configuration value!");
+        }
+        let base_origin = base_origin.ascii_serialization().leak();
 
         let count_js = CountJs {
             base_url,
@@ -108,6 +117,7 @@ impl InnerAppState {
             utc_offset_str,
             posix_utc_offset_str,
             base_url,
+            base_origin,
             count_js,
             http_client,
         })
