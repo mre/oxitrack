@@ -18,7 +18,7 @@
 - 🏅 Low memory usage (about 12 MiB)
 - 📦️ First class container support
 - 🔀 Asynchronous and multithreaded
-- 📜 Informative tracing (logging) to stdout and to a log file
+- 📜 Informative tracing (logging)
 - 🆓 Free & open source (AGPLv3)
 - 🦀 Written in Rust (**oxi**dized)
 
