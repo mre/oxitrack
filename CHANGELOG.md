@@ -5,7 +5,7 @@
 ### Features
 
 - Don't count the domain of OxiTraffic as a referrer.
-- Improve the documentation of the couting script `count.js`.
+- Improve the documentation of the counting script `count.js`.
 
 ## 0.9.1
 
