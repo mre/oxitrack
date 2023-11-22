@@ -6,12 +6,12 @@
 
         <link rel="icon"
               type="image/x-icon"
-              href="/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}" />
+              href="/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}">
 
         <title>{{- base.title -}}</title>
 
         <link href='/static/main.css?v={{ env!("BUILD_TIMESTAMP") }}'
-              rel="stylesheet" />
+              rel="stylesheet">
     </head>
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-4">
@@ -19,7 +19,7 @@
             <a href="/">
                 <img class="w-9 h-9 transition duration-500 hover:scale-110"
                      src='/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
-                     alt="Logo" />
+                     alt="Logo">
             </a>
 
             <nav class="font-bold">
@@ -34,9 +34,7 @@
         <footer class="py-2 mt-auto text-sm text-center bg-gray-100 rounded-xl">
             <p>All datetimes have the UTC offset {{ base.utc_offset }}</p>
             <p>
-                v{{ env!("CARGO_PKG_VERSION") }} - <a href="https://codeberg.org/mo8it/oxitraffic"
-    target="_blank"
-    rel="noreferrer">Source Code</a> 🦀
+                v{{ env!("CARGO_PKG_VERSION") }} - <a href="https://codeberg.org/mo8it/oxitraffic" target="_blank">Source Code</a> 🦀
             </p>
         </footer>
 

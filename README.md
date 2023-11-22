@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="100" src="https://codeberg.org/mo8it/oxitraffic/raw/branch/main/static/logo.svg" />
+  <img height="100" src="https://codeberg.org/mo8it/oxitraffic/raw/branch/main/static/logo.svg">
 </p>
 <h1 align="center">OxiTraffic</h1>
 <p align="center">Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
