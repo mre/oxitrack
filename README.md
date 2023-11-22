@@ -3,7 +3,7 @@
 </p>
 <h1 align="center">OxiTraffic</h1>
 <p align="center">Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
-<h2 align="center">➡️ <a href="https://oxitraffic.mo8it.com">Demo<a/> ⬅️</h2>
+<h2 align="center">➡️ <a href="https://oxitraffic.mo8it.com">Demo</a> ⬅️</h2>
 
 ## Features
 
