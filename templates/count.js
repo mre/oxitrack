@@ -43,16 +43,12 @@ async function count() {
 
   let queryParams = "";
   // Extract the referrer origin respecting the `no-referrer` policy
-  if (document.referrer.length > 0) {
-    try {
-      const referrer = new URL(document.referrer);
-      if (referrer.protocol === "https:" && referrer.origin !== window.location.origin) {
-        queryParams = "?referrer_origin=" + encodeURIComponent(referrer.origin);
-      }
-    } catch (e) {
-      console.log(e);
+  try {
+    const referrer = new URL(document.referrer);
+    if (referrer.protocol === "https:" && referrer.origin !== window.location.origin) {
+      queryParams = "?referrer_origin=" + encodeURIComponent(referrer.origin);
     }
-  }
+  } catch { }
 
   // Call `/post-sleep` for the visit to be counted
   await fetch("{{ base_url }}/post-sleep/" + visitorId + queryParams, fetchOptions);
