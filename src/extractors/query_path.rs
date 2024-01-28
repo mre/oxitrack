@@ -49,30 +49,6 @@ impl QueryPath {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::QueryPath;
-
-    #[test]
-    fn path_normalization() {
-        for (before, after) in [
-            ("/blog", "/blog"),
-            ("", "/"),
-            ("/blog/", "/blog"),
-            ("/", "/"),
-            ("//", "/"),
-            ("/nested/path", "/nested/path"),
-            ("/nested/path///", "/nested/path"),
-        ] {
-            let path = QueryPath {
-                path: before.to_owned(),
-            };
-
-            assert_eq!(path.normalized(), after);
-        }
-    }
-}
-
 pub struct OptionalPathId(pub Option<i64>);
 
 #[async_trait::async_trait]
@@ -94,5 +70,29 @@ impl FromRequestParts<&'static InnerAppState> for OptionalPathId {
         let path_id = path.normalized_with_id(&state.pool).await?.path_id;
 
         Ok(Self(Some(path_id)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::QueryPath;
+
+    #[test]
+    fn path_normalization() {
+        for (before, after) in [
+            ("/blog", "/blog"),
+            ("", "/"),
+            ("/blog/", "/blog"),
+            ("/", "/"),
+            ("//", "/"),
+            ("/nested/path", "/nested/path"),
+            ("/nested/path///", "/nested/path"),
+        ] {
+            let path = QueryPath {
+                path: before.to_owned(),
+            };
+
+            assert_eq!(path.normalized(), after);
+        }
     }
 }
