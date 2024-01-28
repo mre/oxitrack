@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
 use axum::{http::header::HeaderValue, routing::get, Router};
-use oxi_axum_helpers::{static_router, Initialization};
+use oxi_axum_helpers::{init_config, init_tracer, static_router};
 use std::net::SocketAddr;
+use time::UtcOffset;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
@@ -12,7 +13,10 @@ use tracing::Level;
 use crate::{config::Config, handlers, states::InnerAppState};
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
-    let Initialization { config, utc_offset } = Initialization::<Config>::try_init("oxitraffic")?;
+    init_tracer()?;
+    let config = init_config::<Config>("oxitraffic")?;
+    let utc_offset = UtcOffset::from_hms(config.utc_offset.hours, config.utc_offset.minutes, 0)
+        .context("Invalid UTC offset configuration!")?;
 
     let socket_address = config.socket_address;
 
@@ -95,7 +99,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 mod tests {
     use super::app;
     use axum::{
-        body::Body,
+        body::{to_bytes, Body},
         http::{header, Request, StatusCode},
     };
     use figment::Jail;
@@ -180,7 +184,6 @@ mod tests {
                 socket_address = "127.0.0.1:8080"
                 base_url = "http://127.0.0.1:8080"
                 tracked_origin = "https://mo8it.com"
-                logs_dir = "logs"
 
                 min_delay_secs = 0
 
@@ -205,7 +208,14 @@ mod tests {
                             .uri(req.path)
                             .body(Body::empty())
                             .unwrap();
-                        let response = app.ready().await.unwrap().call(request).await.unwrap();
+                        let response = app
+                            .as_service()
+                            .ready()
+                            .await
+                            .unwrap()
+                            .call(request)
+                            .await
+                            .unwrap();
 
                         assert_eq!(response.status(), req.status, "path={}", req.path);
 
@@ -225,7 +235,7 @@ mod tests {
 
                         if let Some(output) = req.output {
                             assert_eq!(
-                                hyper::body::to_bytes(response.into_body()).await.unwrap(),
+                                to_bytes(response.into_body(), 1 << 10).await.unwrap(),
                                 output,
                                 "path={}",
                                 req.path

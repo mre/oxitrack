@@ -1,5 +1,5 @@
 use axum::{
-    body::Full,
+    body::Body,
     extract::State,
     http::header::{self, HeaderValue},
     response::{IntoResponse, Response},
@@ -12,7 +12,7 @@ static CACHE_CONTROL: HeaderValue =
     HeaderValue::from_static("public, max-age=86400, must-revalidate");
 
 pub async fn get(State(state): AppState) -> Response {
-    let mut res = Full::from(state.count_js).into_response();
+    let mut res = Body::from(state.count_js).into_response();
 
     res.headers_mut().extend([
         (header::CONTENT_TYPE, CONTENT_TYPE.clone()),
