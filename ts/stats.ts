@@ -94,3 +94,5 @@ export async function render_bar_chart(base_url: string, path?: string) {
     })
   }
 }
+
+(window as any).render_bar_chart = render_bar_chart;

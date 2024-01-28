@@ -3,7 +3,7 @@ gzip_options := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
 build-static-dev:
 	{{tailwind_cmd}}
-	npx rspack --mode development
+	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
 	gzip --fast {{gzip_options}}
 
 alias r := run
@@ -31,7 +31,7 @@ publish:
 	cargo test
 
 	{{tailwind_cmd}} -m
-	npx rspack
+	npx esbuild --bundle --sourcemap --minify --outdir=static ts/stats.ts
 	gzip --best {{gzip_options}}
 
 	cargo publish --allow-dirty
