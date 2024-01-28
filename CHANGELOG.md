@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0
+
+### BREAKING CHANGES
+
+- Remove the `logs_dir` configuration value and go back to logging to stdout. `/var/log/oxitraffic` is therefore not used anymore. Remove the volume mount to `/var/log/oxitraffic` if you had it. I wasn't aware of the power of journald 😅
+
+### Features
+
+- Allow customizing the logging level using the `RUST_LOG` environment variable.
+
 ## 0.9.2
 
 ### Features

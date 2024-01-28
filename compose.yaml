@@ -7,8 +7,6 @@ services:
     volumes:
       # You can change the source to point to your configuration file.
       - ./config.toml:/volumes/config.toml:Z,ro
-      # You can change the source to point to a specific logs directory.
-      - ./logs:/var/log/oxitraffic:Z
     # You can replace the ports section with an internal network for a reverse proxy (like Traefik).
     ports:
       # You can change the source port from 8080.

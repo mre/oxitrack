@@ -1,9 +1,15 @@
-use oxi_axum_helpers::{ConfigBuilder, HMUtcOffset, PgConfig};
+use oxi_axum_helpers::PgConfig;
 use serde::Deserialize;
-use std::{
-    net::{Ipv4Addr, SocketAddr, SocketAddrV4},
-    path::{Path, PathBuf},
-};
+use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+
+#[derive(Deserialize, Default)]
+#[serde(deny_unknown_fields)]
+pub struct HMUtcOffset {
+    #[serde(default)]
+    pub hours: i8,
+    #[serde(default)]
+    pub minutes: i8,
+}
 
 /// Configuration.
 #[derive(Deserialize)]
@@ -21,8 +27,6 @@ pub struct Config {
     pub db: PgConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,
-    #[serde(default = "default_logs_dir")]
-    pub logs_dir: PathBuf,
 }
 const fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
@@ -30,17 +34,4 @@ const fn default_socket_address() -> SocketAddr {
 }
 const fn default_min_delay_secs() -> u16 {
     19
-}
-fn default_logs_dir() -> PathBuf {
-    PathBuf::from("/var/log/oxitraffic")
-}
-
-impl ConfigBuilder for Config {
-    fn hm_utc_offset(&self) -> &HMUtcOffset {
-        &self.utc_offset
-    }
-
-    fn logs_dir(&self) -> &Path {
-        &self.logs_dir
-    }
 }
