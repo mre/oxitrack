@@ -1178,9 +1178,9 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.29"
+version = "0.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb1c5879e9ba5b8d0585921105b93508100c4eae503966ed05daf1885b70c04b"
+checksum = "cc18c3e1487d6a6a9839c37bef6b51516068629d6ebb6da4c317dff0e2b867c9"
 dependencies = [
  "anyhow",
  "askama",
@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "oxitraffic"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "anyhow",
  "askama",

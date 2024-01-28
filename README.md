@@ -142,7 +142,7 @@ minutes = 0
 ### Logging
 
 Oxitraffic logs to stdout.
-The default log level is `error`, but you can choose one of the following other levels:
+The default log level is `info`, but you can choose one of the following other levels:
 
 - `off`
 - `error`
