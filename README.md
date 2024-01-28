@@ -173,6 +173,8 @@ minutes = 0
 
 ## Limitations
 
+### Number of concurrent visitors
+
 Counting will fail if your website has more than `2^16 = 65536` concurrent visitors.
 
 The cause of this is that the registration ID is assigned periodically.
@@ -182,7 +184,17 @@ the communication will either fail or will be interpreted as if it was from the 
 
 This limitation can be avoided, but it would lead to higher RAM usage and slightly worse performance.
 
-That being said, if you really have more than `65536` concurrent visitors, contact me 😉
+That being said, if you really have more than `65536` concurrent visitors, open an issue 😉
+
+### Single instance
+
+OxiTraffic is designed as a lightweight single instance app.
+Although it uses a database, it is still stateful for performance reasons and to make self-hosting easier by avoiding an additional dependency like Redis.
+A single instance is more than enough for a single website.
+
+The state that prevents having more than one instance for a single website is the cache of visits before reaching the minimum delay.
+
+That being said, if you still need to scale horizontally, open an issue for adding something like Redis 😉
 
 ## Questions?
 
