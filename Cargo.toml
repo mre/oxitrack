@@ -30,12 +30,12 @@ axum = { version = "0.7.4", default-features = false, features = ["http1", "toki
 bigdecimal = "0.4.2"
 oxi-axum-helpers = { version = "0.0.30", features = ["toml", "postgres", "templates", "static_router"] }
 rand = "0.8.5"
-reqwest = { version = "0.11.23", default-features = false, features = ["rustls-tls"] }
-serde_json = "1.0.112"
+reqwest = { version = "0.11.24", default-features = false, features = ["rustls-tls"] }
+serde_json = "1.0.113"
 serde_urlencoded = "0.7.1"
 serde = { version = "1.0.196", features = ["derive"] }
 sqlx = { version = "0.7.3", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "macros", "migrate", "time", "bigdecimal"] }
-time = { version = "0.3.31" }
+time = { version = "0.3.32" }
 tokio = { version = "1.35.1", default-features = false, features = ["rt-multi-thread"] }
 tower-http = { version = "0.5.1", default-features = false, features = ["cors", "trace", "compression-gzip"] }
 tracing = "0.1.40"
