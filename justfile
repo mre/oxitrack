@@ -1,10 +1,10 @@
 tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
-gzip_options := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
+gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
 build-static-dev:
 	{{tailwind_cmd}}
 	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
-	gzip --fast {{gzip_options}}
+	gzip --fast {{gzip_args}}
 
 alias r := run
 
@@ -32,7 +32,7 @@ publish:
 
 	{{tailwind_cmd}} -m
 	npx esbuild --bundle --sourcemap --minify --outdir=static ts/stats.ts
-	gzip --best {{gzip_options}}
+	gzip --best {{gzip_args}}
 
 	cargo publish --allow-dirty
 
