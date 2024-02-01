@@ -1,26 +1,24 @@
+# Run `just --list` to see available recipes
+
 tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
 gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
-build-static-dev:
+_build-static-dev:
 	{{tailwind_cmd}}
 	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
 	gzip --fast {{gzip_args}}
 
-alias r := run
+# Initialize the project for development or compilation from source
+init: && _build-static-dev
+	npm install
 
 # Run the binary
-run: build-static-dev
+run: _build-static-dev
 	OXITRAFFIC_CONFIG_FILE=dev/config.toml cargo r
-
-alias w := watch
 
 # Run the binary in watch mode
 watch:
 	watchexec -nr -w src -w templates -w ts just r
-
-# Initialize the project for development or compilation from source
-init: && build-static-dev
-	npm install
 
 # Publish on crates.io
 publish:
@@ -42,3 +40,6 @@ publish:
 	buildah build -t oxitraffic:latest .
 	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:v$(cargo read-manifest | jaq -r '.version')
 	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:latest
+
+alias r := run
+alias w := watch
