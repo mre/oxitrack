@@ -3,6 +3,8 @@
 tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
 gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
+default: watch
+
 _build-static-dev:
 	{{tailwind_cmd}}
 	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
