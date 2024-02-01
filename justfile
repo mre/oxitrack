@@ -3,6 +3,7 @@
 tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
 gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
+# Equivalent to `watch`
 default: watch
 
 _build-static-dev:
