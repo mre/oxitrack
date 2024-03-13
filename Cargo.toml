@@ -22,28 +22,28 @@ include = [
 ]
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.81"
 askama = { version = "0.12.1", default-features = false }
 async-trait = "0.1.77"
 axum-ctx = "0.2.0"
 axum = { version = "0.7.4", default-features = false, features = ["http1", "tokio", "json", "query"] }
 bigdecimal = "0.4.2"
-oxi-axum-helpers = { version = "0.0.30", features = ["toml", "postgres", "templates", "static_router"] }
+oxi-axum-helpers = { version = "0.0.31", features = ["toml", "postgres", "templates", "static_router"] }
 rand = "0.8.5"
-reqwest = { version = "0.11.24", default-features = false, features = ["rustls-tls"] }
-serde_json = "1.0.113"
+reqwest = { version = "0.11.26", default-features = false, features = ["rustls-tls"] }
+serde_json = "1.0.114"
 serde_urlencoded = "0.7.1"
-serde = { version = "1.0.196", features = ["derive"] }
-sqlx = { version = "0.7.3", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "macros", "migrate", "time", "bigdecimal"] }
-time = "0.3.32"
-tokio = { version = "1.35.1", default-features = false, features = ["rt-multi-thread"] }
-tower-http = { version = "0.5.1", default-features = false, features = ["cors", "trace", "compression-gzip"] }
+serde = { version = "1.0.197", features = ["derive"] }
+sqlx = { version = "0.7.4", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls", "macros", "migrate", "time", "bigdecimal"] }
+time = "0.3.34"
+tokio = { version = "1.36.0", default-features = false, features = ["rt-multi-thread"] }
+tower-http = { version = "0.5.2", default-features = false, features = ["cors", "trace", "compression-gzip"] }
 tracing = "0.1.40"
 url = "2.5.0"
 
 [dev-dependencies]
 figment = { version = "0.10.14", features = ["test"] }
-hyper = { version = "1.1.0", default-features = false }
+hyper = { version = "1.2.0", default-features = false }
 mime = "0.3.17"
 tower = { version = "0.4.13", default-features = false }
 typed-builder = "0.18.1"
