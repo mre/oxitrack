@@ -51,9 +51,13 @@ typed-builder = "0.18.1"
 [build-dependencies]
 time = { version = "0.3.30" }
 
+[profile.dev]
+strip = "debuginfo"
+
 [profile.release]
 lto = true
 codegen-units = 1
+strip = "debuginfo"
 
 [profile.dev.package.sqlx-macros]
 opt-level = 3
