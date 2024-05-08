@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.2
+
+### Fixes
+
+- Break large words in tables to avoid exceeding the screen width.
+
 ## 0.10.0-0.10.1
 
 ### BREAKING CHANGES
