@@ -1,5 +1,5 @@
 use axum::{extract::State, Json};
-use axum_ctx::{RespErr, Status};
+use axum_ctx::*;
 
 use crate::{extractors::query_path::OptionalPathId, states::AppState};
 
@@ -19,7 +19,7 @@ pub async fn get(
         ..
     }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
     else {
-        return Err(RespErr::new(Status::NotFound)
+        return Err(RespErr::new(StatusCode::NOT_FOUND)
             .user_msg("The requested path has no counted visits yet."));
     };
 

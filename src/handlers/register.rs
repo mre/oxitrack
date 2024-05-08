@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Json,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use time::OffsetDateTime;
 
 use crate::{
@@ -30,7 +30,7 @@ pub async fn get(
     )
     .fetch_optional(&state.pool)
     .await
-    .ctx(Status::Internal)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
     .log_msg(|| format!("Failed to run the path query for the path {path}!"))?;
 
     let path_id = if let Some(row) = path_row {
@@ -41,12 +41,12 @@ pub async fn get(
             .get(state.tracked_url_from_path(path))
             .send()
             .await
-            .ctx(Status::NotFound)
+            .ctx(StatusCode::NOT_FOUND)
             .user_msg(|| format!("Failed to look up the path {path} on the tracked website!"))?
             .status();
 
         if !status.is_success() {
-            return Err(RespErr::new(Status::NotFound).user_msg(format!(
+            return Err(RespErr::new(StatusCode::NOT_FOUND).user_msg(format!(
                 "The path {path} was not found on the tracked website!"
             )));
         }
@@ -64,7 +64,7 @@ pub async fn get(
         )
         .fetch_optional(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg(|| format!("Failed to insert the path {path}!"))?;
 
         if let Some(row) = inserted_row {
@@ -79,7 +79,7 @@ pub async fn get(
             )
             .fetch_one(&state.pool)
             .await
-            .ctx(Status::Internal)
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
             .log_msg(|| format!("Failed to insert the path {path}!"))?
             .id
         }

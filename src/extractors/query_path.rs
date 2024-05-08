@@ -1,5 +1,5 @@
 use axum::{extract::FromRequestParts, http::request::Parts};
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -38,7 +38,7 @@ impl QueryPath {
         )
         .fetch_one(pool)
         .await
-        .ctx(Status::NotFound)
+        .ctx(StatusCode::NOT_FOUND)
         .user_msg(|| format!("Path {normalized} not found!"))?
         .id;
 
@@ -64,7 +64,7 @@ impl FromRequestParts<&'static InnerAppState> for OptionalPathId {
         };
 
         let path = serde_urlencoded::from_str::<QueryPath>(query)
-            .ctx(Status::BadRequest)
+            .ctx(StatusCode::BAD_REQUEST)
             .user_msg("Failed to deserialize the `path` query parameter!")?;
 
         let path_id = path.normalized_with_id(&state.pool).await?.path_id;

@@ -1,4 +1,4 @@
-use axum_ctx::{RespErr, Status};
+use axum_ctx::*;
 
 use super::{contiguous_date_part::ContiguousDatePart, DataPoint};
 
@@ -33,7 +33,7 @@ where
 
     pub fn push(&mut self, count: u64) -> Result<(), RespErr> {
         if self.inner.len() == Self::MAX_LEN {
-            return Err(RespErr::new(Status::Internal)
+            return Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .log_msg("The maximum length of ChartDataVec is exceeded!"));
         }
 

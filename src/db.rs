@@ -1,5 +1,4 @@
-use anyhow::Result;
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use serde::Serialize;
 use time::PrimitiveDateTime;
 
@@ -15,7 +14,7 @@ impl VisitCount {
     pub async fn all_sorted_by_count(
         state: &'static InnerAppState,
         start_datetime: Option<PrimitiveDateTime>,
-    ) -> Result<Vec<Self>, RespErr> {
+    ) -> RespResult<Vec<Self>> {
         sqlx::query_as!(
             Self,
             r#"SELECT path, COUNT(*) AS "count!" FROM paths
@@ -28,7 +27,7 @@ impl VisitCount {
         )
         .fetch_all(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Counts query failed!")
     }
 }

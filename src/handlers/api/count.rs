@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Json,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
@@ -20,7 +20,7 @@ pub async fn get(
     )
     .fetch_one(&state.pool)
     .await
-    .ctx(Status::Internal)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
     .log_msg("Failed to query the count of visits.")
     .map(|row| Json(row.count))
 }

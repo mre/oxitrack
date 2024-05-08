@@ -1,4 +1,4 @@
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use time::{OffsetDateTime, PrimitiveDateTime};
 
 use crate::states::InnerAppState;
@@ -26,7 +26,7 @@ impl WholeDaysSinceFirstVisit {
         )
         .fetch_optional(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to query the first visit!")?;
 
         let first_visit = match first_visit {

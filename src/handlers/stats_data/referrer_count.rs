@@ -1,4 +1,4 @@
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use time::PrimitiveDateTime;
 
 use crate::{handlers::count_rows::Count, states::InnerAppState};
@@ -27,7 +27,7 @@ impl ReferrerCount {
         )
         .fetch_all(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to query referrers!")
     }
 }

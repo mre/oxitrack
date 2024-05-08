@@ -2,7 +2,7 @@ use axum::{
     extract::{Query, State},
     Json,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use serde::{Serialize, Serializer};
 use time::PrimitiveDateTime;
 
@@ -59,7 +59,7 @@ pub async fn get(
     )
     .fetch_all(&state.pool)
     .await
-    .ctx(Status::Internal)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
     .log_msg("History query failed!")?;
 
     let history = History {

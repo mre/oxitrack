@@ -1,4 +1,4 @@
-use axum_ctx::{RespErr, Status};
+use axum_ctx::*;
 use serde::{Serialize, Serializer};
 use std::{cmp::Ordering, fmt};
 use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
@@ -163,7 +163,7 @@ impl ContiguousDatePart for ContiguousDay {
                 self.0 = day;
                 Ok(())
             }
-            None => Err(RespErr::new(Status::Internal).log_msg("Failed to get the next day!")),
+            None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR).log_msg("Failed to get the next day!")),
         }
     }
 

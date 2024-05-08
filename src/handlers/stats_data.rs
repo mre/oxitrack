@@ -11,7 +11,7 @@ use askama::Template;
 use axum::Json;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use serde::Serialize;
 use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
@@ -67,7 +67,7 @@ where
         )
         .fetch_all(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
@@ -165,7 +165,7 @@ impl StatsData {
 
             VisitsTableBody { visit_count_rows }.render()
         }
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to render the table body template!")?;
 
         Ok(Json(Self {
@@ -178,7 +178,7 @@ impl StatsData {
 fn hour_data_start_datetime(now: OffsetDateTime) -> Result<PrimitiveDateTime, RespErr> {
     let date = now.date() - Duration::days(2);
     let time = Time::from_hms(now.hour(), 0, 0)
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to create Time for hour data!")?;
 
     Ok(PrimitiveDateTime::new(date, time))

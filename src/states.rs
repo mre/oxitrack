@@ -3,7 +3,7 @@ pub mod visitor_state;
 use anyhow::{bail, Context, Result};
 use askama::Template;
 use axum::extract::State;
-use axum_ctx::{RespErr, Status};
+use axum_ctx::*;
 use sqlx::PgPool;
 use std::time::Duration;
 use time::{OffsetDateTime, UtcOffset};
@@ -134,7 +134,7 @@ impl InnerAppState {
     pub fn apply_utc_offset(&self, datetime: OffsetDateTime) -> Result<OffsetDateTime, RespErr> {
         match datetime.checked_to_offset(self.utc_offset) {
             Some(t) => Ok(t),
-            None => Err(RespErr::new(Status::Internal)
+            None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .log_msg("Failed to change the UTC offset of a datetime!")),
         }
     }

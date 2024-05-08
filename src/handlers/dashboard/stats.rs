@@ -3,7 +3,7 @@ use axum::{
     extract::{Query, State},
     response::Html,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use bigdecimal::ToPrimitive;
 use oxi_axum_helpers::TryIntoTemplResp;
 
@@ -30,7 +30,7 @@ impl Visits {
             first_visit,
         }) = WholeDaysSinceFirstVisit::build(state, Some(path_id), now, None).await?
         else {
-            return Err(RespErr::new(Status::NotFound)
+            return Err(RespErr::new(StatusCode::NOT_FOUND)
                 .user_msg("The requested path has no counted visits yet."));
         };
 
@@ -41,7 +41,7 @@ impl Visits {
         )
         .fetch_one(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to run the average time spent query!")?
         .avg
         .and_then(|decimal| decimal.to_u64().map(SecondsFormatter));
@@ -54,7 +54,7 @@ impl Visits {
         )
         .fetch_one(&state.pool)
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to query the count of visits")?
         .count;
 

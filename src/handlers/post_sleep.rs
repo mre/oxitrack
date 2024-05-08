@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, Status};
+use axum_ctx::*;
 use serde::Deserialize;
 use sqlx::PgConnection;
 use url::Url;
@@ -103,14 +103,14 @@ pub async fn get(
     } = state
         .visitor_states
         .post_sleep(visitor_id)
-        .ctx(Status::BadRequest)
+        .ctx(StatusCode::BAD_REQUEST)
         .user_msg("The visitor ID is invalid or has expired!")?;
 
     let mut tx = state
         .pool
         .begin()
         .await
-        .ctx(Status::Internal)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to begin a transaction!")?;
 
     let referrer_id = params.referrer_id(state, &mut tx).await;
@@ -125,11 +125,11 @@ pub async fn get(
     )
     .fetch_one(&mut *tx)
     .await
-    .ctx(Status::Internal)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
     .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
     .id;
 
-    tx.commit().await.ctx(Status::Internal).log_msg(|| {
+    tx.commit().await.ctx(StatusCode::INTERNAL_SERVER_ERROR).log_msg(|| {
         format!("Failed to commit the post-sleep transaction for the path_id {path_id}!")
     })?;
 

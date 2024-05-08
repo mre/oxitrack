@@ -11,14 +11,12 @@ use oxi_axum_helpers::shutdown_signal;
 use tokio::{net::TcpListener, runtime::Runtime};
 use tracing::info;
 
-use app::app;
-
 async fn init() -> Result<()> {
-    let (app, socket_address) = app().await?;
+    let (app, socket_address) = app::app().await?;
 
     let listener = TcpListener::bind(socket_address).await?;
     info!(
-        "Listening on {}",
+        "Listening on http://{}",
         listener
             .local_addr()
             .context("Failed to determine the local address to bind to!")?
