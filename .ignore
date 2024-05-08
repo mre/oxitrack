@@ -1,4 +1,4 @@
-/Cargo.lock
-/LICENSE.txt
-/.sqlx/
+Cargo.lock
+LICENSE.txt
+.sqlx/
 /static/

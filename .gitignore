@@ -7,7 +7,6 @@ target/
 
 # Dev
 /dev/
-*.log
 .env
 
 # Auto-generated
