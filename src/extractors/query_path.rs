@@ -27,7 +27,7 @@ impl QueryPath {
         }
     }
 
-    pub async fn normalized_with_id(&self, pool: &PgPool) -> Result<PathId, RespErr> {
+    pub async fn normalized_with_id(&self, pool: &PgPool) -> RespResult<PathId> {
         let normalized = self.normalized();
 
         let id = sqlx::query!(

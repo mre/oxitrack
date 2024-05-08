@@ -6,7 +6,7 @@ use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
 pub trait ContiguousDatePart:
     From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord
 {
-    fn next(&mut self) -> Result<(), RespErr>;
+    fn next(&mut self) -> RespResult<()>;
 
     fn date_truncation() -> &'static str;
 }
@@ -36,7 +36,7 @@ impl Serialize for ContiguousYear {
 }
 
 impl ContiguousDatePart for ContiguousYear {
-    fn next(&mut self) -> Result<(), RespErr> {
+    fn next(&mut self) -> RespResult<()> {
         self.0 += 1;
 
         Ok(())
@@ -99,7 +99,7 @@ impl Serialize for ContiguousMonth {
 }
 
 impl ContiguousDatePart for ContiguousMonth {
-    fn next(&mut self) -> Result<(), RespErr> {
+    fn next(&mut self) -> RespResult<()> {
         match self.month {
             Month::January => self.month = Month::February,
             Month::February => self.month = Month::March,
@@ -157,13 +157,14 @@ impl fmt::Display for ContiguousDay {
 }
 
 impl ContiguousDatePart for ContiguousDay {
-    fn next(&mut self) -> Result<(), RespErr> {
+    fn next(&mut self) -> RespResult<()> {
         match self.0.next_day() {
             Some(day) => {
                 self.0 = day;
                 Ok(())
             }
-            None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR).log_msg("Failed to get the next day!")),
+            None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .log_msg("Failed to get the next day!")),
         }
     }
 
@@ -206,7 +207,7 @@ impl Serialize for ContiguousHour {
 }
 
 impl ContiguousDatePart for ContiguousHour {
-    fn next(&mut self) -> Result<(), RespErr> {
+    fn next(&mut self) -> RespResult<()> {
         if let 0..=22 = self.hour {
             self.hour += 1;
             Ok(())

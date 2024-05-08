@@ -11,7 +11,7 @@ use super::{
 pub async fn get(
     State(state): AppState,
     OptionalPathId(path_id): OptionalPathId,
-) -> Result<Json<StatsData>, RespErr> {
+) -> RespResult<Json<StatsData>> {
     let now = state.now_tz()?;
 
     let Some(WholeDaysSinceFirstVisit {

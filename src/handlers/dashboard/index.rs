@@ -1,6 +1,6 @@
 use askama::Template;
 use axum::{extract::State, response::Html};
-use axum_ctx::RespErr;
+use axum_ctx::*;
 use oxi_axum_helpers::TryIntoTemplResp;
 
 use crate::{handlers::base_template::Base, states::AppState};
@@ -13,7 +13,7 @@ struct Index<'a> {
     pub tracked_origin: &'static str,
 }
 
-pub async fn get(State(state): AppState) -> Result<Html<String>, RespErr> {
+pub async fn get(State(state): AppState) -> RespResult<Html<String>> {
     Index {
         base: Base::new(state, "Dashboard"),
         base_url: state.base_url,

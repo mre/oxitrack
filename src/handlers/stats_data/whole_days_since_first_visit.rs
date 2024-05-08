@@ -14,7 +14,7 @@ impl WholeDaysSinceFirstVisit {
         path_id: Option<i64>,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
-    ) -> Result<Option<Self>, RespErr> {
+    ) -> RespResult<Option<Self>> {
         let first_visit = sqlx::query!(
             "SELECT registered_at FROM visits
             WHERE ($1::bigint IS NULL OR path_id = $1) AND ($2::timestamp IS NULL OR TIMEZONE($3, registered_at) >= $2)

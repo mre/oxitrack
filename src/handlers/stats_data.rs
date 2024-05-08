@@ -52,7 +52,7 @@ where
         path_id: Option<i64>,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
-    ) -> Result<Vec<Self>, RespErr> {
+    ) -> RespResult<Vec<Self>> {
         let rows = sqlx::query_as!(
             TruncDateCount,
             r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS "trunc_registered_at!",
@@ -149,7 +149,7 @@ impl StatsData {
         state: &'static InnerAppState,
         path_id: Option<i64>,
         start_datetime: Option<PrimitiveDateTime>,
-    ) -> Result<Json<Self>, RespErr> {
+    ) -> RespResult<Json<Self>> {
         let table_body = if let Some(path_id) = path_id {
             let referrer_counts =
                 ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
@@ -175,7 +175,7 @@ impl StatsData {
     }
 }
 
-fn hour_data_start_datetime(now: OffsetDateTime) -> Result<PrimitiveDateTime, RespErr> {
+fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime> {
     let date = now.date() - Duration::days(2);
     let time = Time::from_hms(now.hour(), 0, 0)
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)

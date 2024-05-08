@@ -131,7 +131,7 @@ impl InnerAppState {
         url
     }
 
-    pub fn apply_utc_offset(&self, datetime: OffsetDateTime) -> Result<OffsetDateTime, RespErr> {
+    pub fn apply_utc_offset(&self, datetime: OffsetDateTime) -> RespResult<OffsetDateTime> {
         match datetime.checked_to_offset(self.utc_offset) {
             Some(t) => Ok(t),
             None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
@@ -139,7 +139,7 @@ impl InnerAppState {
         }
     }
 
-    pub fn now_tz(&self) -> Result<OffsetDateTime, RespErr> {
+    pub fn now_tz(&self) -> RespResult<OffsetDateTime> {
         self.apply_utc_offset(OffsetDateTime::now_utc())
     }
 }

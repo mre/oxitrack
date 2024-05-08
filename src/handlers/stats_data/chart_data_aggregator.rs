@@ -31,7 +31,7 @@ where
         self.next_date_part
     }
 
-    pub fn push(&mut self, count: u64) -> Result<(), RespErr> {
+    pub fn push(&mut self, count: u64) -> RespResult<()> {
         if self.inner.len() == Self::MAX_LEN {
             return Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .log_msg("The maximum length of ChartDataVec is exceeded!"));

@@ -16,7 +16,7 @@ use crate::{
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<VisitorId>, RespErr> {
+) -> RespResult<Json<VisitorId>> {
     // As early as possible for a correct time measurement.
     let registered_at = OffsetDateTime::now_utc();
 

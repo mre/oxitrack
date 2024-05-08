@@ -1,5 +1,5 @@
 use axum::{extract::State, Json};
-use axum_ctx::RespErr;
+use axum_ctx::*;
 
 use crate::{extractors::query_path::OptionalPathId, states::AppState};
 
@@ -11,7 +11,7 @@ use super::{
 pub async fn get(
     State(state): AppState,
     OptionalPathId(path_id): OptionalPathId,
-) -> Result<Json<StatsData>, RespErr> {
+) -> RespResult<Json<StatsData>> {
     let now = state.now_tz()?;
 
     let start_datetime = day_data_start_datetime(now);

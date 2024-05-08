@@ -22,7 +22,7 @@ struct Visits {
 }
 
 impl Visits {
-    async fn build(state: &'static InnerAppState, path_id: i64) -> Result<Self, RespErr> {
+    async fn build(state: &'static InnerAppState, path_id: i64) -> RespResult<Self> {
         let now = state.now_tz()?;
 
         let Some(WholeDaysSinceFirstVisit {
@@ -89,7 +89,7 @@ struct Stats<'a> {
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Html<String>, RespErr> {
+) -> RespResult<Html<String>> {
     let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
     let visits = Visits::build(state, path_id).await?;

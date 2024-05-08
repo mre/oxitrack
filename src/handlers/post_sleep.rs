@@ -96,7 +96,7 @@ pub async fn get(
     State(state): AppState,
     Query(params): Query<Params>,
     Path(visitor_id): Path<VisitorId>,
-) -> Result<StatusCode, RespErr> {
+) -> RespResult<StatusCode> {
     let SleepingState {
         path_id,
         registered_at,
@@ -129,9 +129,12 @@ pub async fn get(
     .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
     .id;
 
-    tx.commit().await.ctx(StatusCode::INTERNAL_SERVER_ERROR).log_msg(|| {
-        format!("Failed to commit the post-sleep transaction for the path_id {path_id}!")
-    })?;
+    tx.commit()
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg(|| {
+            format!("Failed to commit the post-sleep transaction for the path_id {path_id}!")
+        })?;
 
     state
         .visitor_states

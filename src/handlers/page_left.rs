@@ -9,7 +9,7 @@ use crate::states::{visitor_state::VisitorId, AppState};
 pub async fn get(
     State(state): AppState,
     Path((visitor_id, time_on_page_sec)): Path<(VisitorId, u16)>,
-) -> Result<StatusCode, RespErr> {
+) -> RespResult<StatusCode> {
     let visit_id = state
         .visitor_states
         .page_left(visitor_id)

@@ -13,7 +13,7 @@ impl ReferrerCount {
         state: &'static InnerAppState,
         path_id: i64,
         start_datetime: Option<PrimitiveDateTime>,
-    ) -> Result<Vec<Self>, RespErr> {
+    ) -> RespResult<Vec<Self>> {
         sqlx::query_as!(
             Self,
             r#"SELECT domain, COUNT(*) as "count!" FROM visits

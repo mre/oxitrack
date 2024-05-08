@@ -1,8 +1,8 @@
 use axum::{extract::State, Json};
-use axum_ctx::RespErr;
+use axum_ctx::*;
 
 use crate::{db::VisitCount, states::AppState};
 
-pub async fn get(State(state): AppState) -> Result<Json<Vec<VisitCount>>, RespErr> {
+pub async fn get(State(state): AppState) -> RespResult<Json<Vec<VisitCount>>> {
     VisitCount::all_sorted_by_count(state, None).await.map(Json)
 }

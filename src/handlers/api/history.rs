@@ -45,7 +45,7 @@ pub struct History {
 pub async fn get(
     State(state): AppState,
     Query(path): Query<QueryPath>,
-) -> Result<Json<History>, RespErr> {
+) -> RespResult<Json<History>> {
     let path_id = path.normalized_with_id(&state.pool).await?.path_id;
 
     let visits = sqlx::query_as!(

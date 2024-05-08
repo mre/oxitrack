@@ -6,10 +6,7 @@ use axum_ctx::*;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
 
-pub async fn get(
-    State(state): AppState,
-    Query(path): Query<QueryPath>,
-) -> Result<Json<i64>, RespErr> {
+pub async fn get(State(state): AppState, Query(path): Query<QueryPath>) -> RespResult<Json<i64>> {
     let path = path.normalized();
 
     sqlx::query!(
