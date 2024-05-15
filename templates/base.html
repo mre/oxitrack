@@ -8,19 +8,19 @@
 
         <link rel="icon"
               type="image/x-icon"
-              href="/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}">
+              href="{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}">
 
         <title>{{- base.title -}}</title>
 
-        <link href='/static/main.css?v={{ env!("BUILD_TIMESTAMP") }}'
+        <link href='{{ base_url }}/static/main.css?v={{ env!("BUILD_TIMESTAMP") }}'
               rel="stylesheet">
     </head>
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-4">
         <header class="flex gap-x-4 items-center py-1 px-4 mb-2.5 bg-gray-200 rounded-full align-center">
-            <a href="/">
+            <a href="{{ base_url }}">
                 <img class="w-9 h-9 transition duration-500 hover:scale-110"
-                     src='/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
+                     src='{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
                      alt="Logo">
             </a>
 

@@ -7,6 +7,7 @@ use super::referrer_count::ReferrerCount;
 #[derive(Template)]
 #[template(path = "visits_table_body.html")]
 pub struct VisitsTableBody {
+    pub base_url: &'static str,
     pub visit_count_rows: CountRows<VisitCount>,
 }
 
