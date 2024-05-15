@@ -1,17 +1,15 @@
 # Run `just --list` to see available recipes
 
-tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
-gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
+_default:
+	just --list
 
-# Equivalent to `watch`
-default: watch
+# Compile everything from source (including static files). Requires `npm` and `gzip`. `cargo install oxitraffic` is more recommended and only requires Rust
+build:
+	npm install
+	just _build-static-prod
+	cargo build -r
 
-_build-static-dev:
-	{{tailwind_cmd}}
-	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
-	gzip --fast {{gzip_args}}
-
-# Initialize the project for development or compilation from source
+# Initialize the project for development. Use `run` or `watch` afterwards
 init: && _build-static-dev
 	npm install
 
@@ -24,16 +22,12 @@ watch:
 	watchexec -nr -w src -w templates -w ts just r
 
 # Publish on crates.io
-publish:
+publish: _build-static-prod
 	npm outdated
 	cargo outdated --exit-code 1
 	typos
 	cargo sqlx prepare --check
 	cargo test
-
-	{{tailwind_cmd}} -m
-	npx esbuild --bundle --sourcemap --minify --outdir=static ts/stats.ts
-	gzip --best {{gzip_args}}
 
 	cargo publish --allow-dirty
 
@@ -46,3 +40,16 @@ publish:
 
 alias r := run
 alias w := watch
+
+tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
+gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
+
+_build-static-dev:
+	{{tailwind_cmd}}
+	npx esbuild --bundle --sourcemap --outdir=static ts/stats.ts
+	gzip --fast {{gzip_args}}
+
+_build-static-prod:
+	{{tailwind_cmd}} -m
+	npx esbuild --bundle --sourcemap --minify --outdir=static ts/stats.ts
+	gzip --best {{gzip_args}}
