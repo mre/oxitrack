@@ -163,7 +163,11 @@ impl StatsData {
             let visits_counts = VisitCount::all_sorted_by_count(state, start_datetime).await?;
             let visit_count_rows = CountRows::from(visits_counts);
 
-            VisitsTableBody { visit_count_rows }.render()
+            VisitsTableBody {
+                base_url: state.base_url,
+                visit_count_rows,
+            }
+            .render()
         }
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to render the table body template!")?;
