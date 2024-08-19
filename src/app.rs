@@ -105,71 +105,64 @@ mod tests {
     use figment::Jail;
     use mime::Mime;
     use tower::{Service, ServiceExt};
-    use typed_builder::TypedBuilder;
 
-    #[derive(TypedBuilder)]
     struct Req {
         path: &'static str,
-        #[builder(default, setter(strip_option))]
-        mime: Option<Mime>,
-        #[builder(default=StatusCode::OK)]
         status: StatusCode,
-        #[builder(default, setter(strip_option))]
+        mime: Option<Mime>,
         output: Option<&'static str>,
+    }
+
+    impl Req {
+        fn new(path: &'static str) -> Self {
+            Req {
+                path,
+                status: StatusCode::OK,
+                mime: None,
+                output: None,
+            }
+        }
+
+        fn status(mut self, status: StatusCode) -> Self {
+            self.status = status;
+            self
+        }
+
+        fn mime(mut self, mime: Mime) -> Self {
+            self.mime = Some(mime);
+            self
+        }
+
+        fn output(mut self, output: &'static str) -> Self {
+            self.output = Some(output);
+            self
+        }
     }
 
     fn requests() -> [Req; 13] {
         [
             // Static files
-            Req::builder()
-                .path("/static/main.css")
-                .mime(mime::TEXT_CSS)
-                .build(),
-            Req::builder()
-                .path("/static/main.css?v=foo")
-                .mime(mime::TEXT_CSS)
-                .build(),
+            Req::new("/static/main.css").mime(mime::TEXT_CSS_UTF_8),
+            Req::new("/static/main.css?v=foo").mime(mime::TEXT_CSS_UTF_8),
             // register/post-sleep
-            Req::builder()
-                .path("/post-sleep/0")
-                .status(StatusCode::BAD_REQUEST)
-                .build(),
-            Req::builder()
-                .path("/register?path=/")
+            Req::new("/post-sleep/0").status(StatusCode::BAD_REQUEST),
+            Req::new("/register?path=/")
                 .mime(mime::APPLICATION_JSON)
-                .output("0")
-                .build(),
-            Req::builder()
-                .path("/register?path=/")
+                .output("0"),
+            Req::new("/register?path=/")
                 .mime(mime::APPLICATION_JSON)
-                .output("1")
-                .build(),
-            Req::builder().path("/post-sleep/0").build(),
-            Req::builder().path("/post-sleep/1").build(),
-            Req::builder()
-                .path("/post-sleep/0")
-                .status(StatusCode::BAD_REQUEST)
-                .build(),
-            Req::builder()
-                .path("/post-sleep/1")
-                .status(StatusCode::BAD_REQUEST)
-                .build(),
+                .output("1"),
+            Req::new("/post-sleep/0"),
+            Req::new("/post-sleep/1"),
+            Req::new("/post-sleep/0").status(StatusCode::BAD_REQUEST),
+            Req::new("/post-sleep/1").status(StatusCode::BAD_REQUEST),
             // Dashboard
-            Req::builder().path("/").mime(mime::TEXT_HTML_UTF_8).build(),
+            Req::new("/").mime(mime::TEXT_HTML_UTF_8),
             // Stats
-            Req::builder()
-                .path("/stats?path=/")
-                .mime(mime::TEXT_HTML_UTF_8)
-                .build(),
+            Req::new("/stats?path=/").mime(mime::TEXT_HTML_UTF_8),
             // API
-            Req::builder()
-                .path("/api/counts")
-                .mime(mime::APPLICATION_JSON)
-                .build(),
-            Req::builder()
-                .path("/api/history?path=/")
-                .mime(mime::APPLICATION_JSON)
-                .build(),
+            Req::new("/api/counts").mime(mime::APPLICATION_JSON),
+            Req::new("/api/history?path=/").mime(mime::APPLICATION_JSON),
         ]
     }
 
@@ -229,7 +222,7 @@ mod tests {
                                     .unwrap(),
                                 mime.as_ref(),
                                 "path={}",
-                                req.path
+                                req.path,
                             );
                         }
 
@@ -238,7 +231,7 @@ mod tests {
                                 to_bytes(response.into_body(), 1 << 10).await.unwrap(),
                                 output,
                                 "path={}",
-                                req.path
+                                req.path,
                             );
                         }
                     }
