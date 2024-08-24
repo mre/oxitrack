@@ -66,10 +66,10 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
     let static_router = static_router!(
         "../static",
-        ("main.css", "text/css"),
-        ("stats.js", "application/javascript"),
-        ("stats.js.map", "application/json"),
-        ("logo.svg", "image/svg+xml"),
+        ("main.css", mime::TEXT_CSS_UTF_8.as_ref()),
+        ("stats.js", mime::APPLICATION_JAVASCRIPT_UTF_8.as_ref()),
+        ("stats.js.map", mime::APPLICATION_JSON.as_ref()),
+        ("logo.svg", mime::IMAGE_SVG.as_ref()),
     );
 
     let trace_layer = TraceLayer::new_for_http()
@@ -139,8 +139,9 @@ mod tests {
         }
     }
 
-    fn requests() -> [Req; 13] {
-        [
+    #[test]
+    fn simple_requests() {
+        let requests = [
             // Static files
             Req::new("/static/main.css").mime(mime::TEXT_CSS_UTF_8),
             Req::new("/static/main.css?v=foo").mime(mime::TEXT_CSS_UTF_8),
@@ -163,11 +164,8 @@ mod tests {
             // API
             Req::new("/api/counts").mime(mime::APPLICATION_JSON),
             Req::new("/api/history?path=/").mime(mime::APPLICATION_JSON),
-        ]
-    }
+        ];
 
-    #[test]
-    fn simple_requests() {
         Jail::expect_with(|jail| {
             jail.set_env("OXITRAFFIC_CONFIG_FILE", "config.toml");
 
@@ -196,7 +194,7 @@ mod tests {
                 .block_on(async {
                     let (mut app, ..) = app().await.unwrap();
 
-                    for req in requests() {
+                    for req in requests {
                         let request = Request::builder()
                             .uri(req.path)
                             .body(Body::empty())

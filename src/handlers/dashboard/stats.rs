@@ -1,11 +1,10 @@
-use askama::Template;
 use axum::{
     extract::{Query, State},
-    response::Html,
+    response::{IntoResponse, Response},
 };
 use axum_ctx::*;
 use bigdecimal::ToPrimitive;
-use oxi_axum_helpers::TryIntoTemplResp;
+use rinja_axum::Template;
 
 use crate::{
     extractors::query_path::{PathId, QueryPath},
@@ -86,20 +85,17 @@ struct Stats<'a> {
     pub visits: Visits,
 }
 
-pub async fn get(
-    State(state): AppState,
-    Query(path): Query<QueryPath>,
-) -> RespResult<Html<String>> {
+pub async fn get(State(state): AppState, Query(path): Query<QueryPath>) -> RespResult<Response> {
     let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
     let visits = Visits::build(state, path_id).await?;
 
-    Stats {
+    Ok(Stats {
         base: Base::new(state, path),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         path,
         visits,
     }
-    .try_into_resp()
+    .into_response())
 }

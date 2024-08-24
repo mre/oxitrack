@@ -1,7 +1,8 @@
-use askama::Template;
-use axum::{extract::State, response::Html};
-use axum_ctx::*;
-use oxi_axum_helpers::TryIntoTemplResp;
+use axum::{
+    extract::State,
+    response::{IntoResponse, Response},
+};
+use rinja_axum::Template;
 
 use crate::{handlers::base_template::Base, states::AppState};
 
@@ -13,11 +14,11 @@ struct Index<'a> {
     pub tracked_origin: &'static str,
 }
 
-pub async fn get(State(state): AppState) -> RespResult<Html<String>> {
+pub async fn get(State(state): AppState) -> Response {
     Index {
         base: Base::new(state, "Dashboard"),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
     }
-    .try_into_resp()
+    .into_response()
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.3
+
+### Fixes
+
+- Update SQLx to fix [RUSTSEC-2024-0363](https://rustsec.org/advisories/RUSTSEC-2024-0363.html).
+- Add missing usage of the base URL for the case of hosting OxiTraffic under `example.domain.com/PATH`. Thanks to [sgued](https://codeberg.org/sgued)
+
 ## 0.10.2
 
 ### Fixes
