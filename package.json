@@ -1,12 +1,12 @@
 {
   "dependencies": {
-    "chart.js": "^4.4.1"
+    "chart.js": "^4.4.4"
   },
   "devDependencies": {
-    "esbuild": "^0.21.2",
+    "esbuild": "^0.23.1",
     "rustywind": "^0.22.0",
-    "tailwindcss": "^3.4.3",
-    "typescript": "^5.3.3",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
     "typescript-language-server": "^4.3.1"
   }
 }
