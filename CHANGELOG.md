@@ -2,6 +2,10 @@
 
 ## 0.10.3
 
+### Added
+
+- Add the meta tags `noindex` and `nofollow` to avoid OxiTraffic instances from being indexed by search engines.
+
 ### Fixes
 
 - Update SQLx to fix [RUSTSEC-2024-0363](https://rustsec.org/advisories/RUSTSEC-2024-0363.html).
