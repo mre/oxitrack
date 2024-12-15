@@ -1,5 +1,5 @@
 FROM docker.io/library/rust:slim AS builder
-RUN SQLX_OFFLINE=true cargo install oxitraffic --locked
+RUN cargo install oxitraffic --locked
 
 FROM docker.io/library/debian:stable-slim
 EXPOSE 80
