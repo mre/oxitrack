@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4
+
+- Update dependencies
+
 ## 0.10.3
 
 ### Added
