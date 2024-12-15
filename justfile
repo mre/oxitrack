@@ -34,7 +34,7 @@ publish: _build-static-prod
 	git tag -a -m "release" "v$(cargo read-manifest | jaq -r '.version')"
 	git push --follow-tags origin main
 
-	buildah build -t oxitraffic:latest .
+	buildah build --pull=newer -t oxitraffic:latest .
 	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:v$(cargo read-manifest | jaq -r '.version')
 	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:latest
 
