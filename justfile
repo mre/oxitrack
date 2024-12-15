@@ -24,7 +24,7 @@ watch:
 # Publish on crates.io
 publish: _build-static-prod
 	npm outdated
-	cargo outdated --exit-code 1
+	cargo upgrades
 	typos
 	cargo sqlx prepare --check
 	cargo test
