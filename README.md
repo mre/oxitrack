@@ -77,7 +77,7 @@ By default, the container listens on **port** `80`.
 You can also host OxiTraffic directly with the binary that you can install with Cargo:
 
 ```fish
-SQLX_OFFLINE=true cargo install oxitraffic --locked
+cargo install oxitraffic --locked
 ```
 
 Make sure to provide the environment variable `OXITRAFFIC_CONFIG_FILE` when using the binary directly (see the configuration section below).
