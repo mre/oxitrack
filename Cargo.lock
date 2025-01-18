@@ -55,17 +55,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-trait"
-version = "0.1.83"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "721cae7de5c34fbb2acd27e21e6d2cf7b886dce0c27388d46c4e6c47ea4318dd"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "atoi"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -91,13 +80,13 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "axum"
-version = "0.7.9"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "edca88bc138befd0323b20752846e6587272d3b03b0343c8ea28a6f819e6e71f"
+checksum = "6d6fd624c75e18b3b4c6b9caf42b1afe24437daaee904069137d8bab077be8b8"
 dependencies = [
- "async-trait",
  "axum-core",
  "bytes",
+ "form_urlencoded",
  "futures-util",
  "http",
  "http-body",
@@ -124,11 +113,10 @@ dependencies = [
 
 [[package]]
 name = "axum-core"
-version = "0.4.5"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09f2bd6146b97ae3359fa0cc6d6b376d9539582c7b4220f041a33ec24c226199"
+checksum = "df1362f362fd16024ae199c1970ce98f9661bf5ef94b9808fee734bc3698b733"
 dependencies = [
- "async-trait",
  "bytes",
  "futures-util",
  "http",
@@ -144,9 +132,8 @@ dependencies = [
 
 [[package]]
 name = "axum-ctx"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4403ac014295aa57f6ff250b59d67c1087fb8a0fe07893317945bf2c7ed17296"
+version = "0.5.0"
+source = "git+https://codeberg.org/sgued/axum-ctx.git?rev=175eddc9807078dbb0cde1937038c5a7b428e05b#175eddc9807078dbb0cde1937038c5a7b428e05b"
 dependencies = [
  "axum-core",
  "http",
@@ -179,6 +166,15 @@ name = "base64ct"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
+
+[[package]]
+name = "basic-toml"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "823388e228f614e9558c6804262db37960ec8821856535f5c3f59913140558f8"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "bigdecimal"
@@ -695,6 +691,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
+name = "humansize"
+version = "2.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6cb51c9a029ddc91b07a787f1d86b53ccfa49b0e86688c946ebe8d3555685dd7"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "hyper"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -990,9 +995,9 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 
 [[package]]
 name = "matchit"
-version = "0.7.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e7465ac9959cc2b1404e8e2367b43684a6d13790fe23056cc8c6c5a6b7bcb94"
+checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
 name = "md-5"
@@ -1142,9 +1147,8 @@ checksum = "1261fe7e33c73b354eab43b1273a57c8f967d0391e80353e51f764ac02cf6775"
 
 [[package]]
 name = "oxi-axum-helpers"
-version = "0.0.35"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d4fd7e5baf4b5bc8d6cfc40cb0ad0201f868310b41b089a93da6b0c73fefe4a"
+version = "0.0.36"
+source = "git+https://codeberg.org/sgued/oxi-axum-helpers.git?rev=4a5778f8d7a3f5720b452d1c9a2b717a4f000eda#4a5778f8d7a3f5720b452d1c9a2b717a4f000eda"
 dependencies = [
  "anyhow",
  "axum",
@@ -1158,10 +1162,9 @@ dependencies = [
 
 [[package]]
 name = "oxitraffic"
-version = "0.10.4"
+version = "0.10.5"
 dependencies = [
  "anyhow",
- "async-trait",
  "axum",
  "axum-ctx",
  "bigdecimal",
@@ -1170,7 +1173,7 @@ dependencies = [
  "oxi-axum-helpers",
  "rand",
  "reqwest",
- "rinja_axum",
+ "rinja",
  "serde",
  "serde_urlencoded",
  "sqlx",
@@ -1494,19 +1497,10 @@ version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dc4940d00595430b3d7d5a01f6222b5e5b51395d1120bdb28d854bb8abb17a5"
 dependencies = [
+ "humansize",
  "itoa",
+ "percent-encoding",
  "rinja_derive",
-]
-
-[[package]]
-name = "rinja_axum"
-version = "0.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc64d77bb950f6498d0fc64b028d168fcb4e56ac31b66a8ae05f64d3b0c218b6"
-dependencies = [
- "axum-core",
- "http",
- "rinja",
 ]
 
 [[package]]
@@ -1515,6 +1509,7 @@ version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d9ed0146aef6e2825f1b1515f074510549efba38d71f4554eec32eb36ba18b"
 dependencies = [
+ "basic-toml",
  "memchr",
  "mime",
  "mime_guess",
@@ -1522,6 +1517,7 @@ dependencies = [
  "quote",
  "rinja_parser",
  "rustc-hash",
+ "serde",
  "syn",
 ]
 
@@ -1533,6 +1529,7 @@ checksum = "93f9a866e2e00a7a1fb27e46e9e324a6f7c0e7edc4543cae1d38f4e4a100c610"
 dependencies = [
  "memchr",
  "nom",
+ "serde",
 ]
 
 [[package]]
@@ -2404,9 +2401,9 @@ dependencies = [
 
 [[package]]
 name = "unicase"
-version = "2.8.0"
+version = "2.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e51b68083f157f853b6379db119d1c1be0e6e4dec98101079dec41f6f5cf6df"
+checksum = "75b844d17643ee918803943289730bec8aac480150456169e647ed0b576ba539"
 
 [[package]]
 name = "unicode-bidi"

@@ -51,7 +51,6 @@ impl QueryPath {
 
 pub struct OptionalPathId(pub Option<i64>);
 
-#[async_trait::async_trait]
 impl FromRequestParts<&'static InnerAppState> for OptionalPathId {
     type Rejection = RespErr;
 

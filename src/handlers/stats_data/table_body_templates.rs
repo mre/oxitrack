@@ -1,4 +1,4 @@
-use rinja_axum::Template;
+use rinja::Template;
 
 use crate::{db::VisitCount, handlers::count_rows::CountRows};
 

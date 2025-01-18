@@ -1,9 +1,9 @@
 pub mod visitor_state;
 
 use anyhow::{bail, Context, Result};
-use rinja_axum::Template;
 use axum::extract::State;
 use axum_ctx::*;
+use rinja::Template;
 use sqlx::PgPool;
 use std::time::Duration;
 use time::{OffsetDateTime, UtcOffset};

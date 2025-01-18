@@ -1,10 +1,10 @@
 use axum::{
     extract::{Query, State},
-    response::{IntoResponse, Response},
+    response::Html,
 };
 use axum_ctx::*;
 use bigdecimal::ToPrimitive;
-use rinja_axum::Template;
+use rinja::Template;
 
 use crate::{
     extractors::query_path::{PathId, QueryPath},
@@ -85,17 +85,23 @@ struct Stats<'a> {
     pub visits: Visits,
 }
 
-pub async fn get(State(state): AppState, Query(path): Query<QueryPath>) -> RespResult<Response> {
+pub async fn get(
+    State(state): AppState,
+    Query(path): Query<QueryPath>,
+) -> RespResult<Html<String>> {
     let PathId { path, path_id } = path.normalized_with_id(&state.pool).await?;
 
     let visits = Visits::build(state, path_id).await?;
 
-    Ok(Stats {
+    Stats {
         base: Base::new(state, path),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         path,
         visits,
     }
-    .into_response())
+    .render()
+    .map(Html)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+    .log_msg("Failed to render dashboard stats")
 }

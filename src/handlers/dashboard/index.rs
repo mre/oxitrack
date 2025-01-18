@@ -1,8 +1,6 @@
-use axum::{
-    extract::State,
-    response::{IntoResponse, Response},
-};
-use rinja_axum::Template;
+use axum::{extract::State, response::Html};
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
+use rinja::Template;
 
 use crate::{handlers::base_template::Base, states::AppState};
 
@@ -14,11 +12,14 @@ struct Index<'a> {
     pub tracked_origin: &'static str,
 }
 
-pub async fn get(State(state): AppState) -> Response {
+pub async fn get(State(state): AppState) -> RespResult<Html<String>> {
     Index {
         base: Base::new(state, "Dashboard"),
         base_url: state.base_url,
         tracked_origin: state.tracked_origin,
     }
-    .into_response()
+    .render()
+    .map(Html)
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+    .log_msg("Failed to render dashboard index")
 }
