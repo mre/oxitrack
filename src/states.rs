@@ -1,7 +1,7 @@
 pub mod visitor_state;
 
 use anyhow::{bail, Context, Result};
-use rinja_axum::Template;
+use askama::Template;
 use axum::extract::State;
 use axum_ctx::*;
 use sqlx::PgPool;

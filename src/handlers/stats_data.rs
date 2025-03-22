@@ -7,7 +7,7 @@ pub mod referrer_count;
 pub mod table_body_templates;
 mod whole_days_since_first_visit;
 
-use rinja_axum::Template;
+use askama::Template;
 use axum::Json;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
