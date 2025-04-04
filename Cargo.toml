@@ -30,7 +30,7 @@ axum = { version = "0.8", default-features = false, features = ["http1", "tokio"
 bigdecimal = "0.4"
 mime = "0.3"
 oxi-axum-helpers = { version = "0.0.36", features = ["init", "postgres", "static_router"] }
-rand = "0.9"
+rand = { version = "0.9", default-features = false, features = ["thread_rng"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 serde_urlencoded = "0.7"
 serde = { version = "1", features = ["derive"] }

@@ -1,4 +1,4 @@
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 use std::{
     mem, process,
     sync::{Mutex, MutexGuard},
@@ -80,7 +80,7 @@ impl VisitorStateStore {
 
         // No protection needed during development.
         if !cfg!(debug_assertions) {
-            let mut rng = thread_rng();
+            let mut rng = rng();
             ind_to_id_map.shuffle(&mut rng);
         }
 
