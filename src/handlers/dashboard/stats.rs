@@ -1,10 +1,11 @@
+use askama::Template;
+use askama_web::WebTemplate;
 use axum::{
     extract::{Query, State},
     response::{IntoResponse, Response},
 };
 use axum_ctx::*;
 use bigdecimal::ToPrimitive;
-use rinja_axum::Template;
 
 use crate::{
     extractors::query_path::{PathId, QueryPath},
@@ -75,7 +76,7 @@ impl Visits {
     }
 }
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "stats.html")]
 struct Stats<'a> {
     pub base: Base<'a>,
