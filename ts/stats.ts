@@ -20,6 +20,8 @@ export async function render_bar_chart(base_url: string, path?: string) {
   const data = await chart_data(checked_filter.value);
 
   const table = document.getElementById("table")!;
+  const chart_canvas = document.getElementById("bar_chart")!;
+  const chart_canvas_table = document.querySelector("#bar_chart table")!;
   const table_body_element = document.getElementById("table_body")!;
 
   function update_table(data: StatsData) {
@@ -31,10 +33,25 @@ export async function render_bar_chart(base_url: string, path?: string) {
     }
   }
 
-  update_table(data);
+  function update_canvas_table(data: StatsData) {
+    document.querySelectorAll("#bar_chart tr").forEach(e => e.remove());
+    for (const row of data.chart_data) {
+      let th = document.createElement("th");
+      th.innerText = row.x;
+      let td = document.createElement("td");
+      td.innerText = `${row.y}`;
+      let tr = document.createElement("tr");
+      tr.appendChild(th);
+      tr.appendChild(td);
+      chart_canvas_table.appendChild(tr);
+    }
+  }
 
+  update_table(data);
+  update_canvas_table(data);
+  
   const chart = new Chart(
-    document.getElementById('bar_chart') as HTMLCanvasElement, {
+    chart_canvas as HTMLCanvasElement, {
     type: 'bar',
     data: {
       datasets: [{
@@ -91,6 +108,7 @@ export async function render_bar_chart(base_url: string, path?: string) {
       chart.update();
 
       update_table(data);
+      update_canvas_table(data);
     })
   }
 }
