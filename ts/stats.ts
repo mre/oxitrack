@@ -5,6 +5,8 @@ type StatsData = {
   table_body: string;
 };
 
+const colorSchemeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
 export async function render_bar_chart(base_url: string, path?: string) {
   const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
   const chart_data_url = base_url + "/stats-data/";
@@ -49,7 +51,14 @@ export async function render_bar_chart(base_url: string, path?: string) {
 
   update_table(data);
   update_canvas_table(data);
-  
+
+  let color;
+  if (colorSchemeQueryList.matches) {
+    color = '#FFF';
+  } else {
+    color = '#000';
+  }
+
   const chart = new Chart(
     chart_canvas as HTMLCanvasElement, {
     type: 'bar',
@@ -64,10 +73,12 @@ export async function render_bar_chart(base_url: string, path?: string) {
       animation: {
         duration: 2000
       },
+      color,
       plugins: {
         title: {
           display: true,
-          text: "visits"
+          text: "visits",
+          color,
         },
         legend: {
           display: false
@@ -79,10 +90,11 @@ export async function render_bar_chart(base_url: string, path?: string) {
           ticks: {
             minRotation: 60,
             maxRotation: 60,
-            includeBounds: false
+            includeBounds: false,
+            color,
           },
           grid: {
-            display: false
+            display: false,
           }
         },
         y: {
@@ -91,7 +103,8 @@ export async function render_bar_chart(base_url: string, path?: string) {
           ticks: {
             precision: 0,
             minRotation: 0,
-            maxRotation: 0
+            maxRotation: 0,
+            color,
           }
         }
       }
@@ -111,6 +124,22 @@ export async function render_bar_chart(base_url: string, path?: string) {
       update_canvas_table(data);
     })
   }
+
+  colorSchemeQueryList.addEventListener("change", () => {
+    if (colorSchemeQueryList.matches) {
+      chart.options.color = '#FFF';
+      chart.options.plugins!.title!.color =  '#FFF';
+      chart.options.scales!["x"]!.ticks!.color =  '#FFF';
+      chart.options.scales!["y"]!.ticks!.color =  '#FFF';
+    } else {
+      chart.options.color = '#000';
+      chart.options.plugins!.title!.color =  '#000';
+      chart.options.scales!["x"]!.ticks!.color =  '#000';
+      chart.options.scales!["y"]!.ticks!.color =  '#000';
+    }
+
+    chart.update();
+  });
 }
 
 (window as any).render_bar_chart = render_bar_chart;
