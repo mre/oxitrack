@@ -19,14 +19,12 @@
 
     <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words lg:px-4">
         <header class="flex gap-x-4 items-center py-1 px-4 mb-2.5 bg-gray-200 rounded-full align-center">
-            <a href="{{ base_url }}">
-                <img class="w-9 h-9 transition duration-500 hover:scale-110"
-                     src='{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
-                     alt="Logo">
-            </a>
-
             <nav class="font-bold">
-                <a class="no-underline" href="{{ base_url }}">OxiTraffic</a>
+                <a href="{{ base_url }}">
+                    <img class="w-9 h-9 transition duration-500 hover:scale-110 inline-block me-2"
+                         src='{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
+                         alt="Logo">OxiTraffic
+                </a>
             </nav>
         </header>
 
