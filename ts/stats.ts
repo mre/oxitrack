@@ -8,7 +8,7 @@ type StatsData = {
 const colorSchemeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
 
 export async function render_bar_chart(base_url: string, path?: string) {
-  const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
+  const query_params = (path !== undefined && path !== null) ? "?path=" + encodeURIComponent(path) : "";
   const chart_data_url = base_url + "/stats-data/";
 
   async function chart_data(filter: string): Promise<StatsData> {
@@ -142,4 +142,4 @@ export async function render_bar_chart(base_url: string, path?: string) {
   });
 }
 
-(window as any).render_bar_chart = render_bar_chart;
+render_bar_chart(document.currentScript?.getAttribute("data-base-url"), document.currentScript?.getAttribute("data-path"));

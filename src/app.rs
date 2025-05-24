@@ -1,11 +1,16 @@
 use anyhow::{Context, Result};
-use axum::{http::header::HeaderValue, routing::get, Router};
+use axum::{
+    http::header::{HeaderValue, CONTENT_SECURITY_POLICY},
+    routing::get,
+    Router,
+};
 use oxi_axum_helpers::{init_config, init_tracer, static_router};
 use std::net::SocketAddr;
 use time::UtcOffset;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
+    set_header::SetResponseHeaderLayer,
     trace::{DefaultMakeSpan, TraceLayer},
 };
 use tracing::Level;
@@ -84,12 +89,19 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     let trace_layer =
         trace_layer.on_request(tower_http::trace::DefaultOnRequest::new().level(Level::DEBUG));
 
+    let csp_layer = SetResponseHeaderLayer::if_not_present(
+        CONTENT_SECURITY_POLICY,
+        // Only accept things coming from self, and the inline script that renders the bar chart for the first time
+        HeaderValue::from_static(concat!("default-src 'self';", "object-src 'none';",)),
+    );
+
     let app = Router::new()
         .merge(static_router)
         .merge(cors_router)
         .merge(dashboard_router)
         .nest("/api", api_router)
         .layer(trace_layer)
+        .layer(csp_layer)
         .with_state(app_state);
 
     Ok((app, socket_address))
