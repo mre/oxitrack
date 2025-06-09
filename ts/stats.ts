@@ -23,7 +23,7 @@ export async function render_bar_chart(base_url: string, path?: string) {
 
   const table = document.getElementById("table")!;
   const chart_canvas = document.getElementById("bar_chart")!;
-  const chart_canvas_table = document.querySelector("#bar_chart table")!;
+  const chart_canvas_table = document.getElementById("bar_chart_table")!;
   const table_body_element = document.getElementById("table_body")!;
 
   function update_table(data: StatsData) {
@@ -36,7 +36,7 @@ export async function render_bar_chart(base_url: string, path?: string) {
   }
 
   function update_canvas_table(data: StatsData) {
-    document.querySelectorAll("#bar_chart tr").forEach(e => e.remove());
+    document.querySelectorAll("#bar_chart_table tr").forEach(e => e.remove());
     for (const row of data.chart_data) {
       let th = document.createElement("th");
       th.innerText = row.x;
