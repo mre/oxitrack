@@ -24,6 +24,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src='{{ base_url }}/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
-    <script>render_bar_chart("{{ base_url }}");</script>
+    <script data-base-url="{{ base_url }}" src='{{ base_url }}/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
 {% endblock %}

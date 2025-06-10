@@ -5,8 +5,10 @@ type StatsData = {
   table_body: string;
 };
 
+const colorSchemeQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+
 export async function render_bar_chart(base_url: string, path?: string) {
-  const query_params = (path !== undefined) ? "?path=" + encodeURIComponent(path) : "";
+  const query_params = (path !== undefined && path !== null) ? "?path=" + encodeURIComponent(path) : "";
   const chart_data_url = base_url + "/stats-data/";
 
   async function chart_data(filter: string): Promise<StatsData> {
@@ -20,6 +22,8 @@ export async function render_bar_chart(base_url: string, path?: string) {
   const data = await chart_data(checked_filter.value);
 
   const table = document.getElementById("table")!;
+  const chart_canvas = document.getElementById("bar_chart")!;
+  const chart_canvas_table = document.getElementById("bar_chart_table")!;
   const table_body_element = document.getElementById("table_body")!;
 
   function update_table(data: StatsData) {
@@ -31,10 +35,32 @@ export async function render_bar_chart(base_url: string, path?: string) {
     }
   }
 
+  function update_canvas_table(data: StatsData) {
+    document.querySelectorAll("#bar_chart_table tr").forEach(e => e.remove());
+    for (const row of data.chart_data) {
+      let th = document.createElement("th");
+      th.innerText = row.x;
+      let td = document.createElement("td");
+      td.innerText = `${row.y}`;
+      let tr = document.createElement("tr");
+      tr.appendChild(th);
+      tr.appendChild(td);
+      chart_canvas_table.appendChild(tr);
+    }
+  }
+
   update_table(data);
+  update_canvas_table(data);
+
+  let color;
+  if (colorSchemeQueryList.matches) {
+    color = '#FFF';
+  } else {
+    color = '#000';
+  }
 
   const chart = new Chart(
-    document.getElementById('bar_chart') as HTMLCanvasElement, {
+    chart_canvas as HTMLCanvasElement, {
     type: 'bar',
     data: {
       datasets: [{
@@ -47,10 +73,12 @@ export async function render_bar_chart(base_url: string, path?: string) {
       animation: {
         duration: 2000
       },
+      color,
       plugins: {
         title: {
           display: true,
-          text: "visits"
+          text: "visits",
+          color,
         },
         legend: {
           display: false
@@ -62,10 +90,11 @@ export async function render_bar_chart(base_url: string, path?: string) {
           ticks: {
             minRotation: 60,
             maxRotation: 60,
-            includeBounds: false
+            includeBounds: false,
+            color,
           },
           grid: {
-            display: false
+            display: false,
           }
         },
         y: {
@@ -74,7 +103,8 @@ export async function render_bar_chart(base_url: string, path?: string) {
           ticks: {
             precision: 0,
             minRotation: 0,
-            maxRotation: 0
+            maxRotation: 0,
+            color,
           }
         }
       }
@@ -91,8 +121,25 @@ export async function render_bar_chart(base_url: string, path?: string) {
       chart.update();
 
       update_table(data);
+      update_canvas_table(data);
     })
   }
+
+  colorSchemeQueryList.addEventListener("change", () => {
+    if (colorSchemeQueryList.matches) {
+      chart.options.color = '#FFF';
+      chart.options.plugins!.title!.color =  '#FFF';
+      chart.options.scales!["x"]!.ticks!.color =  '#FFF';
+      chart.options.scales!["y"]!.ticks!.color =  '#FFF';
+    } else {
+      chart.options.color = '#000';
+      chart.options.plugins!.title!.color =  '#000';
+      chart.options.scales!["x"]!.ticks!.color =  '#000';
+      chart.options.scales!["y"]!.ticks!.color =  '#000';
+    }
+
+    chart.update();
+  });
 }
 
-(window as any).render_bar_chart = render_bar_chart;
+render_bar_chart(document.currentScript?.getAttribute("data-base-url"), document.currentScript?.getAttribute("data-path"));
