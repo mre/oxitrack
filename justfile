@@ -31,8 +31,10 @@ publish: _build-static-prod
 
 	cargo publish --allow-dirty
 
-	git tag -a -m "release" "v$(cargo read-manifest | jaq -r '.version')"
-	git push --follow-tags origin main
+	jj b s -r @- main
+	jj tag s -r main "v$(cargo read-manifest | jaq -r '.version')"
+	jj git push -b main
+	git push --tags
 
 	buildah build --pull=newer -t oxitraffic:latest .
 	podman push localhost/oxitraffic:latest docker.io/mo8it/oxitraffic:v$(cargo read-manifest | jaq -r '.version')
