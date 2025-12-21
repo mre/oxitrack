@@ -6,7 +6,7 @@ authors = ["Mo Bitar <mo8it@proton.me>"]
 repository = "https://codeberg.org/mo8it/oxitraffic"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
-edition = "2021"
+edition = "2024"
 include = [
   "/.sqlx/",
   "/migrations/",
@@ -22,7 +22,7 @@ include = [
 ]
 
 [dependencies]
-anyhow = "1.0"
+anyhow = "1"
 askama = { version = "0.14", default-features = false, features = ["derive", "std"] }
 askama_web = { version = "0.14", features = ["axum-0.8"] }
 axum-ctx = "0.5"
@@ -61,7 +61,3 @@ opt-level = 3
 
 [profile.dev.package.askama_derive]
 opt-level = 3
-
-[patch.crates-io]
-axum-ctx = { git = "https://codeberg.org/sgued/axum-ctx.git", rev = "175eddc9807078dbb0cde1937038c5a7b428e05b" }
-oxi-axum-helpers = { git = "https://codeberg.org/sgued/oxi-axum-helpers.git", rev = "4a5778f8d7a3f5720b452d1c9a2b717a4f000eda" }

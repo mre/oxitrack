@@ -43,7 +43,7 @@ publish: _build-static-prod
 alias r := run
 alias w := watch
 
-tailwind_cmd := "npx tailwindcss -i input.css -o static/main.css"
+tailwind_cmd := "npx @tailwindcss/cli -i input.css -o static/main.css"
 gzip_args := "-kf static/{logo.svg,main.css,stats.js{,.map}}"
 
 _build-static-dev:
