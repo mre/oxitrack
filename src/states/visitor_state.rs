@@ -91,7 +91,7 @@ impl VisitorStateStore {
         }
     }
 
-    fn locked(&self) -> MutexGuard<VisitorStateStoreInner> {
+    fn locked(&self) -> MutexGuard<'_, VisitorStateStoreInner> {
         self.inner.lock().unwrap_or_else(|_| {
             error!("Visitor state store mutex poisoned!");
             process::exit(1);
