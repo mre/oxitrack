@@ -1,6 +1,6 @@
 use axum::{
-    extract::{Query, State},
     Json,
+    extract::{Query, State},
 };
 use axum_ctx::*;
 use time::OffsetDateTime;
@@ -8,8 +8,8 @@ use time::OffsetDateTime;
 use crate::{
     extractors::query_path::QueryPath,
     states::{
-        visitor_state::{SleepingState, VisitorId},
         AppState,
+        visitor_state::{SleepingState, VisitorId},
     },
 };
 

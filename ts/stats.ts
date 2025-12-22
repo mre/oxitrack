@@ -128,14 +128,14 @@ export async function render_bar_chart(base_url: string, path?: string) {
   colorSchemeQueryList.addEventListener("change", () => {
     if (colorSchemeQueryList.matches) {
       chart.options.color = '#FFF';
-      chart.options.plugins!.title!.color =  '#FFF';
-      chart.options.scales!["x"]!.ticks!.color =  '#FFF';
-      chart.options.scales!["y"]!.ticks!.color =  '#FFF';
+      chart.options.plugins!.title!.color = '#FFF';
+      chart.options.scales!["x"]!.ticks!.color = '#FFF';
+      chart.options.scales!["y"]!.ticks!.color = '#FFF';
     } else {
       chart.options.color = '#000';
-      chart.options.plugins!.title!.color =  '#000';
-      chart.options.scales!["x"]!.ticks!.color =  '#000';
-      chart.options.scales!["y"]!.ticks!.color =  '#000';
+      chart.options.plugins!.title!.color = '#000';
+      chart.options.scales!["x"]!.ticks!.color = '#000';
+      chart.options.scales!["y"]!.ticks!.color = '#000';
     }
 
     chart.update();

@@ -111,8 +111,8 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 mod tests {
     use super::app;
     use axum::{
-        body::{to_bytes, Body},
-        http::{header, Request, StatusCode},
+        body::{Body, to_bytes},
+        http::{Request, StatusCode, header},
     };
     use figment::Jail;
     use mime::Mime;

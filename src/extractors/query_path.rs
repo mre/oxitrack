@@ -20,11 +20,7 @@ impl QueryPath {
     pub fn normalized(&self) -> &str {
         let path = self.path.trim_end_matches('/');
 
-        if path.is_empty() {
-            "/"
-        } else {
-            path
-        }
+        if path.is_empty() { "/" } else { path }
     }
 
     pub async fn normalized_with_id(&self, pool: &PgPool) -> RespResult<PathId<'_>> {

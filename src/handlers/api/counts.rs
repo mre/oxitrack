@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use axum_ctx::*;
 
 use crate::{db::VisitCount, states::AppState};

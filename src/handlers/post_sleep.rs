@@ -8,8 +8,8 @@ use sqlx::PgConnection;
 use url::Url;
 
 use crate::states::{
-    visitor_state::{SleepingState, VisitorId},
     AppState, InnerAppState,
+    visitor_state::{SleepingState, VisitorId},
 };
 
 const MAX_DOMAIN_LEN: usize = 255;

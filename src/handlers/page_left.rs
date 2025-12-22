@@ -4,7 +4,7 @@ use axum::{
 };
 use axum_ctx::*;
 
-use crate::states::{visitor_state::VisitorId, AppState};
+use crate::states::{AppState, visitor_state::VisitorId};
 
 pub async fn get(
     State(state): AppState,

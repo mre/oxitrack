@@ -1,6 +1,6 @@
 pub mod visitor_state;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use askama::Template;
 use axum::extract::State;
 use axum_ctx::*;

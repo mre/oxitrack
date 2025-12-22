@@ -1,11 +1,11 @@
-use axum::{extract::State, Json};
+use axum::{Json, extract::State};
 use axum_ctx::*;
 
 use crate::{extractors::query_path::OptionalPathId, states::AppState};
 
 use super::{
-    day_data_start_datetime, hour_data_start_datetime, ChartData, DataPoint, StatsData,
-    WholeDaysSinceFirstVisit,
+    ChartData, DataPoint, StatsData, WholeDaysSinceFirstVisit, day_data_start_datetime,
+    hour_data_start_datetime,
 };
 
 pub async fn get(

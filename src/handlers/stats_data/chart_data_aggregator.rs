@@ -1,6 +1,6 @@
 use axum_ctx::*;
 
-use super::{contiguous_date_part::ContiguousDatePart, DataPoint};
+use super::{DataPoint, contiguous_date_part::ContiguousDatePart};
 
 pub struct ChartDataAggregator<D>
 where
