@@ -2,6 +2,8 @@
 
 ## 0.10.5
 
+- Add dark mode support by [sgued](https://codeberg.org/sgued)
+- Improve accessibility by [sgued](https://codeberg.org/sgued)
 - Update dependencies
 
 ## 0.10.4
