@@ -7,7 +7,7 @@
         Website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
     </p>
 
-    {% call bar_chart_macros::bar_chart() %}
+    {{ bar_chart_macros::bar_chart() }}
 
     <table class="w-full md:w-fit" id="table" hidden>
         <thead>
