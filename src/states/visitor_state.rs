@@ -137,7 +137,7 @@ impl VisitorStateStore {
     }
 
     /// Returns the DB visit ID if the visitor already successfully called `post_delay`.
-    /// Returns `None` otherwise after clearning the visitor state.
+    /// Returns `None` otherwise after clearing the visitor state.
     #[must_use]
     pub fn page_left(&self, visitor_id: VisitorId) -> Option<VisitId> {
         let state = mem::take(self.locked().get_mut(visitor_id));

@@ -53,7 +53,7 @@ pub async fn get(
 
         // There is a possible race condition here.
         // If two requests try to insert at the same time,
-        // then only one insertion will be succussful.
+        // then only one insertion will be successful.
         // If the insertion fails because of the constraint, we will try to select.
         let inserted_row = sqlx::query!(
             "INSERT INTO paths(path)
