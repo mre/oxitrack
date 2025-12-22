@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use axum::{
-    http::header::{HeaderValue, CONTENT_SECURITY_POLICY},
-    routing::get,
     Router,
+    http::header::{self, HeaderValue},
+    routing::get,
 };
 use oxi_axum_helpers::{init_config, init_tracer, static_router};
 use std::net::SocketAddr;
@@ -16,6 +16,10 @@ use tower_http::{
 use tracing::Level;
 
 use crate::{config::Config, handlers, states::InnerAppState};
+
+// Only accept things coming from self, and the inline script that renders the bar chart for the first time
+static CONTENT_SECURITY_POLICY: HeaderValue =
+    HeaderValue::from_static("default-src 'self'; object-src 'none';");
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
     init_tracer()?;
@@ -90,9 +94,8 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         trace_layer.on_request(tower_http::trace::DefaultOnRequest::new().level(Level::DEBUG));
 
     let csp_layer = SetResponseHeaderLayer::if_not_present(
-        CONTENT_SECURITY_POLICY,
-        // Only accept things coming from self, and the inline script that renders the bar chart for the first time
-        HeaderValue::from_static(concat!("default-src 'self';", "object-src 'none';",)),
+        header::CONTENT_SECURITY_POLICY,
+        CONTENT_SECURITY_POLICY.clone(),
     );
 
     let app = Router::new()
