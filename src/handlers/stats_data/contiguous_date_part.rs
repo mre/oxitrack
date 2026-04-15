@@ -8,6 +8,7 @@ pub trait ContiguousDatePart:
 {
     fn next(&mut self) -> RespResult<()>;
 
+    #[allow(dead_code)]
     fn date_truncation() -> &'static str;
 }
 

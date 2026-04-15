@@ -4,12 +4,15 @@ use axum::{
 };
 use axum_ctx::*;
 use serde::Deserialize;
-use sqlx::PgConnection;
+use sqlx::Row;
 use url::Url;
 
-use crate::states::{
-    AppState, InnerAppState,
-    visitor_state::{SleepingState, VisitorId},
+use crate::{
+    db::DbConnection,
+    states::{
+        AppState, InnerAppState,
+        visitor_state::{SleepingState, VisitorId},
+    },
 };
 
 const MAX_DOMAIN_LEN: usize = 255;
@@ -24,7 +27,7 @@ impl Params {
     async fn referrer_id(
         &self,
         state: &'static InnerAppState,
-        tx: &mut PgConnection,
+        tx: &mut DbConnection,
     ) -> Option<i64> {
         let referrer_origin = self.referrer_origin.as_deref()?;
         if referrer_origin == state.tracked_origin || referrer_origin == state.base_origin {
@@ -42,18 +45,19 @@ impl Params {
             return None;
         }
 
-        let referrer_row = sqlx::query!(
-            "SELECT id FROM referrers
-            WHERE domain = $1
-            LIMIT 1",
-            domain,
-        )
-        .fetch_optional(&mut *tx)
-        .await
-        .ok()?;
+        #[cfg(feature = "postgres")]
+        let sql_select = "SELECT id FROM referrers WHERE domain = $1 LIMIT 1";
+        #[cfg(feature = "sqlite")]
+        let sql_select = "SELECT id FROM referrers WHERE domain = ? LIMIT 1";
+
+        let referrer_row = sqlx::query(sql_select)
+            .bind(domain)
+            .fetch_optional(&mut *tx)
+            .await
+            .ok()?;
 
         if let Some(row) = referrer_row {
-            return Some(row.id);
+            return Some(row.get("id"));
         }
 
         // Check that the referrer domain actually exists to prevent submitting random domains.
@@ -63,32 +67,34 @@ impl Params {
         // If two requests try to insert at the same time,
         // then only one insertion will be successful.
         // If the insertion fails because of the constraint, we will try to select.
-        let inserted_row = sqlx::query!(
-            "INSERT INTO referrers(domain)
+        #[cfg(feature = "postgres")]
+        let sql_insert = "INSERT INTO referrers(domain)
             VALUES ($1)
             ON CONFLICT ON CONSTRAINT unique_domain DO NOTHING
-            RETURNING id",
-            domain,
-        )
-        .fetch_optional(&mut *tx)
-        .await
-        .ok()?;
+            RETURNING id";
+        #[cfg(feature = "sqlite")]
+        let sql_insert = "INSERT INTO referrers(domain)
+            VALUES (?)
+            ON CONFLICT(domain) DO NOTHING
+            RETURNING id";
+
+        let inserted_row = sqlx::query(sql_insert)
+            .bind(domain)
+            .fetch_optional(&mut *tx)
+            .await
+            .ok()?;
 
         if let Some(row) = inserted_row {
-            return Some(row.id);
+            return Some(row.get("id"));
         }
 
         // A concurrent request inserted first.
-        sqlx::query!(
-            "SELECT id FROM referrers
-            WHERE domain = $1
-            LIMIT 1",
-            domain,
-        )
-        .fetch_one(&mut *tx)
-        .await
-        .ok()
-        .map(|row| row.id)
+        sqlx::query(sql_select)
+            .bind(domain)
+            .fetch_one(&mut *tx)
+            .await
+            .ok()
+            .map(|row| row.get("id"))
     }
 }
 
@@ -115,19 +121,24 @@ pub async fn get(
 
     let referrer_id = params.referrer_id(state, &mut tx).await;
 
-    let visit_id = sqlx::query!(
-        "INSERT INTO visits(path_id, registered_at, referrer_id)
+    #[cfg(feature = "postgres")]
+    let sql_insert_visit = "INSERT INTO visits(path_id, registered_at, referrer_id)
         VALUES ($1, $2, $3)
-        RETURNING id",
-        path_id,
-        registered_at,
-        referrer_id,
-    )
-    .fetch_one(&mut *tx)
-    .await
-    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-    .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
-    .id;
+        RETURNING id";
+    #[cfg(feature = "sqlite")]
+    let sql_insert_visit = "INSERT INTO visits(path_id, registered_at, referrer_id)
+        VALUES (?, ?, ?)
+        RETURNING id";
+
+    let visit_id: i64 = sqlx::query(sql_insert_visit)
+        .bind(path_id)
+        .bind(registered_at)
+        .bind(referrer_id)
+        .fetch_one(&mut *tx)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
+        .get("id");
 
     tx.commit()
         .await

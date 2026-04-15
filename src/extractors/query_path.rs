@@ -1,8 +1,9 @@
 use axum::{extract::FromRequestParts, http::request::Parts};
 use axum_ctx::*;
 use serde::Deserialize;
-use sqlx::PgPool;
+use sqlx::Row;
 
+use crate::db::DbPool;
 use crate::states::InnerAppState;
 
 #[derive(Deserialize)]
@@ -23,20 +24,22 @@ impl QueryPath {
         if path.is_empty() { "/" } else { path }
     }
 
-    pub async fn normalized_with_id(&self, pool: &PgPool) -> RespResult<PathId<'_>> {
+    pub async fn normalized_with_id(&self, pool: &DbPool) -> RespResult<PathId<'_>> {
         let normalized = self.normalized();
 
-        let id = sqlx::query!(
-            "SELECT id FROM paths
-            WHERE path = $1
-            LIMIT 1",
-            normalized,
-        )
-        .fetch_one(pool)
-        .await
-        .ctx(StatusCode::NOT_FOUND)
-        .user_msg(|| format!("Path {normalized} not found!"))?
-        .id;
+        #[cfg(feature = "postgres")]
+        let sql = "SELECT id FROM paths WHERE path = $1 LIMIT 1";
+        #[cfg(feature = "sqlite")]
+        let sql = "SELECT id FROM paths WHERE path = ? LIMIT 1";
+
+        let row = sqlx::query(sql)
+            .bind(normalized)
+            .fetch_one(pool)
+            .await
+            .ctx(StatusCode::NOT_FOUND)
+            .user_msg(|| format!("Path {normalized} not found!"))?;
+
+        let id: i64 = row.get("id");
 
         Ok(PathId {
             path: normalized,

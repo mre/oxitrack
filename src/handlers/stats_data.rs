@@ -15,7 +15,10 @@ use axum_ctx::*;
 use serde::Serialize;
 use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
-use crate::{db::VisitCount, states::InnerAppState};
+use crate::{
+    db::{Db, VisitCount},
+    states::InnerAppState,
+};
 
 use chart_data_aggregator::ChartDataAggregator;
 use contiguous_date_part::{
@@ -29,6 +32,7 @@ use self::{
 
 use super::count_rows::CountRows;
 
+#[derive(sqlx::FromRow)]
 struct TruncDateCount {
     trunc_registered_at: PrimitiveDateTime,
     count: i64,
@@ -53,18 +57,40 @@ where
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
-        let rows = sqlx::query_as!(
-            TruncDateCount,
-            r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS "trunc_registered_at!",
-            COUNT(registered_at) AS "count!" FROM visits
-            WHERE ($2::bigint IS NULL OR path_id = $2) AND ($3::timestamp IS NULL OR TIMEZONE($4, registered_at) >= $3)
-            GROUP BY "trunc_registered_at!"
-            ORDER BY "trunc_registered_at!""#,
-            D::date_truncation(),
-            path_id,
-            start_datetime,
-            state.posix_utc_offset_str,
+        // PostgreSQL: positional params ($1–$4), only 4 bindings needed.
+        #[cfg(feature = "postgres")]
+        let rows = sqlx::query_as::<Db, TruncDateCount>(
+            r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS trunc_registered_at,
+            COUNT(registered_at) AS count FROM visits
+            WHERE ($2 IS NULL OR path_id = $2) AND ($3 IS NULL OR TIMEZONE($4, registered_at) >= $3)
+            GROUP BY trunc_registered_at
+            ORDER BY trunc_registered_at"#,
         )
+        .bind(D::date_truncation())
+        .bind(path_id)
+        .bind(start_datetime)
+        .bind(state.posix_utc_offset_str)
+        .fetch_all(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to query chart data!")?;
+
+        // SQLite: each `?` is a distinct positional slot; DATE_TRUNC/TIMEZONE
+        // do not exist, so a simplified form is used (no truncation applied).
+        #[cfg(feature = "sqlite")]
+        let rows = sqlx::query_as::<Db, TruncDateCount>(
+            r#"SELECT datetime(registered_at, ?) AS trunc_registered_at,
+            COUNT(registered_at) AS count FROM visits
+            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= ?)
+            GROUP BY trunc_registered_at
+            ORDER BY trunc_registered_at"#,
+        )
+        .bind(state.posix_utc_offset_str)
+        .bind(path_id)
+        .bind(path_id)
+        .bind(start_datetime)
+        .bind(state.posix_utc_offset_str)
+        .bind(start_datetime)
         .fetch_all(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)

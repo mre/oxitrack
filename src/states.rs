@@ -4,12 +4,12 @@ use anyhow::{Context, Result, bail};
 use askama::Template;
 use axum::extract::State;
 use axum_ctx::*;
-use sqlx::PgPool;
 use std::time::Duration;
 use time::{OffsetDateTime, UtcOffset};
 use url::Url;
 
 use crate::config::Config;
+use crate::db::DbPool;
 use visitor_state::VisitorStateStore;
 
 #[derive(Template)]
@@ -21,7 +21,7 @@ pub struct CountJs {
 
 /// The application state.
 pub struct InnerAppState {
-    pub pool: PgPool,
+    pub pool: DbPool,
     pub tracked_origin: &'static str,
     pub tracked_origin_callback: &'static str,
     pub visitor_states: VisitorStateStore,

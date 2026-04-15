@@ -5,7 +5,7 @@ fn main() {
     println!("cargo:rustc-env=BUILD_TIMESTAMP={timestamp}");
 
     if !Path::new("dev").exists() {
-        println!("cargo:rustc-env=SQLX_OFFLINE=true");
+        println!("cargo:rustc-env=SQLX_OFFLINE=false");
     }
 
     // Trigger recompilation

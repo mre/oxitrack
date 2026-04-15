@@ -5,7 +5,9 @@ use axum::{
     response::Html,
 };
 use axum_ctx::*;
+#[cfg(feature = "postgres")]
 use bigdecimal::ToPrimitive;
+use sqlx::Row;
 
 use crate::{
     extractors::query_path::{PathId, QueryPath},
@@ -34,29 +36,47 @@ impl Visits {
                 .user_msg("The requested path has no counted visits yet."));
         };
 
-        let average_time_spent = sqlx::query!(
-            "SELECT AVG(time_s) FROM visits
-            WHERE path_id = $1",
-            path_id,
-        )
-        .fetch_one(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to run the average time spent query!")?
-        .avg
-        .and_then(|decimal| decimal.to_u64().map(SecondsFormatter));
+        // -- AVG query -------------------------------------------------------
+        #[cfg(feature = "postgres")]
+        let sql_avg = "SELECT AVG(time_s) AS avg FROM visits WHERE path_id = $1";
+        #[cfg(feature = "sqlite")]
+        let sql_avg = "SELECT AVG(time_s) AS avg FROM visits WHERE path_id = ?";
+
+        let avg_row = sqlx::query(sql_avg)
+            .bind(path_id)
+            .fetch_one(&state.pool)
+            .await
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Failed to run the average time spent query!")?;
+
+        #[cfg(feature = "postgres")]
+        let average_time_spent = avg_row
+            .try_get::<Option<bigdecimal::BigDecimal>, _>("avg")
+            .ok()
+            .flatten()
+            .and_then(|decimal| decimal.to_u64().map(SecondsFormatter));
+
+        #[cfg(feature = "sqlite")]
+        let average_time_spent = avg_row
+            .try_get::<Option<f64>, _>("avg")
+            .ok()
+            .flatten()
+            .map(|f| SecondsFormatter(f as u64));
+
+        // -- COUNT query -----------------------------------------------------
+        #[cfg(feature = "postgres")]
+        let sql_count = r#"SELECT COUNT(*) AS count FROM visits WHERE path_id = $1"#;
+        #[cfg(feature = "sqlite")]
+        let sql_count = "SELECT COUNT(*) AS count FROM visits WHERE path_id = ?";
 
         #[allow(clippy::cast_sign_loss)]
-        let total_n_visits = sqlx::query!(
-            r#"SELECT COUNT(*) AS "count!" FROM visits
-            WHERE path_id = $1"#,
-            path_id,
-        )
-        .fetch_one(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query the count of visits")?
-        .count;
+        let total_n_visits: i64 = sqlx::query(sql_count)
+            .bind(path_id)
+            .fetch_one(&state.pool)
+            .await
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Failed to query the count of visits")?
+            .get("count");
 
         #[allow(clippy::cast_precision_loss)]
         let visits_per_day = if whole_days_since_first_visit > 0 {

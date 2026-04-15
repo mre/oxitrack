@@ -8,6 +8,7 @@ use time::PrimitiveDateTime;
 
 use crate::{extractors::query_path::QueryPath, formatters::DateTimeFormatter, states::AppState};
 
+#[derive(sqlx::FromRow)]
 struct Visit {
     registered_at_tz: PrimitiveDateTime,
     referrer: Option<String>,
@@ -48,19 +49,31 @@ pub async fn get(
 ) -> RespResult<Json<History>> {
     let path_id = path.normalized_with_id(&state.pool).await?.path_id;
 
-    let visits = sqlx::query_as!(
-        Visit,
-        r#"SELECT TIMEZONE($1, registered_at) AS "registered_at_tz!", domain AS "referrer?", time_s FROM visits
+    #[cfg(feature = "postgres")]
+    let sql = r#"SELECT TIMEZONE($1, registered_at) AS registered_at_tz,
+        domain AS referrer,
+        time_s
+        FROM visits
         LEFT JOIN referrers ON referrers.id = referrer_id
         WHERE path_id = $2
-        ORDER BY "registered_at_tz!""#,
-        state.posix_utc_offset_str,
-        path_id,
-    )
-    .fetch_all(&state.pool)
-    .await
-    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-    .log_msg("History query failed!")?;
+        ORDER BY registered_at_tz"#;
+
+    #[cfg(feature = "sqlite")]
+    let sql = r#"SELECT datetime(registered_at, ?) AS registered_at_tz,
+        domain AS referrer,
+        time_s
+        FROM visits
+        LEFT JOIN referrers ON referrers.id = referrer_id
+        WHERE path_id = ?
+        ORDER BY registered_at_tz"#;
+
+    let visits = sqlx::query_as::<_, Visit>(sql)
+        .bind(state.posix_utc_offset_str)
+        .bind(path_id)
+        .fetch_all(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("History query failed!")?;
 
     let history = History {
         utc_offset: state.utc_offset_str,
