@@ -12,8 +12,8 @@ use crate::{
         base_template::Base,
         count_rows::CountRows,
         stats_data::{
-            Filter, WholeDaysSinceFirstVisit, build_chart, chart_width,
-            referrer_count::ReferrerCount, start_datetime_for_filter,
+            Filter, WholeDaysSinceFirstVisit, build_chart, referrer_count::ReferrerCount,
+            start_datetime_for_filter,
         },
     },
     states::{AppState, InnerAppState},
@@ -94,7 +94,6 @@ pub struct Stats {
     pub visits: Visits,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
-    pub chart_width: f64,
     pub filter: Filter,
 }
 
@@ -116,7 +115,6 @@ pub async fn get(
     let referrers = CountRows::from(referrers);
 
     let chart = build_chart(state, Some(path_id), filter).await?;
-    let cw = chart_width(chart.len());
 
     Ok(Stats {
         base: Base::new(state, "Stats"),
@@ -126,7 +124,6 @@ pub async fn get(
         visits,
         referrers,
         chart,
-        chart_width: cw,
         filter,
     })
 }

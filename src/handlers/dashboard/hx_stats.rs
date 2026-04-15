@@ -9,8 +9,7 @@ use crate::{
     handlers::{
         count_rows::CountRows,
         stats_data::{
-            Filter, build_chart, chart_width, referrer_count::ReferrerCount,
-            start_datetime_for_filter,
+            Filter, build_chart, referrer_count::ReferrerCount, start_datetime_for_filter,
         },
     },
     states::AppState,
@@ -30,7 +29,6 @@ pub struct HxStats {
     pub pages: CountRows<VisitCount>,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
-    pub chart_width: f64,
     pub filter: Filter,
     pub total_visits: i64,
     pub path: Option<String>,
@@ -60,14 +58,12 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
     let referrers = CountRows::from(referrers);
 
     let chart = build_chart(state, path_id, filter).await?;
-    let cw = chart_width(chart.len());
 
     Ok(HxStats {
         base_url: state.base_url,
         pages,
         referrers,
         chart,
-        chart_width: cw,
         filter,
         total_visits,
         path: q.path,

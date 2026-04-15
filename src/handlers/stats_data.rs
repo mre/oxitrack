@@ -22,26 +22,10 @@ struct TruncDateCount {
     count: i64,
 }
 
-/// A single bar in the SVG chart.
+/// A single bar in the chart.
 pub struct ChartBar {
     pub label: String,
     pub count: u64,
-    /// SVG x position
-    pub x: f64,
-    /// SVG y position (from top, since SVG y increases downward)
-    pub y: f64,
-    /// Bar width in SVG units
-    pub w: f64,
-    /// Bar height in SVG units
-    pub h: f64,
-}
-
-const BAR_WIDTH: f64 = 10.0;
-const BAR_PITCH: f64 = 12.0;
-const CHART_HEIGHT: f64 = 60.0;
-
-pub fn chart_width(n: usize) -> f64 {
-    (n as f64 * BAR_PITCH).max(BAR_PITCH)
 }
 
 /// Time filter for chart/stats queries.
@@ -152,21 +136,11 @@ where
 fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
     points: Vec<DataPoint<D>>,
 ) -> Vec<ChartBar> {
-    let max_count = points.iter().map(|p| p.y).max().unwrap_or(1).max(1);
     points
         .into_iter()
-        .enumerate()
-        .map(|(i, p)| {
-            let h =
-                (p.y as f64 / max_count as f64 * CHART_HEIGHT).max(if p.y > 0 { 1.0 } else { 0.0 });
-            ChartBar {
-                label: p.x.to_string(),
-                count: p.y,
-                x: i as f64 * BAR_PITCH,
-                y: CHART_HEIGHT - h,
-                w: BAR_WIDTH,
-                h,
-            }
+        .map(|p| ChartBar {
+            label: p.x.to_string(),
+            count: p.y,
         })
         .collect()
 }
