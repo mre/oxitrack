@@ -118,6 +118,7 @@ th {
 .bar-fill {
     display: block;
     height: 100%;
+    width: var(--bar-pct, 0%);
     background: var(--pico-primary);
     border-radius: 3px;
     min-width: 1px;

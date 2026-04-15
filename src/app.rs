@@ -18,8 +18,9 @@ use tracing::Level;
 
 use crate::{config::Config, handlers, states::InnerAppState};
 
-static CONTENT_SECURITY_POLICY: HeaderValue =
-    HeaderValue::from_static("default-src 'self'; object-src 'none';");
+static CONTENT_SECURITY_POLICY: HeaderValue = HeaderValue::from_static(
+    "default-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none';",
+);
 
 fn load_config() -> Result<Config> {
     use anyhow::Context;
