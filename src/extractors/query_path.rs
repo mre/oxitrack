@@ -27,12 +27,7 @@ impl QueryPath {
     pub async fn normalized_with_id(&self, pool: &DbPool) -> RespResult<PathId<'_>> {
         let normalized = self.normalized();
 
-        #[cfg(feature = "postgres")]
-        let sql = "SELECT id FROM paths WHERE path = $1 LIMIT 1";
-        #[cfg(feature = "sqlite")]
-        let sql = "SELECT id FROM paths WHERE path = ? LIMIT 1";
-
-        let row = sqlx::query(sql)
+        let row = sqlx::query("SELECT id FROM paths WHERE path = ? LIMIT 1")
             .bind(normalized)
             .fetch_one(pool)
             .await

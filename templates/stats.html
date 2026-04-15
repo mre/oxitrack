@@ -1,53 +1,110 @@
 {% extends "base.html" %}
 
-{%- import "bar_chart.html" as bar_chart_macros -%}
-
 {% block content %}
-    <table class="border-separate border-spacing-3">
-        <tr>
-            <td>Page</td>
-            <td>
-                <a href="{{ tracked_origin }}{{ path }}">{{ tracked_origin }}{{ path }}</a>
-            </td>
-        </tr>
-        <tr>
-            <td>First visit</td>
-            <td>{{ visits.first }}</td>
-        </tr>
-        <tr>
-            <td>Visits</td>
-            <td>{{ visits.total_n }}</td>
-        </tr>
-        <tr>
-            <td>Visits per day</td>
-            <td>{{ "{:.2}"|format(visits.per_day) }}</td>
-        </tr>
-        {% match visits.average_time_spent %}
-            {% when Some with (time) %}
-            <tr>
-                <td>Average time spent</td>
-                <td>{{ time }}</td>
-            </tr>
-            {% when None %}
-        {% endmatch %}
-    </table>
+<hgroup>
+    <h1>{{ path }}</h1>
+    <p><a href="{{ tracked_origin }}{{ path }}" target="_blank">{{ tracked_origin }}{{ path }}</a></p>
+</hgroup>
 
-    {{ bar_chart_macros::bar_chart() }}
+<section>
+    <figure>
+        <table class="meta-table">
+            <tbody>
+                <tr>
+                    <td>First visit</td>
+                    <td>{{ visits.first }}</td>
+                </tr>
+                <tr>
+                    <td>Total visits</td>
+                    <td>{{ visits.total_n }}</td>
+                </tr>
+                <tr>
+                    <td>Visits / day</td>
+                    <td>{{ "{:.2}"|format(visits.per_day) }}</td>
+                </tr>
+                <tr>
+                    <td>Avg. time spent</td>
+                    <td>
+                        {% match visits.average_time_spent %}
+                        {% when Some with (t) %}{{ t }}
+                        {% when None %}&mdash;
+                        {% endmatch %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </figure>
+</section>
 
-    <table class="w-full md:w-fit" id="table" hidden>
-        <thead>
-            <tr class="border-b-4">
-                <th class="pr-5 text-left">Referrer</th>
-                <th class="pr-5 text-left">Visits</th>
-                <th class="text-right">%</th>
-            </tr>
-        </thead>
+<div id="stats-panel">
+    <div class="filter-tabs">
+        <a role="button"
+           hx-get="/hx/stats?filter=last-2-days&amp;path={{ path }}"
+           hx-target="#stats-panel"
+           hx-swap="outerHTML"
+           {% if filter == crate::handlers::stats_data::Filter::Last2Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 2 Days</a>
+        <a role="button"
+           hx-get="/hx/stats?filter=last-60-days&amp;path={{ path }}"
+           hx-target="#stats-panel"
+           hx-swap="outerHTML"
+           {% if filter == crate::handlers::stats_data::Filter::Last60Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 60 Days</a>
+        <a role="button"
+           hx-get="/hx/stats?filter=all-time&amp;path={{ path }}"
+           hx-target="#stats-panel"
+           hx-swap="outerHTML"
+           {% if filter == crate::handlers::stats_data::Filter::AllTime %}aria-current="page"{% else %}class="outline secondary"{% endif %}>All Time</a>
+    </div>
 
-        <tbody id="table_body">
-        </tbody>
-    </table>
-{% endblock %}
+    {% if !chart.is_empty() %}
+    <div class="chart-wrap">
+        <svg class="visits-chart" viewBox="0 0 {{ chart_width }} 60" preserveAspectRatio="none">
+            {% for bar in &chart %}
+            <rect
+                x="{{ bar.x }}"
+                y="{{ bar.y }}"
+                width="{{ bar.w }}"
+                height="{{ bar.h }}"
+                fill="var(--pico-primary)"
+                opacity="0.85"
+                rx="1">
+                <title>{{ bar.label }}: {{ bar.count }}</title>
+            </rect>
+            {% endfor %}
+        </svg>
+    </div>
+    {% endif %}
 
-{% block scripts %}
-    <script data-base-url="{{ base_url }}" data-path="{{ path }}" src='{{ base_url }}/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
+    <p class="muted-stat"><small>{{ visits.total_n }} total visits &mdash; {{ filter.label() }}</small></p>
+
+    {% if !referrers.is_empty() %}
+    <section>
+        <h3>Referrers</h3>
+        <figure>
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th>Domain</th>
+                        <th class="num">Visits</th>
+                        <th class="num">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for (rc, pct) in &referrers %}
+                    <tr>
+                        <td>{{ rc.domain }}</td>
+                        <td class="num">{{ rc.count }}</td>
+                        <td class="num pct-cell">
+                            <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+                            {{ pct }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    </section>
+    {% else %}
+    <p class="muted-stat">No referrers recorded for this page yet.</p>
+    {% endif %}
+</div>
 {% endblock %}

@@ -1,36 +1,20 @@
-pub mod all_time;
 mod chart_data_aggregator;
 mod contiguous_date_part;
-pub mod last_2_days;
-pub mod last_60_days;
 pub mod referrer_count;
-pub mod table_body_templates;
-mod whole_days_since_first_visit;
+pub mod whole_days_since_first_visit;
 
-use askama::Template;
-use axum::Json;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::*;
-use serde::Serialize;
+use serde::Deserialize;
 use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
-use crate::{
-    db::{Db, VisitCount},
-    states::InnerAppState,
-};
+use crate::{db::Db, states::InnerAppState};
 
 use chart_data_aggregator::ChartDataAggregator;
 use contiguous_date_part::{
     ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
 };
-
-use self::{
-    referrer_count::ReferrerCount,
-    table_body_templates::{ReferrersTableBody, VisitsTableBody},
-};
-
-use super::count_rows::CountRows;
 
 #[derive(sqlx::FromRow)]
 struct TruncDateCount {
@@ -38,12 +22,50 @@ struct TruncDateCount {
     count: i64,
 }
 
-#[derive(Serialize)]
-pub struct DataPoint<T>
-where
-    T: Serialize,
-{
-    x: T,
+/// A single bar in the SVG chart.
+pub struct ChartBar {
+    pub label: String,
+    pub count: u64,
+    /// SVG x position
+    pub x: f64,
+    /// SVG y position (from top, since SVG y increases downward)
+    pub y: f64,
+    /// Bar width in SVG units
+    pub w: f64,
+    /// Bar height in SVG units
+    pub h: f64,
+}
+
+const BAR_WIDTH: f64 = 10.0;
+const BAR_PITCH: f64 = 12.0;
+const CHART_HEIGHT: f64 = 60.0;
+
+pub fn chart_width(n: usize) -> f64 {
+    (n as f64 * BAR_PITCH).max(BAR_PITCH)
+}
+
+/// Time filter for chart/stats queries.
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum Filter {
+    Last2Days,
+    Last60Days,
+    #[default]
+    AllTime,
+}
+
+impl Filter {
+    pub fn label(self) -> &'static str {
+        match self {
+            Filter::Last2Days => "Last 2 days",
+            Filter::Last60Days => "Last 60 days",
+            Filter::AllTime => "All time",
+        }
+    }
+}
+
+struct DataPoint<D> {
+    x: D,
     y: u64,
 }
 
@@ -56,45 +78,26 @@ where
         path_id: Option<i64>,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
+        trunc_sql: &str,
     ) -> RespResult<Vec<Self>> {
-        // PostgreSQL: positional params ($1–$4), only 4 bindings needed.
-        #[cfg(feature = "postgres")]
-        let rows = sqlx::query_as::<Db, TruncDateCount>(
-            r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS trunc_registered_at,
+        let sql = format!(
+            r#"SELECT {trunc_sql} AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
-            WHERE ($2 IS NULL OR path_id = $2) AND ($3 IS NULL OR TIMEZONE($4, registered_at) >= $3)
+            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
             GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"#,
-        )
-        .bind(D::date_truncation())
-        .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .fetch_all(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query chart data!")?;
+            ORDER BY trunc_registered_at"#
+        );
 
-        // SQLite: each `?` is a distinct positional slot; DATE_TRUNC/TIMEZONE
-        // do not exist, so a simplified form is used (no truncation applied).
-        #[cfg(feature = "sqlite")]
-        let rows = sqlx::query_as::<Db, TruncDateCount>(
-            r#"SELECT datetime(registered_at, ?) AS trunc_registered_at,
-            COUNT(registered_at) AS count FROM visits
-            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= ?)
-            GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"#,
-        )
-        .bind(state.posix_utc_offset_str)
-        .bind(path_id)
-        .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(start_datetime)
-        .fetch_all(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query chart data!")?;
+        let rows = sqlx::query_as::<Db, TruncDateCount>(&sql)
+            .bind(path_id)
+            .bind(path_id)
+            .bind(start_datetime)
+            .bind(state.posix_utc_offset_str)
+            .bind(start_datetime)
+            .fetch_all(&state.pool)
+            .await
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
 
@@ -103,19 +106,15 @@ where
         } else if let Some(row) = rows.first() {
             D::from(row.trunc_registered_at)
         } else {
-            // `all-time` in month or year aggregation without any rows.
-            let datapoints = vec![Self {
+            return Ok(vec![Self {
                 x: now_date_part,
                 y: 0,
-            }];
-            return Ok(datapoints);
+            }]);
         };
 
-        // Fill from the last row until now if the date part of the last row is not now.
         let additional_given_point = match rows.last() {
             Some(last_row) => {
                 let last_row_date_part = D::from(last_row.trunc_registered_at);
-
                 (now_date_part > last_row_date_part).then_some(Ok((now_date_part, 0)))
             }
             None => Some(Ok((now_date_part, 0))),
@@ -135,18 +134,14 @@ where
         for given_point in given_points {
             let (row_date_part, count) = given_point?;
 
-            // Fill the gap until the row.
             if aggregator.next_date_part() < row_date_part {
                 loop {
                     aggregator.push(0)?;
-
                     if aggregator.next_date_part() >= row_date_part {
                         break;
                     }
                 }
             }
-
-            // Add row.
             aggregator.push(count)?;
         }
 
@@ -154,54 +149,114 @@ where
     }
 }
 
-#[derive(Serialize)]
-#[serde(untagged)]
-pub enum ChartData {
-    Year(Vec<DataPoint<ContiguousYear>>),
-    Month(Vec<DataPoint<ContiguousMonth>>),
-    Day(Vec<DataPoint<ContiguousDay>>),
-    Hour(Vec<DataPoint<ContiguousHour>>),
+fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
+    points: Vec<DataPoint<D>>,
+) -> Vec<ChartBar> {
+    let max_count = points.iter().map(|p| p.y).max().unwrap_or(1).max(1);
+    points
+        .into_iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let h =
+                (p.y as f64 / max_count as f64 * CHART_HEIGHT).max(if p.y > 0 { 1.0 } else { 0.0 });
+            ChartBar {
+                label: p.x.to_string(),
+                count: p.y,
+                x: i as f64 * BAR_PITCH,
+                y: CHART_HEIGHT - h,
+                w: BAR_WIDTH,
+                h,
+            }
+        })
+        .collect()
 }
 
-#[derive(Serialize)]
-pub struct StatsData {
-    chart_data: ChartData,
-    table_body: String,
-}
+pub async fn build_chart(
+    state: &'static InnerAppState,
+    path_id: Option<i64>,
+    filter: Filter,
+) -> RespResult<Vec<ChartBar>> {
+    let now = state.now_tz()?;
 
-impl StatsData {
-    pub async fn build_response(
-        chart_data: ChartData,
-        state: &'static InnerAppState,
-        path_id: Option<i64>,
-        start_datetime: Option<PrimitiveDateTime>,
-    ) -> RespResult<Json<Self>> {
-        let table_body = if let Some(path_id) = path_id {
-            let referrer_counts =
-                ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
-            let referrer_count_rows = CountRows::from(referrer_counts);
-
-            ReferrersTableBody {
-                referrer_count_rows,
-            }
-            .render()
-        } else {
-            let visits_counts = VisitCount::all_sorted_by_count(state, start_datetime).await?;
-            let visit_count_rows = CountRows::from(visits_counts);
-
-            VisitsTableBody {
-                base_url: state.base_url,
-                visit_count_rows,
-            }
-            .render()
+    match filter {
+        Filter::Last2Days => {
+            let start = hour_data_start_datetime(now)?;
+            let trunc = format!(
+                "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
+                state.posix_utc_offset_str
+            );
+            let points =
+                DataPoint::<ContiguousHour>::all(state, path_id, now, Some(start), &trunc).await?;
+            Ok(to_chart_bars(points))
         }
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to render the table body template!")?;
+        Filter::Last60Days => {
+            let start = day_data_start_datetime(now);
+            let trunc = format!(
+                "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
+                state.posix_utc_offset_str
+            );
+            let points =
+                DataPoint::<ContiguousDay>::all(state, path_id, now, Some(start), &trunc).await?;
+            Ok(to_chart_bars(points))
+        }
+        Filter::AllTime => {
+            let Some(WholeDaysSinceFirstVisit {
+                whole_days_since_first_visit,
+                ..
+            }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
+            else {
+                return Ok(vec![]);
+            };
 
-        Ok(Json(Self {
-            chart_data,
-            table_body,
-        }))
+            if whole_days_since_first_visit < 2 {
+                let start = hour_data_start_datetime(now)?;
+                let trunc = format!(
+                    "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
+                    state.posix_utc_offset_str
+                );
+                let points =
+                    DataPoint::<ContiguousHour>::all(state, path_id, now, Some(start), &trunc)
+                        .await?;
+                Ok(to_chart_bars(points))
+            } else if whole_days_since_first_visit < 60 {
+                let start = day_data_start_datetime(now);
+                let trunc = format!(
+                    "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
+                    state.posix_utc_offset_str
+                );
+                let points =
+                    DataPoint::<ContiguousDay>::all(state, path_id, now, Some(start), &trunc)
+                        .await?;
+                Ok(to_chart_bars(points))
+            } else if whole_days_since_first_visit < 1461 {
+                let trunc = format!(
+                    "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
+                    state.posix_utc_offset_str
+                );
+                let points =
+                    DataPoint::<ContiguousMonth>::all(state, path_id, now, None, &trunc).await?;
+                Ok(to_chart_bars(points))
+            } else {
+                let trunc = format!(
+                    "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
+                    state.posix_utc_offset_str
+                );
+                let points =
+                    DataPoint::<ContiguousYear>::all(state, path_id, now, None, &trunc).await?;
+                Ok(to_chart_bars(points))
+            }
+        }
+    }
+}
+
+pub fn start_datetime_for_filter(
+    filter: Filter,
+    now: OffsetDateTime,
+) -> RespResult<Option<PrimitiveDateTime>> {
+    match filter {
+        Filter::Last2Days => Ok(Some(hour_data_start_datetime(now)?)),
+        Filter::Last60Days => Ok(Some(day_data_start_datetime(now))),
+        Filter::AllTime => Ok(None),
     }
 }
 
@@ -210,7 +265,6 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
     let time = Time::from_hms(now.hour(), 0, 0)
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to create Time for hour data!")?;
-
     Ok(PrimitiveDateTime::new(date, time))
 }
 

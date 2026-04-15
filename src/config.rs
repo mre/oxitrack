@@ -1,9 +1,6 @@
 use serde::Deserialize;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
-#[cfg(feature = "postgres")]
-use oxi_axum_helpers::PgConfig;
-
 #[derive(Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct HMUtcOffset {
@@ -14,7 +11,6 @@ pub struct HMUtcOffset {
 }
 
 /// Configuration for a SQLite database.
-#[cfg(feature = "sqlite")]
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SqliteConfig {
@@ -23,7 +19,6 @@ pub struct SqliteConfig {
     pub path: String,
 }
 
-#[cfg(feature = "sqlite")]
 impl SqliteConfig {
     pub async fn try_into_pool(self) -> anyhow::Result<sqlx::SqlitePool> {
         use anyhow::Context;
@@ -54,9 +49,6 @@ pub struct Config {
     pub tracked_origin_callback: Option<String>,
     #[serde(default = "default_min_delay_secs")]
     pub min_delay_secs: u16,
-    #[cfg(feature = "postgres")]
-    pub db: PgConfig,
-    #[cfg(feature = "sqlite")]
     pub db: SqliteConfig,
     #[serde(default)]
     pub utc_offset: HMUtcOffset,

@@ -45,12 +45,7 @@ impl Params {
             return None;
         }
 
-        #[cfg(feature = "postgres")]
-        let sql_select = "SELECT id FROM referrers WHERE domain = $1 LIMIT 1";
-        #[cfg(feature = "sqlite")]
-        let sql_select = "SELECT id FROM referrers WHERE domain = ? LIMIT 1";
-
-        let referrer_row = sqlx::query(sql_select)
+        let referrer_row = sqlx::query("SELECT id FROM referrers WHERE domain = ? LIMIT 1")
             .bind(domain)
             .fetch_optional(&mut *tx)
             .await
@@ -67,29 +62,23 @@ impl Params {
         // If two requests try to insert at the same time,
         // then only one insertion will be successful.
         // If the insertion fails because of the constraint, we will try to select.
-        #[cfg(feature = "postgres")]
-        let sql_insert = "INSERT INTO referrers(domain)
-            VALUES ($1)
-            ON CONFLICT ON CONSTRAINT unique_domain DO NOTHING
-            RETURNING id";
-        #[cfg(feature = "sqlite")]
-        let sql_insert = "INSERT INTO referrers(domain)
+        let inserted_row = sqlx::query(
+            "INSERT INTO referrers(domain)
             VALUES (?)
             ON CONFLICT(domain) DO NOTHING
-            RETURNING id";
-
-        let inserted_row = sqlx::query(sql_insert)
-            .bind(domain)
-            .fetch_optional(&mut *tx)
-            .await
-            .ok()?;
+            RETURNING id",
+        )
+        .bind(domain)
+        .fetch_optional(&mut *tx)
+        .await
+        .ok()?;
 
         if let Some(row) = inserted_row {
             return Some(row.get("id"));
         }
 
         // A concurrent request inserted first.
-        sqlx::query(sql_select)
+        sqlx::query("SELECT id FROM referrers WHERE domain = ? LIMIT 1")
             .bind(domain)
             .fetch_one(&mut *tx)
             .await
@@ -121,24 +110,19 @@ pub async fn get(
 
     let referrer_id = params.referrer_id(state, &mut tx).await;
 
-    #[cfg(feature = "postgres")]
-    let sql_insert_visit = "INSERT INTO visits(path_id, registered_at, referrer_id)
-        VALUES ($1, $2, $3)
-        RETURNING id";
-    #[cfg(feature = "sqlite")]
-    let sql_insert_visit = "INSERT INTO visits(path_id, registered_at, referrer_id)
+    let visit_id: i64 = sqlx::query(
+        "INSERT INTO visits(path_id, registered_at, referrer_id)
         VALUES (?, ?, ?)
-        RETURNING id";
-
-    let visit_id: i64 = sqlx::query(sql_insert_visit)
-        .bind(path_id)
-        .bind(registered_at)
-        .bind(referrer_id)
-        .fetch_one(&mut *tx)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
-        .get("id");
+        RETURNING id",
+    )
+    .bind(path_id)
+    .bind(registered_at)
+    .bind(referrer_id)
+    .fetch_one(&mut *tx)
+    .await
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+    .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
+    .get("id");
 
     tx.commit()
         .await

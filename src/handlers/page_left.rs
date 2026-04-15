@@ -23,22 +23,17 @@ pub async fn get(
 
     let time_on_page_sec = i32::from(time_on_page_sec);
 
-    #[cfg(feature = "postgres")]
-    let sql = "UPDATE visits
-        SET time_s = $1
-        WHERE id = $2";
-    #[cfg(feature = "sqlite")]
-    let sql = "UPDATE visits
+    sqlx::query(
+        "UPDATE visits
         SET time_s = ?
-        WHERE id = ?";
-
-    sqlx::query(sql)
-        .bind(time_on_page_sec)
-        .bind(visit_id)
-        .execute(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg(|| format!("Failed to set time_s for visit_id {visit_id}"))?;
+        WHERE id = ?",
+    )
+    .bind(time_on_page_sec)
+    .bind(visit_id)
+    .execute(&state.pool)
+    .await
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+    .log_msg(|| format!("Failed to set time_s for visit_id {visit_id}"))?;
 
     Ok(StatusCode::OK)
 }

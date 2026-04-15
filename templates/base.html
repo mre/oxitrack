@@ -1,44 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
         <meta name="referrer" content="no-referrer">
         <meta name="robots" content="noindex, nofollow">
 
-        <link rel="icon"
-              type="image/x-icon"
-              href="{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}">
+        <title>{{ base.title }} — OxiTraffic</title>
 
-        <title>{{- base.title -}}</title>
-
-        <link href='{{ base_url }}/static/main.css?v={{ env!("BUILD_TIMESTAMP") }}'
-              rel="stylesheet">
+        <link rel="icon" href="/static/logo.svg">
+        <link rel="stylesheet" href="/static/pico.min.css?v={{ env!("BUILD_TIMESTAMP") }}">
+        <link rel="stylesheet" href="/static/style.css?v={{ env!("BUILD_TIMESTAMP") }}">
+        <script src="/static/htmx.min.js?v={{ env!("BUILD_TIMESTAMP") }}"></script>
     </head>
 
-    <body class="flex flex-col p-1 mx-auto min-h-screen text-lg break-words bg-gray-50 lg:px-4 dark:text-gray-50 dark:bg-gray-900 text-gray-950">
-        <header class="flex gap-x-4 items-center py-1 px-4 mb-2.5 bg-gray-200 rounded-full dark:bg-gray-700 align-center">
-            <nav class="font-bold">
-                <a href="{{ base_url }}">
-                    <img class="inline-block w-9 h-9 transition duration-500 hover:scale-110 me-2"
-                         src='{{ base_url }}/static/logo.svg?v={{ env!("BUILD_TIMESTAMP") }}'
-                         alt="Logo">OxiTraffic
-                </a>
+    <body>
+        <header class="container-fluid">
+            <nav>
+                <ul>
+                    <li>
+                        <a href="/" class="brand">
+                            <img src="/static/logo.svg" alt="Logo" class="logo-icon">
+                            <strong>OxiTraffic</strong>
+                        </a>
+                    </li>
+                </ul>
+                <ul>
+                    <li><a href="{{ tracked_origin }}" target="_blank" class="secondary">{{ tracked_origin }}</a></li>
+                    <li>
+                        <button id="theme-toggle" class="outline secondary" onclick="toggleTheme()" aria-label="Toggle theme">&#x25D1;</button>
+                    </li>
+                </ul>
             </nav>
         </header>
 
-        <main class="mx-1 mb-6 leading-relaxed">
+        <main class="container">
             {% block content %}{% endblock %}
         </main>
 
-        <footer class="py-2 mt-auto text-sm text-center bg-gray-100 rounded-xl dark:bg-gray-700">
-            <p>All datetimes have the UTC offset {{ base.utc_offset }}</p>
-            <p>
-                v{{ env!("CARGO_PKG_VERSION") }} - <a href="https://codeberg.org/mo8it/oxitraffic" target="_blank">Source Code</a> 🦀
-            </p>
+        <footer class="container-fluid">
+            <small>
+                UTC{{ base.utc_offset }} &middot;
+                v{{ env!("CARGO_PKG_VERSION") }} &middot;
+                <a href="https://codeberg.org/mo8it/oxitraffic" target="_blank">Source</a>
+            </small>
         </footer>
 
-        {% block scripts %}{% endblock %}
+        <script>
+            function toggleTheme() {
+                const html = document.documentElement;
+                html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', html.dataset.theme);
+            }
+            const saved = localStorage.getItem('theme');
+            if (saved) document.documentElement.dataset.theme = saved;
+        </script>
     </body>
 </html>
