@@ -50,14 +50,23 @@ impl InnerAppState {
             .build()
             .context("Failed to build the reqwest client!")?;
 
+        // Migration strategy:
+        //   SQLite  – run on every startup (no external tooling available in dev).
+        //   Postgres – dev: run manually via `sqlx migrate run`; release: run automatically.
+        #[cfg(feature = "sqlite")]
+        sqlx::migrate!("migrations/sqlite")
+            .set_ignore_missing(true)
+            .run(&pool)
+            .await
+            .context("Failed to run SQLite migrations!")?;
+
         if !cfg!(debug_assertions) {
-            // Migrations must be run manually during development.
-            // Therefore, only run migrations in release mode.
-            sqlx::migrate!()
+            #[cfg(feature = "postgres")]
+            sqlx::migrate!("migrations/postgres")
                 .set_ignore_missing(true)
                 .run(&pool)
                 .await
-                .context("Failed to run migrations!")?;
+                .context("Failed to run Postgres migrations!")?;
 
             // Only check for connection in release mode to speed up the server starting process.
             let callback_status = http_client
