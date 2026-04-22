@@ -3,6 +3,7 @@ use askama_web::WebTemplate;
 use axum::extract::{Query, State};
 use axum_ctx::RespResult;
 use serde::Deserialize;
+use time::Duration;
 
 use crate::{
     handlers::{
@@ -33,8 +34,17 @@ pub struct Index {
 }
 
 pub async fn get(State(state): AppState, Query(q): Query<IndexQuery>) -> RespResult<Index> {
-    let range = DateRange::from_params(q.from, q.to);
     let now = state.now_tz()?;
+    let range = if q.from.is_none() && q.to.is_none() {
+        let to = now.date();
+        let from = to - Duration::days(90);
+        DateRange {
+            from: Some(from),
+            to: Some(to),
+        }
+    } else {
+        DateRange::from_params(q.from, q.to)
+    };
 
     let (page_stats_vec, mut referrers_vec, chart) = tokio::try_join!(
         page_stats::all_sorted_by_count(state, &range, now),
