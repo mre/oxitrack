@@ -46,19 +46,58 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
         None
     };
 
-    let (page_stats_vec, mut referrers_vec, chart) = tokio::try_join!(
-        page_stats::all_sorted_by_count(state, &range, now),
-        ReferrerCount::all_sorted_by_count(
-            state,
-            path_id,
-            range.start_datetime(),
-            range.end_datetime()
-        ),
-        build_chart(state, path_id, &range, now),
-    )?;
+    let (page_stats_vec, mut referrers_vec, chart) = if path_id.is_some() {
+        let (referrers, chart) = tokio::try_join!(
+            ReferrerCount::all_sorted_by_count(
+                state,
+                path_id,
+                range.start_datetime(),
+                range.end_datetime()
+            ),
+            build_chart(state, path_id, &range, now),
+        )?;
+        (vec![], referrers, chart)
+    } else {
+        let (pages, referrers, chart) = tokio::try_join!(
+            page_stats::all_sorted_by_count(state, &range, now),
+            ReferrerCount::all_sorted_by_count(
+                state,
+                None,
+                range.start_datetime(),
+                range.end_datetime()
+            ),
+            build_chart(state, None, &range, now),
+        )?;
+        (pages, referrers, chart)
+    };
 
-    let total_visits = page_stats_vec.iter().map(|p| p.count).sum();
-    let pages = CountRows::from(page_stats_vec);
+    let is_subpage = path_id.is_some();
+
+    let total_visits: i64 = if is_subpage {
+        sqlx::query_scalar(
+            r"SELECT COUNT(*) FROM visits
+              WHERE path_id = ?
+                AND (? IS NULL OR registered_at >= ?)
+                AND (? IS NULL OR registered_at < ?)",
+        )
+        .bind(path_id)
+        .bind(range.start_datetime())
+        .bind(range.start_datetime())
+        .bind(range.end_datetime())
+        .bind(range.end_datetime())
+        .fetch_one(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to query total visits for path")?
+    } else {
+        page_stats_vec.iter().map(|p| p.count).sum()
+    };
+
+    let pages = if is_subpage {
+        CountRows::from(vec![])
+    } else {
+        CountRows::from(page_stats_vec)
+    };
     referrers_vec.truncate(5);
     let referrers = CountRows::from(referrers_vec);
 
