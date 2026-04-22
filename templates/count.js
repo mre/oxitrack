@@ -1,5 +1,5 @@
-// OxiTraffic: Self-hosted, simple and privacy respecting website traffic tracker
-// AGPLv3: https://codeberg.org/mo8it/oxitraffic
+// OxyTrack: Self-hosted, simple and privacy respecting website traffic tracker
+// AGPLv3: https://codeberg.org/mo8it/oxytrack
 //
 // This script reports your page visit, how long you spent on the page and which referrer you possibly had.
 // It doesn't collect any information that can be used to identify you.
@@ -17,7 +17,11 @@ async function count() {
   };
 
   // Register, get a temporary ID and start the time measurement
-  const registrationResp = await fetch("{{ base_url }}/register?path=" + encodeURIComponent(window.location.pathname), fetchOptions);
+  const registrationResp = await fetch(
+    "{{ base_url }}/register?path=" +
+      encodeURIComponent(window.location.pathname),
+    fetchOptions,
+  );
   let startTime = new Date();
   let timeOnPageMs = 0;
   const visitorId = await registrationResp.json();
@@ -34,7 +38,7 @@ async function count() {
   // Sleep the required minimum amount of time before calling `/post-sleep`
   const minDelayMs = 1000 * parseInt("{{ min_delay_secs }}");
   do {
-    await new Promise(r => setTimeout(r, minDelayMs));
+    await new Promise((r) => setTimeout(r, minDelayMs));
 
     const newStartTime = new Date();
     timeOnPageMs += newStartTime.getTime() - startTime.getTime();
@@ -45,19 +49,28 @@ async function count() {
   // Extract the referrer origin respecting the `no-referrer` policy
   try {
     const referrer = new URL(document.referrer);
-    if (referrer.protocol === "https:" && referrer.origin !== window.location.origin) {
+    if (
+      referrer.protocol === "https:" &&
+      referrer.origin !== window.location.origin
+    ) {
       queryParams = "?referrer_origin=" + encodeURIComponent(referrer.origin);
     }
-  } catch { }
+  } catch {}
 
   // Call `/post-sleep` for the visit to be counted
-  await fetch("{{ base_url }}/post-sleep/" + visitorId + queryParams, fetchOptions);
+  await fetch(
+    "{{ base_url }}/post-sleep/" + visitorId + queryParams,
+    fetchOptions,
+  );
 
   // On leaving the page, call `/page-left` to report the total spent time in seconds
   window.addEventListener("beforeunload", async () => {
     timeOnPageMs += new Date().getTime() - startTime.getTime();
     const timeOnPageS = Math.round(0.001 * timeOnPageMs);
-    await fetch("{{ base_url }}/page-left/" + visitorId + "/" + timeOnPageS, fetchOptions);
+    await fetch(
+      "{{ base_url }}/page-left/" + visitorId + "/" + timeOnPageS,
+      fetchOptions,
+    );
   });
 }
 

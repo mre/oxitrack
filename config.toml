@@ -1,10 +1,10 @@
-# OxiTraffic configuration — example / local-development defaults
+# OxyTrack configuration — example / local-development defaults
 #
 # This file is committed to the repository as a convenience for local development.
 # For production deployments, copy this file to a location outside the repository,
-# edit the values, and point OxiTraffic at it via the environment variable:
+# edit the values, and point OxyTrack at it via the environment variable:
 #
-#   OXITRAFFIC_CONFIG_FILE=/path/to/your/config.toml oxitraffic
+#   OXYTRACK_CONFIG_FILE=/path/to/your/config.toml oxytrack
 #
 # The default config file path (used when the env var is not set) is "config.toml"
 # relative to the working directory.
@@ -13,7 +13,7 @@ socket_address = "127.0.0.1:8080"
 base_url       = "http://localhost:8080"
 tracked_origin = "https://corrode.dev"
 
-# For the first request to any new path, OxiTraffic makes an outbound HTTP GET
+# For the first request to any new path, OxyTrack makes an outbound HTTP GET
 # to tracked_origin_callback + path to verify the path exists before recording it.
 # This adds latency to the very first visit on each new page. Set
 # tracked_origin_callback to an internal address if your tracked site is behind
@@ -25,7 +25,7 @@ min_delay_secs = 0
 
 [db]
 # Path to the SQLite database file. Created automatically on first run.
-path = "./oxitraffic.db"
+path = "./oxytrack.db"
 
 [utc_offset]
 hours   = 0

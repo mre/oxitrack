@@ -1,9 +1,9 @@
 [package]
-name = "oxitraffic"
+name = "oxytrack"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
 version = "0.10.5"
 authors = ["Mo Bitar <mo8it@proton.me>"]
-repository = "https://codeberg.org/mo8it/oxitraffic"
+repository = "https://codeberg.org/mo8it/oxytrack"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
 categories = ["web-programming", "web-programming::http-server"]

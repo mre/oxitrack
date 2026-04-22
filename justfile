@@ -5,7 +5,7 @@ _default:
 	
 # Run the server in development mode
 run:
-	OXITRAFFIC_CONFIG_FILE=dev/config.toml cargo run
+	OXYTRACK_CONFIG_FILE=dev/config.toml cargo run
 
 # Run the server with auto-reload on source/template changes
 watch:
