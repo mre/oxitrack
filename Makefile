@@ -1,6 +1,6 @@
 SERVER_USER := root
 SERVER_IP   := 46.225.7.147
-REMOTE_DIR  := /data/coolify/applications/oxitrack/data
+REMOTE_DIR  := /data/coolify/applications/vg91n6ofqwle2ws39q8py1tt/data
 TIMESTAMP   := $(shell date +%Y%m%d_%H%M%S)
 
 .DEFAULT_GOAL := help

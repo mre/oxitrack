@@ -17,7 +17,7 @@ askama_web = { version = "0.15", features = ["axum-0.8"] }
 axum-ctx = "0.5"
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json", "query"] }
 
-toml = ">=1"
+
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
 rand = { version = "0.9", default-features = false, features = ["thread_rng"] }
 # native-tls uses the OS TLS stack (SecureTransport / SChannel / OpenSSL) and
@@ -65,6 +65,7 @@ cast_possible_truncation = "allow"
 # ── Intentional allow: axum error types ───────────────────────────────────────
 # RespErr from axum_ctx is large by design (carries HTTP status + message).
 result_large_err = "allow"
+multiple_crate_versions = "allow"
 
 
 [profile.dev]

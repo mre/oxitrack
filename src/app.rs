@@ -31,7 +31,7 @@ fn load_config() -> Result<Config> {
 
     Figment::new()
         .merge(Toml::file(&path))
-        .merge(Env::prefixed("OXITRACK_"))
+        .merge(Env::prefixed("OXITRACK_").ignore(&["CONFIG_FILE"]))
         .extract()
         .with_context(|| format!("Could not load config from {path} (or OXITRACK_* env vars)"))
 }
@@ -157,7 +157,7 @@ mod tests {
 
     impl Req {
         fn new(path: &'static str) -> Self {
-            Req {
+            Self {
                 path,
                 status: StatusCode::OK,
                 mime: None,
