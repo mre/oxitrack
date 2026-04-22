@@ -2,10 +2,10 @@
 
 _default:
 	just --list
-
+	
 # Run the server in development mode
 run:
-	cargo run
+	OXITRAFFIC_CONFIG_FILE=dev/config.toml cargo run
 
 # Run the server with auto-reload on source/template changes
 watch:
@@ -24,5 +24,6 @@ check:
 	cargo clippy
 
 alias r := run
+alias dev := run
 alias w := watch
 alias t := test

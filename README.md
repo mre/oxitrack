@@ -1,225 +1,98 @@
-<p align="center">
-  <img height="100" src="https://codeberg.org/mo8it/oxitraffic/raw/branch/main/static/logo.svg">
-</p>
-<h1 align="center">OxiTraffic</h1>
-<p align="center">Self-hosted, simple and privacy respecting website traffic tracker 🌐</p>
-<h2 align="center">➡️ <a href="https://oxitraffic.mo8it.com">Demo</a> ⬅️</h2>
+# OxiTraffic
+
+Self-hosted, privacy-respecting website traffic tracker.
 
 ## Features
 
-- ❌ Short visits are not counted
-  - ✅ Only meaningful visits are counted
-  - 🤖 Makes it less likely to count visits by web bots
-- 🥷🏼 Respects privacy (no personal data or IP is logged)
-- 🍪 No cookies
-- 🕊️ Self-hosted
-- 📈 Visualization of visits history
-- 💻️ API for visits history and count
-- 🏅 Low memory usage (about 12 MiB)
-- 📦️ First class container support
-- 🔀 Asynchronous and multithreaded
-- 🆓 Free & open source (AGPLv3)
-- 🦀 Written in Rust (**oxi**dized)
-
-## Demo
-
-[Here is a demo](https://oxitraffic.mo8it.com) which tracks my own website (mo8it.com).
+- No personal data or IP addresses are logged
+- No cookies
+- Visits history with charts
+- JSON API for visit history and counts
+- Low memory usage (~12 MiB)
+- First-class container support
+- Only meaningful visits are counted; short visits and bot traffic are filtered out
 
 ## How it works
 
-You add the following script tag to your website after replacing `OXITRAFFIC_BASE_URL` with the base URL of your OxiTraffic instance:
+Add the following script tag to your website, replacing `OXITRAFFIC_BASE_URL` with the base URL of your OxiTraffic instance:
 
 ```html
 <script type="module" src="https://OXITRAFFIC_BASE_URL/count.js"></script>
 ```
 
-It runs the tiny script [`count.js`](templates/count.js).
-
-The script calls `/register?path=PATH` to receive a visitor ID.
-`PATH` is the path of the page you are on.
-
-This ID is used after the minimum delay (configuration option `min_delay_secs`) to call `/post-sleep/VISITOR_ID` which leads to counting that visit.
-
-When the page is left, a request is sent to `/page-left/VISITOR_ID` to record the total spent time.
+The script calls `/register?path=PATH` to receive a visitor ID. After the minimum delay (`min_delay_secs`), it calls `/post-sleep/VISITOR_ID` to count the visit. When the visitor leaves the page, `/page-left/VISITOR_ID` is called to record the time spent.
 
 ### Path validation
 
-How does OxiTraffic know if a newly requested path is a valid one for your tracked website?
+On the first request to a new path, OxiTraffic sends a request to that path prefixed by `tracked_origin_callback`. If the response status is 2xx, the path is accepted. Otherwise it is rejected.
 
-Only for the first request to a new path, OxiTraffic sends a request to that path prefixed by the configuration option `tracked_origin_callback`.
-If the status code is in the range 200-299 (success), the path is added to the database.
-Otherwise, the request is rejected.
+### Binary
 
-## Setup
-
-### Containerized
-
-You can use the container image published on [Docker Hub](https://hub.docker.com/r/mo8it/oxitraffic).
-
-You can pull that image using Docker:
-
-```fish
-docker pull mo8it/oxitraffic:latest
-```
-
-Or using Podman:
-
-```fish
-podman pull docker.io/mo8it/oxitraffic:latest
-```
-
-The container image expects the config file to be mounted as a (read-only) **volume** at `/volumes/config.toml` inside the container (a volume doesn't have to be a directory, it can be a file).
-
-By default, the container listens on **port** `80`.
-
-### Not containerized
-
-You can also host OxiTraffic directly with the binary that you can install with Cargo:
-
-```fish
+```sh
 cargo install oxitraffic --locked
 ```
 
-Make sure to provide the environment variable `OXITRAFFIC_CONFIG_FILE` when using the binary directly (see the configuration section below).
+Set the `OXITRAFFIC_CONFIG_FILE` environment variable to point to your config file (defaults to `config.toml` in the current directory).
 
-### Database
+## Configuration
 
-In both cases (container or binary), you need a PostgreSQL database.
-There are many guides in the internet that explain how to host one either in a container or directly on the host.
-You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it.com/blog/containerized-postgresql-with-rootless-podman/).
+The config file path is read from `OXITRAFFIC_CONFIG_FILE` (defaults to `config.toml`). Every option can also be set or overridden via environment variable.
 
-### Configuration
+| Parameter                 | Description                                                                                                        | Default          | Environment variable               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------- | ---------------------------------- |
+| `socket_address`          | Listening address. Use `127.0.0.1:8080` for local testing; `0.0.0.0:80` for containers.                          | `"0.0.0.0:80"`   | `OXITRAFFIC_SOCKET_ADDRESS`          |
+| `base_url`                | Base URL of your OxiTraffic instance. Used to build `count.js`.                                                     |                  | `OXITRAFFIC_BASE_URL`                |
+| `tracked_origin`          | [Origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website (used for CORS).      |                  | `OXITRAFFIC_TRACKED_ORIGIN`          |
+| `tracked_origin_callback` | Origin used for path validation requests. Useful when OxiTraffic and your site are on the same local network.       | `tracked_origin` | `OXITRAFFIC_TRACKED_ORIGIN_CALLBACK` |
+| `min_delay_secs`          | Seconds a visitor must spend on the page before the visit is counted.                                             | `19`             | `OXITRAFFIC_MIN_DELAY_SECS`          |
+| `utc_offset.hours`        | Hours component of your UTC offset                                                                                 | `0`              | `OXITRAFFIC_UTC_OFFSET__HOURS`       |
+| `utc_offset.minutes`      | Minutes component of your UTC offset                                                                               | `0`              | `OXITRAFFIC_UTC_OFFSET__MINUTES`     |
 
-The binary reads the configuration from the file pointed to by the `OXITRAFFIC_CONFIG_FILE` environment variable.
-If the variable is not set, it defaults to `config.toml` in the current working directory.
-In the container image this variable is pre-set to `/volumes/config.toml`.
-
-For production deployments it is recommended to keep your `config.toml` outside the repository and set `OXITRAFFIC_CONFIG_FILE` explicitly:
-
-```sh
-OXITRAFFIC_CONFIG_FILE=/etc/oxitraffic/config.toml oxitraffic
-```
-
-The table below shows the configuration parameters for the configuration file.
-You can use environment variables to either set or overwrite parameters from the config file.
-
-| Parameter                 | Description                                                                                                                                                                                                                                                                                       | Default          | Environment variable                 |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------ |
-| `socket_address`          | Use `127.0.0.1:8080` for local testing. `0.0.0.0` is important for usage in a container, but you can pick another port.                                                                                                                                                                           | `"0.0.0.0:80"`   | `OXITRAFFIC_SOCKET_ADDRESS`          |
-| `base_url`                | The base URL of your OxiTraffic instance. Used to build the [`count.js`](templates/count.js) script.                                                                                                                                                                                              |                  | `OXITRAFFIC_BASE_URL`                |
-| `tracked_origin`          | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to allow [CORS-requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) from the [`count.js`](templates/count.js) script to OxiTraffic.       |                  | `OXITRAFFIC_TRACKED_ORIGIN`          |
-| `tracked_origin_callback` | The [origin](https://developer.mozilla.org/en-US/docs/Glossary/Origin) of your tracked website that is used to verify a newly requested path as explained above. This option exists to be able to make these requests inside a local network.                                                     | `tracked_origin` | `OXITRAFFIC_TRACKED_ORIGIN_CALLBACK` |
-| `min_delay_secs`          | Minimum delay in seconds between visiting the website and being able to call `/post-sleep` to count the visit. It is recommended to call `/post-sleep` one second after this value. A low value not only counts meaningless visits, but also makes it easier for visits by web bots to be counts. | 19               | `OXITRAFFIC_MIN_DELAY_SECS`          |
-| `db.host`                 | PostgreSQL host                                                                                                                                                                                                                                                                                   |                  | `OXITRAFFIC_DB__HOST`                |
-| `db.port`                 | PostgreSQL port                                                                                                                                                                                                                                                                                   |                  | `OXITRAFFIC_DB__PORT`                |
-| `db.username`             | PostgreSQL username                                                                                                                                                                                                                                                                               |                  | `OXITRAFFIC_DB__USERNAME`            |
-| `db.password`             | PostgreSQL password                                                                                                                                                                                                                                                                               |                  | `OXITRAFFIC_DB__PASSWORD`            |
-| `db.database`             | PostgreSQL database                                                                                                                                                                                                                                                                               |                  | `OXITRAFFIC_DB__DATABASE`            |
-| `utc_offset.hours`        | The hours of your UTC offset                                                                                                                                                                                                                                                                      | 0                | `OXITRAFFIC_UTC_OFFSET__HOURS`       |
-| `utc_offset.minutes`      | The minutes of your UTC offset                                                                                                                                                                                                                                                                    | 0                | `OXITRAFFIC_UTC_OFFSET__MINUTES`     |
-
-#### Example configuration
-
-This is an example of the configuration file `config.toml`:
+### Example `config.toml`
 
 ```toml
-# Can be omitted because this is the default value.
 socket_address = "0.0.0.0:80"
 
 base_url = "https://oxitraffic.your_domain.com"
-
 tracked_origin = "https://your_domain.com"
-# In case both OxiTraffic and your website are in a local network and `website` can be resolved to the local IP address of the your website.
-# Omit this option to use the value of `tracked_origin` instead.
+# Optional: use a local address for path validation
 tracked_origin_callback = "http://website"
-
-[db]
-host = "127.0.0.1"
-port = 5432
-username = "postgres"
-password = "CHANGE_ME"
-database = "postgres"
 
 [utc_offset]
 hours = 2
-# Can be omitted because 0 is the default.
-minutes = 0
 ```
 
 ### Logging
 
-Oxitraffic logs to stdout.
-The default log level is `info`, but you can choose one of the following other levels:
+OxiTraffic logs to stdout at the `info` level by default. Set `RUST_LOG` to one of `off`, `error`, `warn`, `info`, `debug`, or `trace` to change the level.
 
-- `off`
-- `error`
-- `warn`
-- `info`
-- `debug`
-- `trace`
-
-These levels are sorted from no logging to extensive logging.
-You can change the default level by setting the environment variable `RUST_LOG` to the level name.
-
-## Endpoints
+## API
 
 ### Dashboard
 
-| Endpoint           | Description                                             | Return |
-| ------------------ | ------------------------------------------------------- | ------ |
-| `/`                | A list of registered paths to see their visits history. | HTML   |
-| `/stats?path=PATH` | Statistics of the visits history of a specific path.    | HTML   |
+| Endpoint           | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `/`                | List of registered paths with visit counts           |
+| `/stats?path=PATH` | Visit history and statistics for a specific path     |
 
 ### JSON API
 
-| Endpoint                 | Description                                                                                                                                              | Return                                                                                                                               |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `/api/counts`            | The visits count for each registered path                                                                                                                | `JSON([{"path": String, "count": i64}])`                                                                                             |
-| `/api/count?path=PATH`   | The visits count for the specified path                                                                                                                  | `JSON(i64)`                                                                                                                          |
-| `/api/history?path=PATH` | The visits datetimes for a specific path with the nullable referrer and global UTC offset. You can use this endpoint to make your own analysis and plots | `JSON({"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "spent_time_seconds": Option<i64>}]})` |
+| Endpoint                 | Description                              | Response                                                                                                                             |
+| ------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `/api/counts`            | Visit count for each registered path     | `[{"path": String, "count": i64}]`                                                                                                   |
+| `/api/count?path=PATH`   | Visit count for a specific path          | `i64`                                                                                                                                |
+| `/api/history?path=PATH` | Full visit history for a specific path   | `{"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "spent_time_seconds": Option<i64>}]}` |
 
-### Script
+### Tracking script endpoints
 
-| Endpoint                                 | Description                                                                                                         | Return                          |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `/register?path=PATH`                    | Register to receive a `VISITOR_ID` for the `PATH` (e.g. `/` or `/blog/rust-vs-julia`) of the page you are visiting. | `JSON(u16)`                     |
-| `/post-sleep/VISITOR_ID`                 | Use the visitor ID after the minimum delay `min_delay_secs` for the visit to be counted.                            | Only status code 200 on success |
-| `/page-left/VISITOR_ID/TIME_ON_PAGE_SEC` | Use the visitor ID on leaving the page to report the total spent time on the page in seconds (`TIME_ON_PAGE_SEC`).  | Only status code 200 on success |
+| Endpoint                                 | Description                                                          |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| `/register?path=PATH`                    | Register a visitor for the given path; returns a `VISITOR_ID`        |
+| `/post-sleep/VISITOR_ID`                 | Count the visit after the minimum delay has elapsed                  |
+| `/page-left/VISITOR_ID/TIME_ON_PAGE_SEC` | Record the total time spent on the page when the visitor leaves      |
 
 ## Limitations
 
-### Number of concurrent visitors
+**Concurrent visitors:** Counting may behave unexpectedly above 65,536 concurrent visitors, as visitor IDs are 16-bit and recycled periodically. This is unlikely to matter for a self-hosted single-site deployment.
 
-Counting will fail if your website has more than `2^16 = 65536` concurrent visitors.
-
-The cause of this is that the registration ID is assigned periodically.
-This means that the visitor `65537` will get the ID of visitor `1`.
-When the old visitor tries to communicate with OxiTraffic with that ID,
-the communication will either fail or will be interpreted as if it was from the new visitor.
-
-This limitation can be avoided, but it would lead to higher RAM usage and slightly worse performance.
-
-That being said, if you really have more than `65536` concurrent visitors, open an issue 😉
-
-### Single instance
-
-OxiTraffic is designed as a lightweight single instance app.
-Although it uses a database, it is still stateful for performance reasons and to make self-hosting easier by avoiding an additional dependency like Redis.
-A single instance is more than enough for a single website.
-
-The state that prevents having more than one instance for a single website is the cache of visits before reaching the minimum delay.
-
-That being said, if you still need to scale horizontally, open an issue for adding something like Redis 😉
-
-## Questions?
-
-Don't hesitate to open an issue ^^
-
-## Contributing
-
-You are welcome to contribute to the project!
-
-You can always open an issue.
-**Wait** for a response on the issue before starting with a pull request (Rejected pull request are very disappointing).
-
-Use Clippy and rustfmt before submitting code :)
+**Single instance:** OxiTraffic keeps an in-memory cache of pending visits for performance. Running multiple instances against the same database is not supported. If you need horizontal scaling, open an issue.

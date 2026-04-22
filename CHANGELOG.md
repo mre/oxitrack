@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.11.0
+
+### BREAKING CHANGES
+
+- **Project renamed from OxiTraffic to OxiTraffic.** Update any environment variables prefixed with `OXITRAFFIC_` to `OXITRAFFIC_`, and replace references to `oxitraffic` in your config, container images, and scripts with `oxitraffic`.
+
+### Features
+
+- Significant internal rewrite for improved performance, maintainability, and extensibility.
+
 ## 0.10.5
 
 - Add dark mode support by [sgued](https://codeberg.org/sgued)
