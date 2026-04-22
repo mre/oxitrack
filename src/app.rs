@@ -4,6 +4,10 @@ use axum::{
     http::header::{self, HeaderValue},
     routing::get,
 };
+use figment::{
+    Figment,
+    providers::{Env, Format, Toml},
+};
 use std::net::SocketAddr;
 use time::UtcOffset;
 use tower_http::{
@@ -23,14 +27,13 @@ static CONTENT_SECURITY_POLICY: HeaderValue = HeaderValue::from_static(
 );
 
 fn load_config() -> Result<Config> {
-    use anyhow::Context;
-
     let path = std::env::var("OXITRACK_CONFIG_FILE").unwrap_or_else(|_| "config.toml".to_string());
 
-    let contents = std::fs::read_to_string(&path)
-        .with_context(|| format!("Could not read config file: {path}"))?;
-
-    toml::from_str(&contents).with_context(|| format!("Could not parse config file: {path}"))
+    Figment::new()
+        .merge(Toml::file(&path))
+        .merge(Env::prefixed("OXITRACK_"))
+        .extract()
+        .with_context(|| format!("Could not load config from {path} (or OXITRACK_* env vars)"))
 }
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
