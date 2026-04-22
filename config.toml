@@ -3,7 +3,7 @@
 
 socket_address = "127.0.0.1:8080"
 base_url       = "http://localhost:8080"
-tracked_origin = "http://localhost:8080"
+tracked_origin = "https://corrode.dev"
 
 # How many seconds a visitor must stay on a page before the visit is counted.
 # Set to 0 in development so every visit registers immediately.
