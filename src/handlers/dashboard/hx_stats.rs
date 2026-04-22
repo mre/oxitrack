@@ -5,9 +5,9 @@ use axum_ctx::*;
 use serde::Deserialize;
 
 use crate::{
-    db::VisitCount,
     handlers::{
         count_rows::CountRows,
+        dashboard::page_stats::{self, PageStat},
         stats_data::{
             Filter, build_chart, referrer_count::ReferrerCount, start_datetime_for_filter,
         },
@@ -26,7 +26,7 @@ pub struct HxStatsQuery {
 #[template(path = "hx_stats.html")]
 pub struct HxStats {
     pub base_url: &'static str,
-    pub pages: CountRows<VisitCount>,
+    pub pages: CountRows<PageStat>,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
     pub filter: Filter,
@@ -50,9 +50,9 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
         None
     };
 
-    let visits = VisitCount::all_sorted_by_count(state, start_datetime).await?;
-    let total_visits = visits.iter().map(|v| v.count).sum();
-    let pages = CountRows::from(visits);
+    let page_stats = page_stats::all_sorted_by_count(state, filter, now, start_datetime).await?;
+    let total_visits = page_stats.iter().map(|p| p.count).sum();
+    let pages = CountRows::from(page_stats);
 
     let referrers = ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
     let referrers = CountRows::from(referrers);

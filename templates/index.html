@@ -44,6 +44,8 @@
                     <tr>
                         <th>Path</th>
                         <th class="num">Visits</th>
+                        <th class="num">Visits/day</th>
+                        <th class="num">Avg. duration</th>
                         <th class="num">Share</th>
                     </tr>
                 </thead>
@@ -52,6 +54,13 @@
                     <tr>
                         <td><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
                         <td class="num">{{ vc.count }}</td>
+                        <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
+                        <td class="num">
+                            {% match vc.avg_duration %}
+                            {% when Some with (d) %}{{ d }}
+                            {% when None %}&mdash;
+                            {% endmatch %}
+                        </td>
                         <td class="num pct-cell">
                             <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
                             {{ pct }}

@@ -5,10 +5,10 @@ use axum_ctx::*;
 use serde::Deserialize;
 
 use crate::{
-    db::VisitCount,
     handlers::{
         base_template::Base,
         count_rows::CountRows,
+        dashboard::page_stats::{self, PageStat},
         stats_data::{
             Filter, build_chart, referrer_count::ReferrerCount, start_datetime_for_filter,
         },
@@ -28,7 +28,7 @@ pub struct Index {
     pub base: Base<'static>,
     pub base_url: &'static str,
     pub tracked_origin: &'static str,
-    pub pages: CountRows<VisitCount>,
+    pub pages: CountRows<PageStat>,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
     pub filter: Filter,
@@ -40,9 +40,9 @@ pub async fn get(State(state): AppState, Query(q): Query<IndexQuery>) -> RespRes
     let now = state.now_tz()?;
     let start_datetime = start_datetime_for_filter(filter, now)?;
 
-    let visits = VisitCount::all_sorted_by_count(state, start_datetime).await?;
-    let total_visits = visits.iter().map(|v| v.count).sum();
-    let pages = CountRows::from(visits);
+    let page_stats = page_stats::all_sorted_by_count(state, filter, now, start_datetime).await?;
+    let total_visits = page_stats.iter().map(|p| p.count).sum();
+    let pages = CountRows::from(page_stats);
 
     let referrers = ReferrerCount::all_sorted_by_count(state, None, start_datetime).await?;
     let referrers = CountRows::from(referrers);
