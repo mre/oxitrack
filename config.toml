@@ -9,8 +9,8 @@
 # The default config file path (used when the env var is not set) is "config.toml"
 # relative to the working directory.
 
-socket_address = "127.0.0.1:8080"
-base_url       = "http://localhost:8080"
+socket_address = "0.0.0.0:8080"
+base_url       = "https://oxytrack.corrode.dev"
 tracked_origin = "https://corrode.dev"
 
 # For the first request to any new path, OxiTrack makes an outbound HTTP GET
