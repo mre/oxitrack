@@ -1,8 +1,8 @@
 [package]
 name = "oxytrack"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
-version = "0.10.5"
-authors = ["Mo Bitar <mo8it@proton.me>"]
+version = "0.11.0"
+authors = ["Mo Bitar <mo8it@proton.me>, Matthias Endler <matthias@endler.dev>"]
 repository = "https://codeberg.org/mo8it/oxytrack"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
@@ -36,7 +36,6 @@ url = "2"
 figment = { version = "0.10", features = ["test"] }
 mime = "0.3"
 tower = { version = "0.5", default-features = false }
-tower-http = { version = "0.6", default-features = false, features = ["fs"] }
 
 [build-dependencies]
 time = "0.3"
@@ -65,23 +64,6 @@ cast_possible_truncation = "allow"
 # RespErr from axum_ctx is large by design (carries HTTP status + message).
 result_large_err = "allow"
 
-# ── Intentional allow: transitive dependency version conflicts ─────────────────
-# The remaining duplicates are all upstream-locked and cannot be resolved by us:
-#
-#   hashbrown 0.15/0.17    — sqlx-core uses 0.15 via hashlink; indexmap uses 0.17
-#   rand 0.8/0.9           — sqlx bundles sqlx-mysql/postgres (even unused features
-#                            are resolved in the lock file) which need rand 0.8;
-#                            we directly depend on rand 0.9
-#   rand_core/rand_chacha  — follow the rand 0.8/0.9 split above
-#   getrandom 0.2/0.3/0.4  — rand 0.9 → getrandom 0.3; native-tls → getrandom 0.4;
-#                            platform-specific paths drag in 0.2
-#   r-efi 5/6              — follows the getrandom 0.3/0.4 split
-#   redox_syscall 0.5/0.7  — parking_lot 0.12 (via sqlx + figment dev-dep) needs
-#                            0.5; newer ecosystem crates use 0.7
-#   windows-sys 0.48/0.61  — platform-specific (Windows only); mio/tokio use 0.61,
-#                            older platform crates use 0.48
-#   wit-bindgen 0.51/0.57  — deep wasm toolchain transitive chain via getrandom 0.4
-multiple_crate_versions = "allow"
 
 [profile.dev]
 strip = "debuginfo"
