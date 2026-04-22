@@ -1,8 +1,8 @@
 ---
 services:
-  oxytrack:
-    container_name: oxytrack
-    image: docker.io/mo8it/oxytrack:latest
+  oxitrack:
+    container_name: oxitrack
+    image: docker.io/mo8it/oxitrack:latest
     restart: unless-stopped
     volumes:
       # You can change the source to point to your configuration file.

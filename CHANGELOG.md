@@ -4,7 +4,7 @@
 
 ### BREAKING CHANGES
 
-- **Project renamed from OxiTraffic to OxyTrack.** Update any environment variables prefixed with `OXITRAFFIC_` to `OXYTRACK_`, and replace references to `oxitraffic` in your config, container images, and scripts with `oxytrack`.
+- **Project renamed from OxiTraffic to OxiTrack.** Update any environment variables prefixed with `OXITRAFFIC_` to `OXITRACK_`, and replace references to `oxitraffic` in your config, container images, and scripts with `oxitrack`.
 
 ### Features
 

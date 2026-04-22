@@ -31,7 +31,7 @@ impl Params {
     ) -> Option<i64> {
         let referrer_origin = self.referrer_origin.as_deref()?;
         if referrer_origin == state.tracked_origin || referrer_origin == state.base_origin {
-            // Don't count the tracked domain or the domain of OxyTrack as a referrer domain.
+            // Don't count the tracked domain or the domain of OxiTrack as a referrer domain.
             return None;
         }
 

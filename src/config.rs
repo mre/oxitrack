@@ -14,7 +14,7 @@ pub struct HMUtcOffset {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SqliteConfig {
-    /// Path to the `SQLite` database file, e.g. `./oxytrack.db`.
+    /// Path to the `SQLite` database file, e.g. `./oxitrack.db`.
     /// Use `":memory:"` for an in-memory database.
     pub path: String,
 }

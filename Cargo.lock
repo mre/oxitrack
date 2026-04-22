@@ -1265,7 +1265,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxytrack"
+name = "oxitrack"
 version = "0.11.0"
 dependencies = [
  "anyhow",

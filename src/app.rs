@@ -25,7 +25,7 @@ static CONTENT_SECURITY_POLICY: HeaderValue = HeaderValue::from_static(
 fn load_config() -> Result<Config> {
     use anyhow::Context;
 
-    let path = std::env::var("OXYTRACK_CONFIG_FILE").unwrap_or_else(|_| "config.toml".to_string());
+    let path = std::env::var("OXITRACK_CONFIG_FILE").unwrap_or_else(|_| "config.toml".to_string());
 
     let contents = std::fs::read_to_string(&path)
         .with_context(|| format!("Could not read config file: {path}"))?;
@@ -122,6 +122,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
     let app = Router::new()
         .nest_service("/static", static_service)
+        .route("/health", get(handlers::health::get))
         .merge(cors_router)
         .merge(dashboard_router)
         .nest("/hx", hx_router)
@@ -202,7 +203,7 @@ mod tests {
         ];
 
         Jail::expect_with(|jail| {
-            jail.set_env("OXYTRACK_CONFIG_FILE", "config.toml");
+            jail.set_env("OXITRACK_CONFIG_FILE", "config.toml");
 
             jail.create_file(
                 "config.toml",

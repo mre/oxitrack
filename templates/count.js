@@ -1,5 +1,5 @@
-// OxyTrack: Self-hosted, simple and privacy respecting website traffic tracker
-// AGPLv3: https://codeberg.org/mo8it/oxytrack
+// OxiTrack: Self-hosted, simple and privacy respecting website traffic tracker
+// AGPLv3: https://codeberg.org/mo8it/oxitrack
 //
 // This script reports your page visit, how long you spent on the page and which referrer you possibly had.
 // It doesn't collect any information that can be used to identify you.

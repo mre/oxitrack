@@ -3,6 +3,7 @@ mod base_template;
 pub mod count_js;
 pub mod count_rows;
 pub mod dashboard;
+pub mod health;
 pub mod page_left;
 pub mod post_sleep;
 pub mod register;
