@@ -54,8 +54,10 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
     let total_visits = page_stats.iter().map(|p| p.count).sum();
     let pages = CountRows::from(page_stats);
 
-    let referrers = ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
-    let referrers = CountRows::from(referrers);
+    let mut referrers_vec =
+        ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
+    referrers_vec.truncate(5);
+    let referrers = CountRows::from(referrers_vec);
 
     let chart = build_chart(state, path_id, filter).await?;
 

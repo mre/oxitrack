@@ -7,33 +7,24 @@
 </hgroup>
 
 <div id="stats-panel">
-    <div class="filter-tabs">
-        <a role="button"
-           hx-get="/hx/stats?filter=last-2-days"
-           hx-target="#stats-panel"
-           hx-swap="outerHTML"
-           {% if filter == crate::handlers::stats_data::Filter::Last2Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 2 Days</a>
-        <a role="button"
-           hx-get="/hx/stats?filter=last-60-days"
-           hx-target="#stats-panel"
-           hx-swap="outerHTML"
-           {% if filter == crate::handlers::stats_data::Filter::Last60Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 60 Days</a>
-        <a role="button"
-           hx-get="/hx/stats?filter=all-time"
-           hx-target="#stats-panel"
-           hx-swap="outerHTML"
-           {% if filter == crate::handlers::stats_data::Filter::AllTime %}aria-current="page"{% else %}class="outline secondary"{% endif %}>All Time</a>
-    </div>
-
-    {% if !chart.is_empty() %}
     <div class="chart-wrap">
+        <div class="chart-header">
+            <span class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ filter.label() }}</small></span>
+            <div class="filter-buttons">
+                <button hx-get="/hx/stats?filter=last-2-days" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
+                    {% if filter == crate::handlers::stats_data::Filter::Last2Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 2 days</button>
+                <button hx-get="/hx/stats?filter=last-60-days" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
+                    {% if filter == crate::handlers::stats_data::Filter::Last60Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 60 days</button>
+                <button hx-get="/hx/stats?filter=all-time" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
+                    {% if filter == crate::handlers::stats_data::Filter::AllTime %}aria-current="page"{% else %}class="outline secondary"{% endif %}>All time</button>
+            </div>
+        </div>
+        {% if !chart.is_empty() %}
         <div id="visits-chart" class="visits-chart"
             data-labels='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.label }}",{% else %}"{{ bar.label }}"{% endif %}{% endfor %}]'
             data-counts='[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]'></div>
+        {% endif %}
     </div>
-    {% endif %}
-
-    <p class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ filter.label() }}</small></p>
 
     {% if !pages.is_empty() %}
     <section>
@@ -77,7 +68,7 @@
 
     {% if !referrers.is_empty() %}
     <section>
-        <h3>Referrers</h3>
+        <h3>Top referrers</h3>
         <figure>
             <table class="striped">
                 <thead>

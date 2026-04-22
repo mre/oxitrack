@@ -11,6 +11,7 @@
         <link rel="icon" href="/static/logo.svg">
         <link rel="stylesheet" href="/static/pico.min.css?v={{ env!("BUILD_TIMESTAMP") }}">
         <link rel="stylesheet" href="/static/style.css?v={{ env!("BUILD_TIMESTAMP") }}">
+        <script src="/static/theme.js?v={{ env!("BUILD_TIMESTAMP") }}"></script>
         <script src="/static/htmx.min.js?v={{ env!("BUILD_TIMESTAMP") }}"></script>
         <script src="/static/echarts.min.js?v={{ env!("BUILD_TIMESTAMP") }}"></script>
         <script src="/static/chart.js?v={{ env!("BUILD_TIMESTAMP") }}" defer></script>
@@ -30,7 +31,7 @@
                 <ul>
                     <li><a href="{{ tracked_origin }}" target="_blank" class="secondary">{{ tracked_origin }}</a></li>
                     <li>
-                        <button id="theme-toggle" class="outline secondary" onclick="toggleTheme()" aria-label="Toggle theme">&#x25D1;</button>
+                        <button id="theme-toggle" class="outline secondary" aria-label="Toggle theme">&#x25D1;</button>
                     </li>
                 </ul>
             </nav>
@@ -47,15 +48,5 @@
                 <a href="https://codeberg.org/mo8it/oxitraffic" target="_blank">Source</a>
             </small>
         </footer>
-
-        <script>
-            function toggleTheme() {
-                const html = document.documentElement;
-                html.dataset.theme = html.dataset.theme === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('theme', html.dataset.theme);
-            }
-            const saved = localStorage.getItem('theme');
-            if (saved) document.documentElement.dataset.theme = saved;
-        </script>
     </body>
 </html>
