@@ -1,7 +1,7 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::{Query, State};
-use axum_ctx::*;
+use axum_ctx::RespResult;
 use serde::Deserialize;
 
 use crate::{
@@ -24,7 +24,6 @@ pub struct IndexQuery {
 #[template(path = "index.html")]
 pub struct Index {
     pub base: Base<'static>,
-    pub base_url: &'static str,
     pub tracked_origin: &'static str,
     pub pages: CountRows<PageStat>,
     pub referrers: CountRows<ReferrerCount>,
@@ -55,7 +54,6 @@ pub async fn get(State(state): AppState, Query(q): Query<IndexQuery>) -> RespRes
 
     Ok(Index {
         base: Base::new(state, "Dashboard"),
-        base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         pages,
         referrers,

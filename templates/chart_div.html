@@ -1,0 +1,5 @@
+{% if !chart.is_empty() %}
+        <div id="visits-chart" class="visits-chart"
+            data-labels='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.label }}",{% else %}"{{ bar.label }}"{% endif %}{% endfor %}]'
+            data-counts='[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]'></div>
+        {% endif %}

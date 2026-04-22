@@ -10,11 +10,11 @@ pub struct HMUtcOffset {
     pub minutes: i8,
 }
 
-/// Configuration for a SQLite database.
+/// Configuration for a `SQLite` database.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SqliteConfig {
-    /// Path to the SQLite database file, e.g. `./oxitraffic.db`.
+    /// Path to the `SQLite` database file, e.g. `./oxitraffic.db`.
     /// Use `":memory:"` for an in-memory database.
     pub path: String,
 }
@@ -56,7 +56,7 @@ pub struct Config {
 
 const fn default_socket_address() -> SocketAddr {
     // 0.0.0.0:80
-    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(0, 0, 0, 0), 80))
+    SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::UNSPECIFIED, 80))
 }
 
 const fn default_min_delay_secs() -> u16 {

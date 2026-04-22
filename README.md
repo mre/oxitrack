@@ -90,8 +90,15 @@ You could use [my blog post about hosting PostgreSQL using Podman](https://mo8it
 
 ### Configuration
 
-The binary expects the environment variable `OXITRAFFIC_CONFIG_FILE` to point to the TOML configuration file `config.toml`.
-This environment variable is set to `/volumes/config.toml` in the container image.
+The binary reads the configuration from the file pointed to by the `OXITRAFFIC_CONFIG_FILE` environment variable.
+If the variable is not set, it defaults to `config.toml` in the current working directory.
+In the container image this variable is pre-set to `/volumes/config.toml`.
+
+For production deployments it is recommended to keep your `config.toml` outside the repository and set `OXITRAFFIC_CONFIG_FILE` explicitly:
+
+```sh
+OXITRAFFIC_CONFIG_FILE=/etc/oxitraffic/config.toml oxitraffic
+```
 
 The table below shows the configuration parameters for the configuration file.
 You can use environment variables to either set or overwrite parameters from the config file.

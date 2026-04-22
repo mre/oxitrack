@@ -1,10 +1,13 @@
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use time::OffsetDateTime;
 
 use crate::{
     db::Db,
     formatters::SecondsFormatter,
-    handlers::{count_rows::Count, stats_data::DateRange},
+    handlers::{
+        count_rows::Count,
+        stats_data::{DateRange, local_to_utc},
+    },
     states::InnerAppState,
 };
 
@@ -38,12 +41,11 @@ pub async fn all_sorted_by_count(
     let start_datetime = range.start_datetime();
     let end_datetime = range.end_datetime();
 
-    let offset_secs = state.utc_offset.whole_seconds() as i64;
-    let start_utc = start_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
-    let end_utc = end_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+    let start_utc = start_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
+    let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
 
     let rows = sqlx::query_as::<Db, PageStatRow>(
-        r#"SELECT paths.path,
+        r"SELECT paths.path,
             COUNT(*) AS count,
             AVG(visits.time_s) AS avg_time_s,
             MIN(visits.registered_at) AS first_registered_at
@@ -52,7 +54,7 @@ pub async fn all_sorted_by_count(
         WHERE (? IS NULL OR visits.registered_at >= ?)
           AND (? IS NULL OR visits.registered_at < ?)
         GROUP BY paths.path
-        ORDER BY count DESC"#,
+        ORDER BY count DESC",
     )
     .bind(start_utc)
     .bind(start_utc)
@@ -69,9 +71,9 @@ pub async fn all_sorted_by_count(
             #[allow(clippy::cast_precision_loss)]
             let days = range.whole_days(now).unwrap_or_else(|| {
                 row.first_registered_at
-                    .map(|fv| (now.date() - fv.date()).whole_days().max(1))
-                    .unwrap_or(1)
+                    .map_or(1, |fv| (now.date() - fv.date()).whole_days().max(1))
             }) as f64;
+            #[allow(clippy::cast_precision_loss)]
             let per_day = row.count as f64 / days;
 
             PageStat {

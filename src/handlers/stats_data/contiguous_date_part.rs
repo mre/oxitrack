@@ -1,4 +1,4 @@
-use axum_ctx::*;
+use axum_ctx::{RespErr, RespResult, StatusCode};
 use serde::{Serialize, Serializer};
 use std::{cmp::Ordering, fmt};
 use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
@@ -7,7 +7,6 @@ pub trait ContiguousDatePart:
     From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord + fmt::Display
 {
     fn next(&mut self) -> RespResult<()>;
-    fn date_truncation() -> &'static str;
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -41,10 +40,6 @@ impl ContiguousDatePart for ContiguousYear {
     fn next(&mut self) -> RespResult<()> {
         self.0 += 1;
         Ok(())
-    }
-
-    fn date_truncation() -> &'static str {
-        "year"
     }
 }
 
@@ -120,10 +115,6 @@ impl ContiguousDatePart for ContiguousMonth {
         }
         Ok(())
     }
-
-    fn date_truncation() -> &'static str {
-        "month"
-    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -163,10 +154,6 @@ impl ContiguousDatePart for ContiguousDay {
             None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .log_msg("Failed to get the next day!")),
         }
-    }
-
-    fn date_truncation() -> &'static str {
-        "day"
     }
 }
 
@@ -215,9 +202,5 @@ impl ContiguousDatePart for ContiguousHour {
             self.hour = 0;
             self.day.next()
         }
-    }
-
-    fn date_truncation() -> &'static str {
-        "hour"
     }
 }

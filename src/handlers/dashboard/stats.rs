@@ -1,7 +1,7 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::{Query, State};
-use axum_ctx::*;
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult, StatusCode};
 use serde::Deserialize;
 use sqlx::Row;
 
@@ -38,32 +38,25 @@ impl Visits {
         let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             first_visit,
-        }) = WholeDaysSinceFirstVisit::build(state, Some(path_id), now, None).await?
+        }) = WholeDaysSinceFirstVisit::build(state, Some(path_id), now).await?
         else {
             return Err(RespErr::new(StatusCode::NOT_FOUND)
                 .user_msg("The requested path has no counted visits yet."));
         };
 
-        let avg_row = sqlx::query("SELECT AVG(time_s) AS avg FROM visits WHERE path_id = ?")
-            .bind(path_id)
-            .fetch_one(&state.pool)
-            .await
-            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-            .log_msg("Failed to run the average time spent query!")?;
+        let stats_row = sqlx::query(
+            "SELECT COUNT(*) AS total_n, AVG(time_s) AS avg FROM visits WHERE path_id = ?",
+        )
+        .bind(path_id)
+        .fetch_one(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to query visit stats!")?;
 
-        let average_time_spent = avg_row
-            .try_get::<Option<f64>, _>("avg")
-            .ok()
-            .flatten()
-            .map(|f| SecondsFormatter(f as u64));
-
-        let total_n_visits: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM visits WHERE path_id = ?")
-                .bind(path_id)
-                .fetch_one(&state.pool)
-                .await
-                .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-                .log_msg("Failed to query the count of visits")?;
+        let total_n_visits: i64 = stats_row.get("total_n");
+        let average_time_spent_raw = stats_row.try_get::<Option<f64>, _>("avg").ok().flatten();
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        let average_time_spent = average_time_spent_raw.map(|f| SecondsFormatter(f as u64));
 
         #[allow(clippy::cast_precision_loss)]
         let visits_per_day = if whole_days_since_first_visit > 0 {
@@ -87,7 +80,6 @@ impl Visits {
 #[template(path = "stats.html")]
 pub struct Stats {
     pub base: Base<'static>,
-    pub base_url: &'static str,
     pub tracked_origin: &'static str,
     pub path: String,
     pub visits: Visits,
@@ -130,7 +122,6 @@ pub async fn get(
 
     Ok(Stats {
         base: Base::new(state, "Stats"),
-        base_url: state.base_url,
         tracked_origin: state.tracked_origin,
         path: path.to_owned(),
         visits,

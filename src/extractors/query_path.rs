@@ -1,10 +1,8 @@
-use axum::{extract::FromRequestParts, http::request::Parts};
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use serde::Deserialize;
 use sqlx::Row;
 
 use crate::db::DbPool;
-use crate::states::InnerAppState;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -40,29 +38,6 @@ impl QueryPath {
             path: normalized,
             path_id: id,
         })
-    }
-}
-
-pub struct OptionalPathId(pub Option<i64>);
-
-impl FromRequestParts<&'static InnerAppState> for OptionalPathId {
-    type Rejection = RespErr;
-
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &&'static InnerAppState,
-    ) -> Result<Self, Self::Rejection> {
-        let Some(query) = parts.uri.query() else {
-            return Ok(Self(None));
-        };
-
-        let path = serde_urlencoded::from_str::<QueryPath>(query)
-            .ctx(StatusCode::BAD_REQUEST)
-            .user_msg("Failed to deserialize the `path` query parameter!")?;
-
-        let path_id = path.normalized_with_id(&state.pool).await?.path_id;
-
-        Ok(Self(Some(path_id)))
     }
 }
 

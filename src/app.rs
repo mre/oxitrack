@@ -4,7 +4,6 @@ use axum::{
     http::header::{self, HeaderValue},
     routing::get,
 };
-use oxi_axum_helpers::init_tracer;
 use std::net::SocketAddr;
 use time::UtcOffset;
 use tower_http::{
@@ -15,6 +14,7 @@ use tower_http::{
     trace::{DefaultMakeSpan, TraceLayer},
 };
 use tracing::Level;
+use tracing_subscriber::{filter::LevelFilter, util::SubscriberInitExt};
 
 use crate::{config::Config, handlers, states::InnerAppState};
 
@@ -35,7 +35,29 @@ fn load_config() -> Result<Config> {
 }
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
-    init_tracer()?;
+    let default_max_level = if cfg!(debug_assertions) {
+        LevelFilter::DEBUG
+    } else {
+        LevelFilter::INFO
+    };
+    let max_level = std::env::var("RUST_LOG")
+        .ok()
+        .and_then(|v| match v.to_ascii_lowercase().as_str() {
+            "off" => Some(LevelFilter::OFF),
+            "error" => Some(LevelFilter::ERROR),
+            "warn" => Some(LevelFilter::WARN),
+            "info" => Some(LevelFilter::INFO),
+            "debug" => Some(LevelFilter::DEBUG),
+            "trace" => Some(LevelFilter::TRACE),
+            _ => None,
+        })
+        .unwrap_or(default_max_level);
+    tracing_subscriber::fmt::SubscriberBuilder::default()
+        .with_max_level(max_level)
+        .without_time()
+        .finish()
+        .try_init()
+        .context("Failed to initialize the tracer!")?;
     let config = load_config()?;
     let utc_offset = UtcOffset::from_hms(config.utc_offset.hours, config.utc_offset.minutes, 0)
         .context("Invalid UTC offset configuration!")?;

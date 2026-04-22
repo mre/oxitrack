@@ -1,4 +1,4 @@
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use serde::Serialize;
 use time::PrimitiveDateTime;
 
@@ -8,6 +8,8 @@ pub type DbPool = sqlx::SqlitePool;
 pub type DbConnection = sqlx::SqliteConnection;
 pub type Db = sqlx::Sqlite;
 
+/// Sole consumer: the JSON API at `GET /api/counts`.
+/// The dashboard uses `PageStat` from `page_stats.rs` instead.
 #[derive(Serialize, sqlx::FromRow)]
 pub struct VisitCount {
     pub path: String,
@@ -20,11 +22,11 @@ impl VisitCount {
         start_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
         sqlx::query_as::<_, Self>(
-            r#"SELECT path, COUNT(*) AS count FROM paths
+            r"SELECT path, COUNT(*) AS count FROM paths
             INNER JOIN visits ON visits.path_id = paths.id
             WHERE ? IS NULL OR datetime(registered_at, ?) >= datetime(?)
             GROUP BY path
-            ORDER BY count DESC"#,
+            ORDER BY count DESC",
         )
         .bind(start_datetime)
         .bind(state.posix_utc_offset_str)

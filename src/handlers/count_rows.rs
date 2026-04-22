@@ -13,7 +13,7 @@ pub struct CountRows<T> {
 
 impl<T> CountRows<T> {
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.counts.is_empty()
     }
 }
@@ -25,7 +25,11 @@ where
     fn from(counts: Vec<T>) -> Self {
         #[allow(clippy::cast_precision_loss)]
         let total_count = counts.iter().map(|c| c.count() as f64).sum::<f64>();
-        let perc_factor = 100.0 / total_count;
+        let perc_factor = if total_count > 0.0 {
+            100.0 / total_count
+        } else {
+            0.0
+        };
 
         Self {
             counts,

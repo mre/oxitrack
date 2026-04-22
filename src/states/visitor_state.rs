@@ -48,7 +48,13 @@ impl VisitorStateStoreInner {
     #[must_use]
     fn get_mut(&mut self, id: VisitorId) -> &mut VisitorState {
         // Safety: Valid index since `visitors` has length `VisitorIdType::MAX + 1` with `VisitorIdType::MIN = 0`.
-        unsafe { self.visitor_states.get_unchecked_mut(usize::from(id)) }
+        #[expect(
+            unsafe_code,
+            reason = "bounds guaranteed by construction; see Safety comment above"
+        )]
+        unsafe {
+            self.visitor_states.get_unchecked_mut(usize::from(id))
+        }
     }
 }
 
@@ -104,6 +110,10 @@ impl VisitorStateStore {
 
         let mut inner = self.locked();
         // Safety: Valid index since `ind_to_id_map` has length `VisitorIdType::MAX + 1` with `VisitorIdType::MIN = 0`.
+        #[expect(
+            unsafe_code,
+            reason = "bounds guaranteed by construction; see Safety comment above"
+        )]
         let id = *unsafe {
             self.ind_to_id_map
                 .get_unchecked(usize::from(inner.last_id_ind))

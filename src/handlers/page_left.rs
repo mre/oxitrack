@@ -2,12 +2,14 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use axum_ctx::*;
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult};
 
 use crate::states::{AppState, visitor_state::VisitorId};
 
 pub async fn get(
     State(state): AppState,
+    // `u16` caps `time_on_page_sec` at 65 535 s (≈ 18 h), preventing
+    // arbitrarily large values from being stored.
     Path((visitor_id, time_on_page_sec)): Path<(VisitorId, u16)>,
 ) -> RespResult<StatusCode> {
     let visit_id = state

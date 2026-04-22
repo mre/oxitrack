@@ -9,7 +9,7 @@
     <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
 </div>
 
-<div id="stats-panel" data-from="{{ range.from_value() }}" data-to="{{ range.to_value() }}">
+<div id="stats-panel" data-from="{{ range.from_input() }}" data-to="{{ range.to_input() }}">
     <div class="chart-wrap">
         <div class="chart-header">
             <span class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ range.label() }}</small></span>

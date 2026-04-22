@@ -1,9 +1,23 @@
-# OxiTraffic configuration
-# Copy and edit this file, or use it as-is for local development.
+# OxiTraffic configuration — example / local-development defaults
+#
+# This file is committed to the repository as a convenience for local development.
+# For production deployments, copy this file to a location outside the repository,
+# edit the values, and point OxiTraffic at it via the environment variable:
+#
+#   OXITRAFFIC_CONFIG_FILE=/path/to/your/config.toml oxitraffic
+#
+# The default config file path (used when the env var is not set) is "config.toml"
+# relative to the working directory.
 
 socket_address = "127.0.0.1:8080"
 base_url       = "http://localhost:8080"
 tracked_origin = "https://corrode.dev"
+
+# For the first request to any new path, OxiTraffic makes an outbound HTTP GET
+# to tracked_origin_callback + path to verify the path exists before recording it.
+# This adds latency to the very first visit on each new page. Set
+# tracked_origin_callback to an internal address if your tracked site is behind
+# a reverse proxy, to keep this round-trip on the local network.
 
 # How many seconds a visitor must stay on a page before the visit is counted.
 # Set to 0 in development so every visit registers immediately.

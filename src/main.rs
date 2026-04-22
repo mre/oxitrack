@@ -7,8 +7,7 @@ mod handlers;
 mod states;
 
 use anyhow::{Context, Result};
-use oxi_axum_helpers::shutdown_signal;
-use tokio::{net::TcpListener, runtime::Runtime};
+use tokio::{net::TcpListener, runtime::Runtime, signal};
 use tracing::info;
 
 async fn init() -> Result<()> {
@@ -25,6 +24,32 @@ async fn init() -> Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("Server error!")
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to install the Ctrl+C handler for graceful shutdown!");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to install the signal handler for graceful shutdown!")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
+
+    eprintln!("Signal received. Starting graceful shutdown.");
 }
 
 fn main() -> Result<()> {

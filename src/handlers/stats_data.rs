@@ -5,7 +5,7 @@ pub mod whole_days_since_first_visit;
 
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use time::macros::format_description;
 use time::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
@@ -59,11 +59,26 @@ impl DateRange {
 
     pub fn whole_days(&self, now: OffsetDateTime) -> Option<i64> {
         let from = self.from?;
-        let to = self.to.unwrap_or(now.date());
+        let to = self.to.unwrap_or_else(|| now.date());
         Some((to - from).whole_days().max(1))
     }
 
     pub fn label(&self) -> String {
+        // Try to identify common presets and give them a friendly name.
+        // The "today" preset sends from=today&to=today (0-day span).
+        // Other presets send from=N-days-ago&to=today (N-day span).
+        if let (Some(from), Some(to)) = (self.from, self.to) {
+            let days = (to - from).whole_days();
+            match days {
+                0 => return "Today".to_string(),
+                7 => return "Last 7 days".to_string(),
+                30 => return "Last 30 days".to_string(),
+                90 => return "Last 90 days".to_string(),
+                365 => return "Last year".to_string(),
+                _ => {}
+            }
+        }
+
         let fmt = format_description!("[year]-[month]-[day]");
         match (self.from, self.to) {
             (None, _) => "All time".to_string(),
@@ -76,14 +91,15 @@ impl DateRange {
         }
     }
 
-    pub fn from_value(&self) -> String {
+    #[allow(clippy::wrong_self_convention)]
+    pub fn from_input(&self) -> String {
         let fmt = format_description!("[year]-[month]-[day]");
         self.from
             .and_then(|d| d.format(fmt).ok())
             .unwrap_or_default()
     }
 
-    pub fn to_value(&self) -> String {
+    pub fn to_input(&self) -> String {
         let fmt = format_description!("[year]-[month]-[day]");
         self.to.and_then(|d| d.format(fmt).ok()).unwrap_or_default()
     }
@@ -106,18 +122,17 @@ where
         end_datetime: Option<PrimitiveDateTime>,
         trunc_sql: &str,
     ) -> RespResult<Vec<Self>> {
-        let offset_secs = state.utc_offset.whole_seconds() as i64;
-        let start_utc = start_datetime.map(|pdt| pdt - Duration::seconds(offset_secs));
-        let end_utc = end_datetime.map(|pdt| pdt - Duration::seconds(offset_secs));
+        let start_utc = start_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
+        let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
 
         let sql = format!(
-            r#"SELECT {trunc_sql} AS trunc_registered_at,
+            r"SELECT {trunc_sql} AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
             WHERE (? IS NULL OR path_id = ?)
               AND (? IS NULL OR registered_at >= ?)
               AND (? IS NULL OR registered_at < ?)
             GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"#
+            ORDER BY trunc_registered_at"
         );
 
         let rows = sqlx::query_as::<Db, TruncDateCount>(&sql)
@@ -133,16 +148,13 @@ where
             .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
-        let terminal_date_part = end_datetime
-            .map(D::from)
-            .map(|ep| {
-                if ep < now_date_part {
-                    ep
-                } else {
-                    now_date_part
-                }
-            })
-            .unwrap_or(now_date_part);
+        let terminal_date_part = end_datetime.map(D::from).map_or(now_date_part, |ep| {
+            if ep < now_date_part {
+                ep
+            } else {
+                now_date_part
+            }
+        });
 
         let first_date_part = if let Some(start_datetime) = start_datetime {
             D::from(start_datetime)
@@ -155,6 +167,7 @@ where
             }]);
         };
 
+        #[allow(clippy::option_if_let_else)]
         let additional_given_point = match rows.last() {
             Some(last_row) => {
                 let last_row_date_part = D::from(last_row.trunc_registered_at);
@@ -192,6 +205,12 @@ where
     }
 }
 
+/// Converts a local-time `PrimitiveDateTime` to UTC by subtracting the UTC offset.
+/// This is the inverse of `InnerAppState::apply_utc_offset`.
+pub fn local_to_utc(pdt: PrimitiveDateTime, offset: time::UtcOffset) -> PrimitiveDateTime {
+    pdt - time::Duration::seconds(i64::from(offset.whole_seconds()))
+}
+
 fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
     points: Vec<DataPoint<D>>,
 ) -> Vec<ChartBar> {
@@ -219,7 +238,7 @@ pub async fn build_chart(
         let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             ..
-        }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
+        }) = WholeDaysSinceFirstVisit::build(state, path_id, now).await?
         else {
             return Ok(vec![]);
         };
@@ -273,8 +292,4 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to create Time for hour data!")?;
     Ok(PrimitiveDateTime::new(date, time))
-}
-
-fn day_data_start_datetime(now: OffsetDateTime) -> PrimitiveDateTime {
-    PrimitiveDateTime::new(now.date() - Duration::days(59), Time::MIDNIGHT)
 }

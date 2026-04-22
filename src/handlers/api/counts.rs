@@ -1,5 +1,5 @@
 use axum::{Json, extract::State};
-use axum_ctx::*;
+use axum_ctx::RespResult;
 
 use crate::{db::VisitCount, states::AppState};
 

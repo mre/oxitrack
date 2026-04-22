@@ -3,7 +3,7 @@ pub mod visitor_state;
 use anyhow::{Context, Result, bail};
 use askama::Template;
 use axum::extract::State;
-use axum_ctx::*;
+use axum_ctx::{RespErr, RespResult, StatusCode};
 use std::time::Duration;
 use time::{OffsetDateTime, UtcOffset};
 use url::Url;
@@ -29,7 +29,6 @@ pub struct InnerAppState {
     pub utc_offset: UtcOffset,
     pub utc_offset_str: &'static str,
     pub posix_utc_offset_str: &'static str,
-    pub base_url: &'static str,
     pub base_origin: &'static str,
     pub count_js: &'static str,
     pub http_client: reqwest::Client,
@@ -68,9 +67,7 @@ impl InnerAppState {
                 .status();
             if !callback_status.is_success() {
                 bail!(
-                    "The tracked website {} returned the non-successful status code {}!",
-                    tracked_origin_callback,
-                    callback_status,
+                    "The tracked website {tracked_origin_callback} returned the non-successful status code {callback_status}!"
                 );
             }
         }
@@ -100,7 +97,10 @@ impl InnerAppState {
             format!("{sign}{utc_offset_h:02}:{utc_offset_m:02}").leak()
         };
         let posix_utc_offset_str = {
-            // The opposite sign is important since this is POSIX!
+            // POSIX timezone offsets use the *opposite* sign convention from ISO 8601.
+            // e.g. UTC+5 is represented as "-05:00" in a POSIX `datetime(ts, ?)` call.
+            // This string is used exclusively in SQLite `datetime(registered_at, ?)` expressions
+            // for chart bucketing and is constant for the lifetime of the process.
             let posix_sign = if utc_offset.is_negative() { '+' } else { '-' };
             format!("{posix_sign}{utc_offset_h:02}:{utc_offset_m:02}").leak()
         };
@@ -114,7 +114,6 @@ impl InnerAppState {
             utc_offset,
             utc_offset_str,
             posix_utc_offset_str,
-            base_url,
             base_origin,
             count_js,
             http_client,
@@ -128,6 +127,7 @@ impl InnerAppState {
         url
     }
 
+    #[allow(clippy::option_if_let_else)]
     pub fn apply_utc_offset(&self, datetime: OffsetDateTime) -> RespResult<OffsetDateTime> {
         match datetime.checked_to_offset(self.utc_offset) {
             Some(t) => Ok(t),

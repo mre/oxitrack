@@ -2,7 +2,7 @@ use axum::{
     Json,
     extract::{Query, State},
 };
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use sqlx::Row;
 
 use crate::{extractors::query_path::QueryPath, states::AppState};
@@ -11,9 +11,9 @@ pub async fn get(State(state): AppState, Query(path): Query<QueryPath>) -> RespR
     let path = path.normalized();
 
     sqlx::query(
-        r#"SELECT COUNT(*) AS count FROM visits
+        r"SELECT COUNT(*) AS count FROM visits
         JOIN paths ON paths.id = path_id
-        WHERE path = ?"#,
+        WHERE path = ?",
     )
     .bind(path)
     .fetch_one(&state.pool)

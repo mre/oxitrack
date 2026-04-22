@@ -1,5 +1,7 @@
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use time::PrimitiveDateTime;
+
+use super::local_to_utc;
 
 use crate::{db::Db, handlers::count_rows::Count, states::InnerAppState};
 
@@ -16,18 +18,17 @@ impl ReferrerCount {
         start_datetime: Option<PrimitiveDateTime>,
         end_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
-        let offset_secs = state.utc_offset.whole_seconds() as i64;
-        let start_utc = start_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
-        let end_utc = end_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+        let start_utc = start_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
+        let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
 
         sqlx::query_as::<Db, Self>(
-            r#"SELECT domain, COUNT(*) AS count FROM visits
+            r"SELECT domain, COUNT(*) AS count FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
             WHERE (? IS NULL OR path_id = ?)
               AND (? IS NULL OR registered_at >= ?)
               AND (? IS NULL OR registered_at < ?)
             GROUP BY domain
-            ORDER BY count DESC"#,
+            ORDER BY count DESC",
         )
         .bind(path_id)
         .bind(path_id)

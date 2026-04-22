@@ -1,7 +1,7 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::{Query, State};
-use axum_ctx::*;
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use serde::Deserialize;
 
 use crate::{
@@ -23,7 +23,6 @@ pub struct HxStatsQuery {
 #[derive(Template, WebTemplate)]
 #[template(path = "hx_stats.html")]
 pub struct HxStats {
-    pub base_url: &'static str,
     pub pages: CountRows<PageStat>,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
@@ -64,7 +63,6 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
     let referrers = CountRows::from(referrers_vec);
 
     Ok(HxStats {
-        base_url: state.base_url,
         pages,
         referrers,
         chart,
