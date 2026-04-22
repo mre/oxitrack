@@ -97,7 +97,7 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .route("/history", get(handlers::api::history::get))
         .route("/counts", get(handlers::api::counts::get))
         .route("/count", get(handlers::api::count::get))
-        .layer(compression_layer.clone());
+        .route("/live", get(handlers::api::live::get));
 
     let hx_router = Router::new()
         .route("/stats", get(handlers::dashboard::hx_stats::get))

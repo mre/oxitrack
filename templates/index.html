@@ -13,6 +13,7 @@
     <div class="chart-wrap">
         <div class="chart-header">
             <span class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ range.label() }}</small></span>
+            <span id="live-count" hx-get="/api/live" hx-trigger="load, every 5s" hx-swap="innerHTML"></span>
             <div class="filter-buttons">
                 <button type="button" data-preset="today"  class="outline secondary">Today</button>
                 <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>

@@ -131,6 +131,16 @@ impl VisitorStateStore {
         *self.locked().get_mut(visitor_id) = VisitorState::PostSleep { visit_id };
     }
 
+    /// Returns the number of visitors currently active (registered but not yet gone).
+    #[must_use]
+    pub fn live_count(&self) -> usize {
+        self.locked()
+            .visitor_states
+            .iter()
+            .filter(|s| !matches!(s, VisitorState::None))
+            .count()
+    }
+
     /// Returns the DB visit ID if the visitor already successfully called `post_delay`.
     /// Returns `None` otherwise after clearing the visitor state.
     #[must_use]
