@@ -147,13 +147,57 @@ th {
     font-family: var(--pico-font-family-monospace);
 }
 
+/* ─── sort arrows ─── */
+th[data-sort-dir] {
+    white-space: nowrap;
+}
+th[data-sort-dir="asc"],
+th[data-sort-dir="desc"] {
+    color: var(--pico-primary);
+}
+.sort-arrow {
+    font-size: 0.7em;
+    margin-left: 0.15em;
+    opacity: 0.5;
+}
+th[data-sort-dir="asc"] .sort-arrow,
+th[data-sort-dir="desc"] .sort-arrow {
+    opacity: 1;
+}
+
 /* ─── responsive ─── */
+figure {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 600px) {
     .bar-bg {
         width: 40px;
     }
     h1 {
         font-size: 1.5rem;
+    }
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .filter-buttons {
+        justify-content: flex-start;
+    }
+    td,
+    th {
+        padding: 0.4rem 0.5rem;
+    }
+    .pct-cell {
+        gap: 0.3rem;
+    }
+    /* hide the bar column on very small screens to save space */
+    .bar-bg {
+        display: none;
+    }
+    .page-header {
+        flex-wrap: wrap;
     }
 }
 

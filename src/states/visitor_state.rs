@@ -149,13 +149,13 @@ impl VisitorStateStore {
         seen.into_iter().collect()
     }
 
-    /// Returns the number of visitors currently active (registered but not yet gone).
+    /// Returns the number of visitors currently active (sleeping on a page).
     #[must_use]
     pub fn live_count(&self) -> usize {
         self.locked()
             .visitor_states
             .iter()
-            .filter(|s| !matches!(s, VisitorState::None))
+            .filter(|s| matches!(s, VisitorState::Sleeping(_)))
             .count()
     }
 
