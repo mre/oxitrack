@@ -47,21 +47,21 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
         None
     };
 
-    let page_stats = page_stats::all_sorted_by_count(state, &range, now).await?;
-    let total_visits = page_stats.iter().map(|p| p.count).sum();
-    let pages = CountRows::from(page_stats);
+    let (page_stats_vec, mut referrers_vec, chart) = tokio::try_join!(
+        page_stats::all_sorted_by_count(state, &range, now),
+        ReferrerCount::all_sorted_by_count(
+            state,
+            path_id,
+            range.start_datetime(),
+            range.end_datetime()
+        ),
+        build_chart(state, path_id, &range, now),
+    )?;
 
-    let mut referrers_vec = ReferrerCount::all_sorted_by_count(
-        state,
-        path_id,
-        range.start_datetime(),
-        range.end_datetime(),
-    )
-    .await?;
+    let total_visits = page_stats_vec.iter().map(|p| p.count).sum();
+    let pages = CountRows::from(page_stats_vec);
     referrers_vec.truncate(5);
     let referrers = CountRows::from(referrers_vec);
-
-    let chart = build_chart(state, path_id, &range, now).await?;
 
     Ok(HxStats {
         base_url: state.base_url,

@@ -16,23 +16,25 @@ impl ReferrerCount {
         start_datetime: Option<PrimitiveDateTime>,
         end_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
+        let offset_secs = state.utc_offset.whole_seconds() as i64;
+        let start_utc = start_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+        let end_utc = end_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+
         sqlx::query_as::<Db, Self>(
             r#"SELECT domain, COUNT(*) AS count FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
             WHERE (? IS NULL OR path_id = ?)
-              AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
-              AND (? IS NULL OR datetime(registered_at, ?) < datetime(?))
+              AND (? IS NULL OR registered_at >= ?)
+              AND (? IS NULL OR registered_at < ?)
             GROUP BY domain
             ORDER BY count DESC"#,
         )
         .bind(path_id)
         .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(start_datetime)
-        .bind(end_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(end_datetime)
+        .bind(start_utc)
+        .bind(start_utc)
+        .bind(end_utc)
+        .bind(end_utc)
         .fetch_all(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)

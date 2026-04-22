@@ -38,6 +38,10 @@ pub async fn all_sorted_by_count(
     let start_datetime = range.start_datetime();
     let end_datetime = range.end_datetime();
 
+    let offset_secs = state.utc_offset.whole_seconds() as i64;
+    let start_utc = start_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+    let end_utc = end_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+
     let rows = sqlx::query_as::<Db, PageStatRow>(
         r#"SELECT paths.path,
             COUNT(*) AS count,
@@ -45,17 +49,15 @@ pub async fn all_sorted_by_count(
             MIN(visits.registered_at) AS first_registered_at
         FROM paths
         INNER JOIN visits ON visits.path_id = paths.id
-        WHERE (? IS NULL OR datetime(visits.registered_at, ?) >= datetime(?))
-          AND (? IS NULL OR datetime(visits.registered_at, ?) < datetime(?))
+        WHERE (? IS NULL OR visits.registered_at >= ?)
+          AND (? IS NULL OR visits.registered_at < ?)
         GROUP BY paths.path
         ORDER BY count DESC"#,
     )
-    .bind(start_datetime)
-    .bind(state.posix_utc_offset_str)
-    .bind(start_datetime)
-    .bind(end_datetime)
-    .bind(state.posix_utc_offset_str)
-    .bind(end_datetime)
+    .bind(start_utc)
+    .bind(start_utc)
+    .bind(end_utc)
+    .bind(end_utc)
     .fetch_all(&state.pool)
     .await
     .ctx(StatusCode::INTERNAL_SERVER_ERROR)

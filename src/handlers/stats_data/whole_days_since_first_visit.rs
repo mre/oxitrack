@@ -1,6 +1,6 @@
 use axum_ctx::*;
 use sqlx::Row;
-use time::{OffsetDateTime, PrimitiveDateTime};
+use time::{Duration, OffsetDateTime, PrimitiveDateTime};
 
 use crate::states::InnerAppState;
 
@@ -16,18 +16,20 @@ impl WholeDaysSinceFirstVisit {
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Option<Self>> {
+        let offset_secs = state.utc_offset.whole_seconds() as i64;
+        let start_utc = start_datetime.map(|pdt| pdt - Duration::seconds(offset_secs));
+
         let first_visit_row = sqlx::query(
             "SELECT registered_at FROM visits
             WHERE (? IS NULL OR path_id = ?)
-              AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
+              AND (? IS NULL OR registered_at >= ?)
             ORDER BY registered_at
             LIMIT 1",
         )
         .bind(path_id)
         .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(start_datetime)
+        .bind(start_utc)
+        .bind(start_utc)
         .fetch_optional(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
