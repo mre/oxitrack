@@ -23,12 +23,7 @@ pub async fn get(
 
     let path = path.normalized();
 
-    #[cfg(feature = "postgres")]
-    let sql_select = "SELECT id FROM paths WHERE path = $1 LIMIT 1";
-    #[cfg(feature = "sqlite")]
-    let sql_select = "SELECT id FROM paths WHERE path = ? LIMIT 1";
-
-    let path_row = sqlx::query(sql_select)
+    let path_row = sqlx::query("SELECT id FROM paths WHERE path = ? LIMIT 1")
         .bind(path)
         .fetch_optional(&state.pool)
         .await
@@ -57,34 +52,23 @@ pub async fn get(
         // If two requests try to insert at the same time,
         // then only one insertion will be successful.
         // If the insertion fails because of the constraint, we will try to select.
-        #[cfg(feature = "postgres")]
-        let sql_insert = "INSERT INTO paths(path)
-            VALUES ($1)
-            ON CONFLICT ON CONSTRAINT unique_path DO NOTHING
-            RETURNING id";
-        #[cfg(feature = "sqlite")]
-        let sql_insert = "INSERT INTO paths(path)
+        let inserted_row = sqlx::query(
+            "INSERT INTO paths(path)
             VALUES (?)
             ON CONFLICT(path) DO NOTHING
-            RETURNING id";
-
-        let inserted_row = sqlx::query(sql_insert)
-            .bind(path)
-            .fetch_optional(&state.pool)
-            .await
-            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-            .log_msg(|| format!("Failed to insert the path {path}!"))?;
+            RETURNING id",
+        )
+        .bind(path)
+        .fetch_optional(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg(|| format!("Failed to insert the path {path}!"))?;
 
         if let Some(row) = inserted_row {
             row.get::<i64, _>("id")
         } else {
             // A concurrent request inserted first.
-            #[cfg(feature = "postgres")]
-            let sql_select_fallback = "SELECT id FROM paths WHERE path = $1 LIMIT 1";
-            #[cfg(feature = "sqlite")]
-            let sql_select_fallback = "SELECT id FROM paths WHERE path = ? LIMIT 1";
-
-            sqlx::query(sql_select_fallback)
+            sqlx::query("SELECT id FROM paths WHERE path = ? LIMIT 1")
                 .bind(path)
                 .fetch_one(&state.pool)
                 .await

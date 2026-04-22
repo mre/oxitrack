@@ -4,11 +4,9 @@ use std::{cmp::Ordering, fmt};
 use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
 
 pub trait ContiguousDatePart:
-    From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord
+    From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord + fmt::Display
 {
     fn next(&mut self) -> RespResult<()>;
-
-    #[allow(dead_code)]
     fn date_truncation() -> &'static str;
 }
 
@@ -27,19 +25,21 @@ impl From<PrimitiveDateTime> for ContiguousYear {
     }
 }
 
+impl fmt::Display for ContiguousYear {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 impl Serialize for ContiguousYear {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&self.0)
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(&self.0)
     }
 }
 
 impl ContiguousDatePart for ContiguousYear {
     fn next(&mut self) -> RespResult<()> {
         self.0 += 1;
-
         Ok(())
     }
 
@@ -56,11 +56,8 @@ pub struct ContiguousMonth {
 
 impl Ord for ContiguousMonth {
     fn cmp(&self, other: &Self) -> Ordering {
-        let self_month = self.month as u8;
-        let other_month = other.month as u8;
-
         match self.year.cmp(&other.year) {
-            Ordering::Equal => self_month.cmp(&other_month),
+            Ordering::Equal => (self.month as u8).cmp(&(other.month as u8)),
             o => o,
         }
     }
@@ -73,29 +70,32 @@ impl PartialOrd for ContiguousMonth {
 }
 
 impl From<OffsetDateTime> for ContiguousMonth {
-    fn from(datetime: OffsetDateTime) -> Self {
+    fn from(d: OffsetDateTime) -> Self {
         Self {
-            year: datetime.year(),
-            month: datetime.month(),
+            year: d.year(),
+            month: d.month(),
         }
     }
 }
 
 impl From<PrimitiveDateTime> for ContiguousMonth {
-    fn from(datetime: PrimitiveDateTime) -> Self {
+    fn from(d: PrimitiveDateTime) -> Self {
         Self {
-            year: datetime.year(),
-            month: datetime.month(),
+            year: d.year(),
+            month: d.month(),
         }
     }
 }
 
+impl fmt::Display for ContiguousMonth {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{:02}", self.year, self.month as u8)
+    }
+}
+
 impl Serialize for ContiguousMonth {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&format_args!("{}.{:02}", self.year, self.month as u8))
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(&format_args!("{}.{:02}", self.year, self.month as u8))
     }
 }
 
@@ -118,7 +118,6 @@ impl ContiguousDatePart for ContiguousMonth {
                 self.month = Month::January;
             }
         }
-
         Ok(())
     }
 
@@ -131,29 +130,26 @@ impl ContiguousDatePart for ContiguousMonth {
 pub struct ContiguousDay(Date);
 
 impl From<OffsetDateTime> for ContiguousDay {
-    fn from(datetime: OffsetDateTime) -> Self {
-        Self(datetime.date())
+    fn from(d: OffsetDateTime) -> Self {
+        Self(d.date())
     }
 }
 
 impl From<PrimitiveDateTime> for ContiguousDay {
-    fn from(datetime: PrimitiveDateTime) -> Self {
-        Self(datetime.date())
-    }
-}
-
-impl Serialize for ContiguousDay {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&self.0)
+    fn from(d: PrimitiveDateTime) -> Self {
+        Self(d.date())
     }
 }
 
 impl fmt::Display for ContiguousDay {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
+    }
+}
+
+impl Serialize for ContiguousDay {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(&self.0)
     }
 }
 
@@ -181,35 +177,38 @@ pub struct ContiguousHour {
 }
 
 impl From<OffsetDateTime> for ContiguousHour {
-    fn from(datetime: OffsetDateTime) -> Self {
+    fn from(d: OffsetDateTime) -> Self {
         Self {
-            day: ContiguousDay::from(datetime),
-            hour: datetime.hour(),
+            day: ContiguousDay::from(d),
+            hour: d.hour(),
         }
     }
 }
 
 impl From<PrimitiveDateTime> for ContiguousHour {
-    fn from(datetime: PrimitiveDateTime) -> Self {
+    fn from(d: PrimitiveDateTime) -> Self {
         Self {
-            day: ContiguousDay::from(datetime),
-            hour: datetime.hour(),
+            day: ContiguousDay::from(d),
+            hour: d.hour(),
         }
     }
 }
 
+impl fmt::Display for ContiguousHour {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {:02}:00", self.day, self.hour)
+    }
+}
+
 impl Serialize for ContiguousHour {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.collect_str(&format_args!("{} {:02}:00", self.day, self.hour))
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.collect_str(&format_args!("{} {:02}:00", self.day, self.hour))
     }
 }
 
 impl ContiguousDatePart for ContiguousHour {
     fn next(&mut self) -> RespResult<()> {
-        if let 0..=22 = self.hour {
+        if self.hour <= 22 {
             self.hour += 1;
             Ok(())
         } else {

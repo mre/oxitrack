@@ -1,36 +1,20 @@
-pub mod all_time;
 mod chart_data_aggregator;
 mod contiguous_date_part;
-pub mod last_2_days;
-pub mod last_60_days;
 pub mod referrer_count;
-pub mod table_body_templates;
-mod whole_days_since_first_visit;
+pub mod whole_days_since_first_visit;
 
-use askama::Template;
-use axum::Json;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::*;
-use serde::Serialize;
-use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
+use time::macros::format_description;
+use time::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
-use crate::{
-    db::{Db, VisitCount},
-    states::InnerAppState,
-};
+use crate::{db::Db, states::InnerAppState};
 
 use chart_data_aggregator::ChartDataAggregator;
 use contiguous_date_part::{
     ContiguousDatePart, ContiguousDay, ContiguousHour, ContiguousMonth, ContiguousYear,
 };
-
-use self::{
-    referrer_count::ReferrerCount,
-    table_body_templates::{ReferrersTableBody, VisitsTableBody},
-};
-
-use super::count_rows::CountRows;
 
 #[derive(sqlx::FromRow)]
 struct TruncDateCount {
@@ -38,12 +22,75 @@ struct TruncDateCount {
     count: i64,
 }
 
-#[derive(Serialize)]
-pub struct DataPoint<T>
-where
-    T: Serialize,
-{
-    x: T,
+/// A single bar in the chart.
+pub struct ChartBar {
+    pub label: String,
+    pub count: u64,
+}
+
+/// Arbitrary date range filter for chart/stats queries.
+#[derive(Clone, Default)]
+pub struct DateRange {
+    pub from: Option<Date>,
+    pub to: Option<Date>,
+}
+
+impl DateRange {
+    pub fn from_params(from: Option<String>, to: Option<String>) -> Self {
+        let fmt = format_description!("[year]-[month]-[day]");
+        Self {
+            from: from
+                .filter(|s| !s.is_empty())
+                .and_then(|s| Date::parse(&s, fmt).ok()),
+            to: to
+                .filter(|s| !s.is_empty())
+                .and_then(|s| Date::parse(&s, fmt).ok()),
+        }
+    }
+
+    pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
+        self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
+    }
+
+    pub fn end_datetime(&self) -> Option<PrimitiveDateTime> {
+        self.to
+            .map(|d| PrimitiveDateTime::new(d + Duration::days(1), Time::MIDNIGHT))
+    }
+
+    pub fn whole_days(&self, now: OffsetDateTime) -> Option<i64> {
+        let from = self.from?;
+        let to = self.to.unwrap_or(now.date());
+        Some((to - from).whole_days().max(1))
+    }
+
+    pub fn label(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        match (self.from, self.to) {
+            (None, _) => "All time".to_string(),
+            (Some(f), None) => format!("Since {}", f.format(fmt).unwrap_or_default()),
+            (Some(f), Some(t)) => format!(
+                "{} – {}",
+                f.format(fmt).unwrap_or_default(),
+                t.format(fmt).unwrap_or_default()
+            ),
+        }
+    }
+
+    pub fn from_value(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        self.from
+            .and_then(|d| d.format(fmt).ok())
+            .unwrap_or_default()
+    }
+
+    pub fn to_value(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        self.to.and_then(|d| d.format(fmt).ok()).unwrap_or_default()
+    }
+}
+
+struct DataPoint<D> {
+    x: D,
     y: u64,
 }
 
@@ -56,69 +103,64 @@ where
         path_id: Option<i64>,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
+        end_datetime: Option<PrimitiveDateTime>,
+        trunc_sql: &str,
     ) -> RespResult<Vec<Self>> {
-        // PostgreSQL: positional params ($1–$4), only 4 bindings needed.
-        #[cfg(feature = "postgres")]
-        let rows = sqlx::query_as::<Db, TruncDateCount>(
-            r#"SELECT DATE_TRUNC($1, TIMEZONE($4, registered_at)) AS trunc_registered_at,
-            COUNT(registered_at) AS count FROM visits
-            WHERE ($2 IS NULL OR path_id = $2) AND ($3 IS NULL OR TIMEZONE($4, registered_at) >= $3)
-            GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"#,
-        )
-        .bind(D::date_truncation())
-        .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .fetch_all(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query chart data!")?;
+        let offset_secs = state.utc_offset.whole_seconds() as i64;
+        let start_utc = start_datetime.map(|pdt| pdt - Duration::seconds(offset_secs));
+        let end_utc = end_datetime.map(|pdt| pdt - Duration::seconds(offset_secs));
 
-        // SQLite: each `?` is a distinct positional slot; DATE_TRUNC/TIMEZONE
-        // do not exist, so a simplified form is used (no truncation applied).
-        #[cfg(feature = "sqlite")]
-        let rows = sqlx::query_as::<Db, TruncDateCount>(
-            r#"SELECT datetime(registered_at, ?) AS trunc_registered_at,
+        let sql = format!(
+            r#"SELECT {trunc_sql} AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
-            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= ?)
+            WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR registered_at >= ?)
+              AND (? IS NULL OR registered_at < ?)
             GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"#,
-        )
-        .bind(state.posix_utc_offset_str)
-        .bind(path_id)
-        .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(start_datetime)
-        .fetch_all(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query chart data!")?;
+            ORDER BY trunc_registered_at"#
+        );
+
+        let rows = sqlx::query_as::<Db, TruncDateCount>(&sql)
+            .bind(path_id)
+            .bind(path_id)
+            .bind(start_utc)
+            .bind(start_utc)
+            .bind(end_utc)
+            .bind(end_utc)
+            .fetch_all(&state.pool)
+            .await
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
+        let terminal_date_part = end_datetime
+            .map(D::from)
+            .map(|ep| {
+                if ep < now_date_part {
+                    ep
+                } else {
+                    now_date_part
+                }
+            })
+            .unwrap_or(now_date_part);
 
         let first_date_part = if let Some(start_datetime) = start_datetime {
             D::from(start_datetime)
         } else if let Some(row) = rows.first() {
             D::from(row.trunc_registered_at)
         } else {
-            // `all-time` in month or year aggregation without any rows.
-            let datapoints = vec![Self {
-                x: now_date_part,
+            return Ok(vec![Self {
+                x: terminal_date_part,
                 y: 0,
-            }];
-            return Ok(datapoints);
+            }]);
         };
 
-        // Fill from the last row until now if the date part of the last row is not now.
         let additional_given_point = match rows.last() {
             Some(last_row) => {
                 let last_row_date_part = D::from(last_row.trunc_registered_at);
-
-                (now_date_part > last_row_date_part).then_some(Ok((now_date_part, 0)))
+                (terminal_date_part > last_row_date_part).then_some(Ok((terminal_date_part, 0)))
             }
-            None => Some(Ok((now_date_part, 0))),
+            None => Some(Ok((terminal_date_part, 0))),
         };
 
         #[allow(clippy::cast_sign_loss)]
@@ -135,18 +177,14 @@ where
         for given_point in given_points {
             let (row_date_part, count) = given_point?;
 
-            // Fill the gap until the row.
             if aggregator.next_date_part() < row_date_part {
                 loop {
                     aggregator.push(0)?;
-
                     if aggregator.next_date_part() >= row_date_part {
                         break;
                     }
                 }
             }
-
-            // Add row.
             aggregator.push(count)?;
         }
 
@@ -154,54 +192,78 @@ where
     }
 }
 
-#[derive(Serialize)]
-#[serde(untagged)]
-pub enum ChartData {
-    Year(Vec<DataPoint<ContiguousYear>>),
-    Month(Vec<DataPoint<ContiguousMonth>>),
-    Day(Vec<DataPoint<ContiguousDay>>),
-    Hour(Vec<DataPoint<ContiguousHour>>),
+fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
+    points: Vec<DataPoint<D>>,
+) -> Vec<ChartBar> {
+    points
+        .into_iter()
+        .map(|p| ChartBar {
+            label: p.x.to_string(),
+            count: p.y,
+        })
+        .collect()
 }
 
-#[derive(Serialize)]
-pub struct StatsData {
-    chart_data: ChartData,
-    table_body: String,
-}
+pub async fn build_chart(
+    state: &'static InnerAppState,
+    path_id: Option<i64>,
+    range: &DateRange,
+    now: OffsetDateTime,
+) -> RespResult<Vec<ChartBar>> {
+    let start_dt = range.start_datetime();
+    let end_dt = range.end_datetime();
 
-impl StatsData {
-    pub async fn build_response(
-        chart_data: ChartData,
-        state: &'static InnerAppState,
-        path_id: Option<i64>,
-        start_datetime: Option<PrimitiveDateTime>,
-    ) -> RespResult<Json<Self>> {
-        let table_body = if let Some(path_id) = path_id {
-            let referrer_counts =
-                ReferrerCount::all_sorted_by_count(state, path_id, start_datetime).await?;
-            let referrer_count_rows = CountRows::from(referrer_counts);
+    let whole_days = if let Some(days) = range.whole_days(now) {
+        days
+    } else {
+        let Some(WholeDaysSinceFirstVisit {
+            whole_days_since_first_visit,
+            ..
+        }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
+        else {
+            return Ok(vec![]);
+        };
+        whole_days_since_first_visit
+    };
 
-            ReferrersTableBody {
-                referrer_count_rows,
-            }
-            .render()
+    if whole_days < 3 {
+        let start = if start_dt.is_none() {
+            Some(hour_data_start_datetime(now)?)
         } else {
-            let visits_counts = VisitCount::all_sorted_by_count(state, start_datetime).await?;
-            let visit_count_rows = CountRows::from(visits_counts);
-
-            VisitsTableBody {
-                base_url: state.base_url,
-                visit_count_rows,
-            }
-            .render()
-        }
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to render the table body template!")?;
-
-        Ok(Json(Self {
-            chart_data,
-            table_body,
-        }))
+            start_dt
+        };
+        let trunc = format!(
+            "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousHour>::all(state, path_id, now, start, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
+    } else if whole_days < 91 {
+        let trunc = format!(
+            "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousDay>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
+    } else if whole_days < 3653 {
+        let trunc = format!(
+            "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousMonth>::all(state, path_id, now, start_dt, end_dt, &trunc)
+                .await?;
+        Ok(to_chart_bars(points))
+    } else {
+        let trunc = format!(
+            "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousYear>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
     }
 }
 
@@ -210,7 +272,6 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
     let time = Time::from_hms(now.hour(), 0, 0)
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to create Time for hour data!")?;
-
     Ok(PrimitiveDateTime::new(date, time))
 }
 

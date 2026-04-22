@@ -1,0 +1,18 @@
+# OxiTraffic configuration
+# Copy and edit this file, or use it as-is for local development.
+
+socket_address = "127.0.0.1:8080"
+base_url       = "http://localhost:8080"
+tracked_origin = "https://corrode.dev"
+
+# How many seconds a visitor must stay on a page before the visit is counted.
+# Set to 0 in development so every visit registers immediately.
+min_delay_secs = 0
+
+[db]
+# Path to the SQLite database file. Created automatically on first run.
+path = "./oxitraffic.db"
+
+[utc_offset]
+hours   = 0
+minutes = 0

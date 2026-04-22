@@ -1,28 +1,101 @@
 {% extends "base.html" %}
 
-{%- import "bar_chart.html" as bar_chart_macros -%}
-
 {% block content %}
-    <p class="my-2 text-xl font-bold">
-        Website: <a href="{{ tracked_origin }}">{{ tracked_origin }}</a>
-    </p>
+<div class="page-header">
+    <hgroup>
+        <h1>Dashboard</h1>
+        <p>Tracking <a href="{{ tracked_origin }}" target="_blank">{{ tracked_origin }}</a></p>
+    </hgroup>
+    <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
+</div>
 
-    {{ bar_chart_macros::bar_chart() }}
+<div id="stats-panel" data-from="{{ range.from_value() }}" data-to="{{ range.to_value() }}">
+    <div class="chart-wrap">
+        <div class="chart-header">
+            <span class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ range.label() }}</small></span>
+            <div class="filter-buttons">
+                <button type="button" data-preset="today"  class="outline secondary">Today</button>
+                <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>
+                <button type="button" data-preset="30"     class="outline secondary">Last 30 days</button>
+                <button type="button" data-preset="90"     class="outline secondary">Last 90 days</button>
+                <button type="button" data-preset="365"    class="outline secondary">Last year</button>
+                <button type="button" data-preset="all"    class="outline secondary">All time</button>
+            </div>
+        </div>
+        {% if !chart.is_empty() %}
+        <div id="visits-chart" class="visits-chart"
+            data-labels='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.label }}",{% else %}"{{ bar.label }}"{% endif %}{% endfor %}]'
+            data-counts='[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]'></div>
+        {% endif %}
+    </div>
 
-    <table class="w-full md:w-fit" id="table" hidden>
-        <thead>
-            <tr class="border-b-4">
-                <th class="pr-5 text-left">Page</th>
-                <th class="pr-5 text-left">Visits</th>
-                <th class="text-right">%</th>
-            </tr>
-        </thead>
+    {% if !pages.is_empty() %}
+    <section>
+        <h3>Pages</h3>
+        <figure>
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th>Path</th>
+                        <th class="num">Visits</th>
+                        <th class="num">Visits/day</th>
+                        <th class="num">Avg. duration</th>
+                        <th class="num">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for (vc, pct) in &pages %}
+                    <tr>
+                        <td><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
+                        <td class="num">{{ vc.count }}</td>
+                        <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
+                        <td class="num">
+                            {% match vc.avg_duration %}
+                            {% when Some with (d) %}{{ d }}
+                            {% when None %}&mdash;
+                            {% endmatch %}
+                        </td>
+                        <td class="num pct-cell">
+                            <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+                            {{ pct }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    </section>
+    {% else %}
+    <p class="muted-stat">No visits recorded yet.</p>
+    {% endif %}
 
-        <tbody id="table_body">
-        </tbody>
-    </table>
-{% endblock %}
-
-{% block scripts %}
-    <script data-base-url="{{ base_url }}" src='{{ base_url }}/static/stats.js?v={{ env!("BUILD_TIMESTAMP") }}'></script>
+    {% if !referrers.is_empty() %}
+    <section>
+        <h3>Top referrers</h3>
+        <figure>
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th>Domain</th>
+                        <th class="num">Visits</th>
+                        <th class="num">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for (rc, pct) in &referrers %}
+                    <tr>
+                        <td>{{ rc.domain }}</td>
+                        <td class="num">{{ rc.count }}</td>
+                        <td class="num pct-cell">
+                            <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+                            {{ pct }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    </section>
+    {% endif %}
+</div>
 {% endblock %}

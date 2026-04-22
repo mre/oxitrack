@@ -12,45 +12,33 @@ pub struct ReferrerCount {
 impl ReferrerCount {
     pub async fn all_sorted_by_count(
         state: &'static InnerAppState,
-        path_id: i64,
+        path_id: Option<i64>,
         start_datetime: Option<PrimitiveDateTime>,
+        end_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
-        // PostgreSQL: $2 is used twice (positional reuse), so only 3 bindings needed.
-        #[cfg(feature = "postgres")]
-        let result = sqlx::query_as::<Db, Self>(
+        let offset_secs = state.utc_offset.whole_seconds() as i64;
+        let start_utc = start_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+        let end_utc = end_datetime.map(|pdt| pdt - time::Duration::seconds(offset_secs));
+
+        sqlx::query_as::<Db, Self>(
             r#"SELECT domain, COUNT(*) AS count FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE path_id = $1 AND ($2 IS NULL OR TIMEZONE($3, registered_at) >= $2)
+            WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR registered_at >= ?)
+              AND (? IS NULL OR registered_at < ?)
             GROUP BY domain
             ORDER BY count DESC"#,
         )
         .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .fetch_all(&state.pool)
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query referrers!");
-
-        // SQLite: each `?` is a separate slot, so start_datetime is bound twice.
-        #[cfg(feature = "sqlite")]
-        let result = sqlx::query_as::<Db, Self>(
-            r#"SELECT domain, COUNT(*) AS count FROM visits
-            INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE path_id = ? AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
-            GROUP BY domain
-            ORDER BY count DESC"#,
-        )
         .bind(path_id)
-        .bind(start_datetime)
-        .bind(state.posix_utc_offset_str)
-        .bind(start_datetime)
+        .bind(start_utc)
+        .bind(start_utc)
+        .bind(end_utc)
+        .bind(end_utc)
         .fetch_all(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to query referrers!");
-
-        result
+        .log_msg("Failed to query referrers!")
     }
 }
 

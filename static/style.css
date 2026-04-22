@@ -1,0 +1,171 @@
+/* ─── density ─── */
+:root {
+    --pico-font-size: 93.75%;
+    --pico-spacing: 0.875rem;
+}
+
+/* ─── page header ─── */
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.page-header hgroup {
+    margin-bottom: 0;
+}
+.page-header h1 {
+    margin-bottom: 0.15rem;
+}
+
+/* ─── theme toggle ─── */
+#theme-toggle {
+    background: none;
+    border: none;
+    padding: 0.1rem 0.25rem;
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--pico-muted-color);
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+#theme-toggle:hover {
+    color: var(--pico-primary);
+}
+
+/* ─── footer ─── */
+footer {
+    margin-top: 3rem;
+    padding-block: 1rem;
+    color: var(--pico-muted-color);
+    text-align: center;
+    border-top: 1px solid var(--pico-muted-border-color);
+}
+
+/* ─── chart header + filter buttons ─── */
+.chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+.filter-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+.filter-buttons button {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.65rem;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* ─── chart ─── */
+.chart-wrap {
+    margin-bottom: 1.5rem;
+    border-radius: var(--pico-border-radius);
+    background: var(--pico-card-sectioning-background-color);
+    padding: 1rem 1rem 0.75rem;
+}
+.visits-chart {
+    width: 100%;
+    height: 200px;
+    display: block;
+}
+
+/* ─── muted stat ─── */
+.muted-stat {
+    color: var(--pico-muted-color);
+    margin-bottom: 1rem;
+}
+
+/* ─── tables ─── */
+figure {
+    margin-bottom: 1.5rem;
+}
+table {
+    font-size: 0.9rem;
+}
+th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pico-muted-color);
+}
+td,
+th {
+    padding: 0.5rem 0.75rem;
+}
+
+.num {
+    text-align: right;
+    font-family: var(--pico-font-family-monospace);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* ─── inline bar ─── */
+.pct-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+.bar-bg {
+    display: inline-block;
+    width: 80px;
+    height: 6px;
+    background: var(--pico-muted-border-color);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--bar-pct, 0%);
+    background: var(--pico-primary);
+    border-radius: 3px;
+    min-width: 1px;
+}
+
+/* ─── per-page meta table ─── */
+.meta-table td:first-child {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    padding-right: 1.5rem;
+    white-space: nowrap;
+}
+.meta-table td:last-child {
+    font-family: var(--pico-font-family-monospace);
+}
+
+/* ─── responsive ─── */
+@media (max-width: 600px) {
+    .bar-bg {
+        width: 40px;
+    }
+    h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* ─── breadcrumb ─── */
+.breadcrumb {
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+}
+.breadcrumb a {
+    color: var(--pico-muted-color);
+    text-decoration: none;
+}
+.breadcrumb a:hover {
+    color: var(--pico-primary);
+}

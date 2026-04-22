@@ -4,12 +4,13 @@ use axum::{
     http::header::{self, HeaderValue},
     routing::get,
 };
-use oxi_axum_helpers::{init_config, init_tracer, static_router};
+use oxi_axum_helpers::init_tracer;
 use std::net::SocketAddr;
 use time::UtcOffset;
 use tower_http::{
     compression::CompressionLayer,
     cors::CorsLayer,
+    services::ServeDir,
     set_header::SetResponseHeaderLayer,
     trace::{DefaultMakeSpan, TraceLayer},
 };
@@ -17,13 +18,25 @@ use tracing::Level;
 
 use crate::{config::Config, handlers, states::InnerAppState};
 
-// Only accept things coming from self, and the inline script that renders the bar chart for the first time
-static CONTENT_SECURITY_POLICY: HeaderValue =
-    HeaderValue::from_static("default-src 'self'; object-src 'none';");
+static CONTENT_SECURITY_POLICY: HeaderValue = HeaderValue::from_static(
+    "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self'; object-src 'none';",
+);
+
+fn load_config() -> Result<Config> {
+    use anyhow::Context;
+
+    let path =
+        std::env::var("OXITRAFFIC_CONFIG_FILE").unwrap_or_else(|_| "config.toml".to_string());
+
+    let contents = std::fs::read_to_string(&path)
+        .with_context(|| format!("Could not read config file: {path}"))?;
+
+    toml::from_str(&contents).with_context(|| format!("Could not parse config file: {path}"))
+}
 
 pub async fn app() -> Result<(Router, SocketAddr)> {
     init_tracer()?;
-    let config = init_config::<Config>("oxitraffic")?;
+    let config = load_config()?;
     let utc_offset = UtcOffset::from_hms(config.utc_offset.hours, config.utc_offset.minutes, 0)
         .context("Invalid UTC offset configuration!")?;
 
@@ -38,15 +51,6 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
     let compression_layer = CompressionLayer::new().gzip(true);
 
-    let chart_data_router = Router::new()
-        .route(
-            "/last-60-days",
-            get(handlers::stats_data::last_60_days::get),
-        )
-        .route("/last-2-days", get(handlers::stats_data::last_2_days::get))
-        .route("/all-time", get(handlers::stats_data::all_time::get))
-        .layer(compression_layer.clone());
-
     let count_js_router = Router::new()
         .route("/count.js", get(handlers::count_js::get))
         .layer(compression_layer.clone());
@@ -59,7 +63,6 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
             get(handlers::page_left::get),
         )
         .merge(count_js_router)
-        .nest("/stats-data", chart_data_router)
         .layer(CorsLayer::new().allow_origin(allowed_origin));
 
     let api_router = Router::new()
@@ -68,18 +71,16 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
         .route("/count", get(handlers::api::count::get))
         .layer(compression_layer.clone());
 
+    let hx_router = Router::new()
+        .route("/stats", get(handlers::dashboard::hx_stats::get))
+        .layer(compression_layer.clone());
+
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index::get))
         .route("/stats", get(handlers::dashboard::stats::get))
         .layer(compression_layer);
 
-    let static_router = static_router!(
-        "../static",
-        ("main.css", mime::TEXT_CSS_UTF_8.as_ref()),
-        ("stats.js", mime::APPLICATION_JAVASCRIPT_UTF_8.as_ref()),
-        ("stats.js.map", mime::APPLICATION_JSON.as_ref()),
-        ("logo.svg", mime::IMAGE_SVG.as_ref()),
-    );
+    let static_service = ServeDir::new("static");
 
     let trace_layer = TraceLayer::new_for_http()
         .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
@@ -99,9 +100,10 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
     );
 
     let app = Router::new()
-        .merge(static_router)
+        .nest_service("/static", static_service)
         .merge(cors_router)
         .merge(dashboard_router)
+        .nest("/hx", hx_router)
         .nest("/api", api_router)
         .layer(trace_layer)
         .layer(csp_layer)
@@ -157,9 +159,6 @@ mod tests {
     #[test]
     fn simple_requests() {
         let requests = [
-            // Static files
-            Req::new("/static/main.css").mime(mime::TEXT_CSS_UTF_8),
-            Req::new("/static/main.css?v=foo").mime(mime::TEXT_CSS_UTF_8),
             // register/post-sleep
             Req::new("/post-sleep/0").status(StatusCode::BAD_REQUEST),
             Req::new("/register?path=/")
@@ -190,15 +189,10 @@ mod tests {
                 socket_address = "127.0.0.1:8080"
                 base_url = "http://127.0.0.1:8080"
                 tracked_origin = "https://mo8it.com"
-
                 min_delay_secs = 0
 
                 [db]
-                host = "127.0.0.1"
-                port = 5432
-                username = "postgres"
-                password = "CHANGE_ME"
-                database = "postgres"
+                path = ":memory:"
                 "#,
             )?;
 
