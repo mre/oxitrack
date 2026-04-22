@@ -31,7 +31,11 @@ fn load_config() -> Result<Config> {
 
     Figment::new()
         .merge(Toml::file(&path))
-        .merge(Env::prefixed("OXITRACK_").ignore(&["CONFIG_FILE"]))
+        .merge(
+            Env::prefixed("OXITRACK_")
+                .ignore(&["CONFIG_FILE"])
+                .split("__"),
+        )
         .extract()
         .with_context(|| format!("Could not load config from {path} (or OXITRACK_* env vars)"))
 }
