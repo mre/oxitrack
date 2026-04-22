@@ -6,8 +6,8 @@ pub mod whole_days_since_first_visit;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::*;
-use serde::Deserialize;
-use time::{Duration, OffsetDateTime, PrimitiveDateTime, Time};
+use time::macros::format_description;
+use time::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
 use crate::{db::Db, states::InnerAppState};
 
@@ -28,23 +28,64 @@ pub struct ChartBar {
     pub count: u64,
 }
 
-/// Time filter for chart/stats queries.
-#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Default)]
-#[serde(rename_all = "kebab-case")]
-pub enum Filter {
-    Last2Days,
-    Last60Days,
-    #[default]
-    AllTime,
+/// Arbitrary date range filter for chart/stats queries.
+#[derive(Clone, Default)]
+pub struct DateRange {
+    pub from: Option<Date>,
+    pub to: Option<Date>,
 }
 
-impl Filter {
-    pub fn label(self) -> &'static str {
-        match self {
-            Filter::Last2Days => "Last 2 days",
-            Filter::Last60Days => "Last 60 days",
-            Filter::AllTime => "All time",
+impl DateRange {
+    pub fn from_params(from: Option<String>, to: Option<String>) -> Self {
+        let fmt = format_description!("[year]-[month]-[day]");
+        Self {
+            from: from
+                .filter(|s| !s.is_empty())
+                .and_then(|s| Date::parse(&s, fmt).ok()),
+            to: to
+                .filter(|s| !s.is_empty())
+                .and_then(|s| Date::parse(&s, fmt).ok()),
         }
+    }
+
+    pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
+        self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
+    }
+
+    pub fn end_datetime(&self) -> Option<PrimitiveDateTime> {
+        self.to
+            .map(|d| PrimitiveDateTime::new(d + Duration::days(1), Time::MIDNIGHT))
+    }
+
+    pub fn whole_days(&self, now: OffsetDateTime) -> Option<i64> {
+        let from = self.from?;
+        let to = self.to.unwrap_or(now.date());
+        Some((to - from).whole_days().max(1))
+    }
+
+    pub fn label(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        match (self.from, self.to) {
+            (None, _) => "All time".to_string(),
+            (Some(f), None) => format!("Since {}", f.format(fmt).unwrap_or_default()),
+            (Some(f), Some(t)) => format!(
+                "{} – {}",
+                f.format(fmt).unwrap_or_default(),
+                t.format(fmt).unwrap_or_default()
+            ),
+        }
+    }
+
+    pub fn from_value(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        self.from
+            .and_then(|d| d.format(fmt).ok())
+            .unwrap_or_default()
+    }
+
+    pub fn to_value(&self) -> String {
+        let fmt = format_description!("[year]-[month]-[day]");
+        self.to.and_then(|d| d.format(fmt).ok()).unwrap_or_default()
     }
 }
 
@@ -62,12 +103,15 @@ where
         path_id: Option<i64>,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
+        end_datetime: Option<PrimitiveDateTime>,
         trunc_sql: &str,
     ) -> RespResult<Vec<Self>> {
         let sql = format!(
             r#"SELECT {trunc_sql} AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
-            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
+            WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
+              AND (? IS NULL OR datetime(registered_at, ?) < datetime(?))
             GROUP BY trunc_registered_at
             ORDER BY trunc_registered_at"#
         );
@@ -78,12 +122,25 @@ where
             .bind(start_datetime)
             .bind(state.posix_utc_offset_str)
             .bind(start_datetime)
+            .bind(end_datetime)
+            .bind(state.posix_utc_offset_str)
+            .bind(end_datetime)
             .fetch_all(&state.pool)
             .await
             .ctx(StatusCode::INTERNAL_SERVER_ERROR)
             .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
+        let terminal_date_part = end_datetime
+            .map(D::from)
+            .map(|ep| {
+                if ep < now_date_part {
+                    ep
+                } else {
+                    now_date_part
+                }
+            })
+            .unwrap_or(now_date_part);
 
         let first_date_part = if let Some(start_datetime) = start_datetime {
             D::from(start_datetime)
@@ -91,7 +148,7 @@ where
             D::from(row.trunc_registered_at)
         } else {
             return Ok(vec![Self {
-                x: now_date_part,
+                x: terminal_date_part,
                 y: 0,
             }]);
         };
@@ -99,9 +156,9 @@ where
         let additional_given_point = match rows.last() {
             Some(last_row) => {
                 let last_row_date_part = D::from(last_row.trunc_registered_at);
-                (now_date_part > last_row_date_part).then_some(Ok((now_date_part, 0)))
+                (terminal_date_part > last_row_date_part).then_some(Ok((terminal_date_part, 0)))
             }
-            None => Some(Ok((now_date_part, 0))),
+            None => Some(Ok((terminal_date_part, 0))),
         };
 
         #[allow(clippy::cast_sign_loss)]
@@ -148,89 +205,63 @@ fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
 pub async fn build_chart(
     state: &'static InnerAppState,
     path_id: Option<i64>,
-    filter: Filter,
-) -> RespResult<Vec<ChartBar>> {
-    let now = state.now_tz()?;
-
-    match filter {
-        Filter::Last2Days => {
-            let start = hour_data_start_datetime(now)?;
-            let trunc = format!(
-                "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
-                state.posix_utc_offset_str
-            );
-            let points =
-                DataPoint::<ContiguousHour>::all(state, path_id, now, Some(start), &trunc).await?;
-            Ok(to_chart_bars(points))
-        }
-        Filter::Last60Days => {
-            let start = day_data_start_datetime(now);
-            let trunc = format!(
-                "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
-                state.posix_utc_offset_str
-            );
-            let points =
-                DataPoint::<ContiguousDay>::all(state, path_id, now, Some(start), &trunc).await?;
-            Ok(to_chart_bars(points))
-        }
-        Filter::AllTime => {
-            let Some(WholeDaysSinceFirstVisit {
-                whole_days_since_first_visit,
-                ..
-            }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
-            else {
-                return Ok(vec![]);
-            };
-
-            if whole_days_since_first_visit < 2 {
-                let start = hour_data_start_datetime(now)?;
-                let trunc = format!(
-                    "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
-                    state.posix_utc_offset_str
-                );
-                let points =
-                    DataPoint::<ContiguousHour>::all(state, path_id, now, Some(start), &trunc)
-                        .await?;
-                Ok(to_chart_bars(points))
-            } else if whole_days_since_first_visit < 60 {
-                let start = day_data_start_datetime(now);
-                let trunc = format!(
-                    "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
-                    state.posix_utc_offset_str
-                );
-                let points =
-                    DataPoint::<ContiguousDay>::all(state, path_id, now, Some(start), &trunc)
-                        .await?;
-                Ok(to_chart_bars(points))
-            } else if whole_days_since_first_visit < 1461 {
-                let trunc = format!(
-                    "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
-                    state.posix_utc_offset_str
-                );
-                let points =
-                    DataPoint::<ContiguousMonth>::all(state, path_id, now, None, &trunc).await?;
-                Ok(to_chart_bars(points))
-            } else {
-                let trunc = format!(
-                    "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
-                    state.posix_utc_offset_str
-                );
-                let points =
-                    DataPoint::<ContiguousYear>::all(state, path_id, now, None, &trunc).await?;
-                Ok(to_chart_bars(points))
-            }
-        }
-    }
-}
-
-pub fn start_datetime_for_filter(
-    filter: Filter,
+    range: &DateRange,
     now: OffsetDateTime,
-) -> RespResult<Option<PrimitiveDateTime>> {
-    match filter {
-        Filter::Last2Days => Ok(Some(hour_data_start_datetime(now)?)),
-        Filter::Last60Days => Ok(Some(day_data_start_datetime(now))),
-        Filter::AllTime => Ok(None),
+) -> RespResult<Vec<ChartBar>> {
+    let start_dt = range.start_datetime();
+    let end_dt = range.end_datetime();
+
+    let whole_days = if let Some(days) = range.whole_days(now) {
+        days
+    } else {
+        let Some(WholeDaysSinceFirstVisit {
+            whole_days_since_first_visit,
+            ..
+        }) = WholeDaysSinceFirstVisit::build(state, path_id, now, None).await?
+        else {
+            return Ok(vec![]);
+        };
+        whole_days_since_first_visit
+    };
+
+    if whole_days < 2 {
+        let start = if start_dt.is_none() {
+            Some(hour_data_start_datetime(now)?)
+        } else {
+            start_dt
+        };
+        let trunc = format!(
+            "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousHour>::all(state, path_id, now, start, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
+    } else if whole_days < 90 {
+        let trunc = format!(
+            "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousDay>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
+    } else if whole_days < 1461 {
+        let trunc = format!(
+            "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousMonth>::all(state, path_id, now, start_dt, end_dt, &trunc)
+                .await?;
+        Ok(to_chart_bars(points))
+    } else {
+        let trunc = format!(
+            "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
+            state.posix_utc_offset_str
+        );
+        let points =
+            DataPoint::<ContiguousYear>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+        Ok(to_chart_bars(points))
     }
 }
 

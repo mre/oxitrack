@@ -10,18 +10,9 @@
     <figure>
         <table class="meta-table">
             <tbody>
-                <tr>
-                    <td>First visit</td>
-                    <td>{{ visits.first }}</td>
-                </tr>
-                <tr>
-                    <td>Total visits</td>
-                    <td>{{ visits.total_n }}</td>
-                </tr>
-                <tr>
-                    <td>Visits / day</td>
-                    <td>{{ "{:.2}"|format(visits.per_day) }}</td>
-                </tr>
+                <tr><td>First visit</td><td>{{ visits.first }}</td></tr>
+                <tr><td>Total visits</td><td>{{ visits.total_n }}</td></tr>
+                <tr><td>Visits / day</td><td>{{ "{:.2}"|format(visits.per_day) }}</td></tr>
                 <tr>
                     <td>Avg. time spent</td>
                     <td>
@@ -36,19 +27,19 @@
     </figure>
 </section>
 
-<div id="stats-panel">
+<div id="stats-panel" data-from="{{ range.from_value() }}" data-to="{{ range.to_value() }}">
     <input type="hidden" id="hx-path" name="path" value="{{ path }}">
 
     <div class="chart-wrap">
         <div class="chart-header">
-            <span class="muted-stat"><small>{{ visits.total_n }} total visits &mdash; {{ filter.label() }}</small></span>
+            <span class="muted-stat"><small>{{ visits.total_n }} total visits &mdash; {{ range.label() }}</small></span>
             <div class="filter-buttons">
-                <button hx-get="/hx/stats?filter=last-2-days&amp;path={{ path }}" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
-                    {% if filter == crate::handlers::stats_data::Filter::Last2Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 2 days</button>
-                <button hx-get="/hx/stats?filter=last-60-days&amp;path={{ path }}" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
-                    {% if filter == crate::handlers::stats_data::Filter::Last60Days %}aria-current="page"{% else %}class="outline secondary"{% endif %}>Last 60 days</button>
-                <button hx-get="/hx/stats?filter=all-time&amp;path={{ path }}" hx-target="#stats-panel" hx-swap="outerHTML" hx-trigger="click"
-                    {% if filter == crate::handlers::stats_data::Filter::AllTime %}aria-current="page"{% else %}class="outline secondary"{% endif %}>All time</button>
+                <button type="button" data-preset="today"  class="outline secondary">Today</button>
+                <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>
+                <button type="button" data-preset="30"     class="outline secondary">Last 30 days</button>
+                <button type="button" data-preset="90"     class="outline secondary">Last 90 days</button>
+                <button type="button" data-preset="365"    class="outline secondary">Last year</button>
+                <button type="button" data-preset="all"    class="outline secondary">All time</button>
             </div>
         </div>
         {% if !chart.is_empty() %}

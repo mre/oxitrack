@@ -1,10 +1,10 @@
 use axum_ctx::*;
-use time::{OffsetDateTime, PrimitiveDateTime};
+use time::OffsetDateTime;
 
 use crate::{
     db::Db,
     formatters::SecondsFormatter,
-    handlers::{count_rows::Count, stats_data::Filter},
+    handlers::{count_rows::Count, stats_data::DateRange},
     states::InnerAppState,
 };
 
@@ -27,15 +27,17 @@ struct PageStatRow {
     path: String,
     count: i64,
     avg_time_s: Option<f64>,
-    first_registered_at: Option<PrimitiveDateTime>,
+    first_registered_at: Option<time::PrimitiveDateTime>,
 }
 
 pub async fn all_sorted_by_count(
     state: &'static InnerAppState,
-    filter: Filter,
+    range: &DateRange,
     now: OffsetDateTime,
-    start_datetime: Option<PrimitiveDateTime>,
 ) -> RespResult<Vec<PageStat>> {
+    let start_datetime = range.start_datetime();
+    let end_datetime = range.end_datetime();
+
     let rows = sqlx::query_as::<Db, PageStatRow>(
         r#"SELECT paths.path,
             COUNT(*) AS count,
@@ -43,37 +45,32 @@ pub async fn all_sorted_by_count(
             MIN(visits.registered_at) AS first_registered_at
         FROM paths
         INNER JOIN visits ON visits.path_id = paths.id
-        WHERE ? IS NULL OR datetime(visits.registered_at, ?) >= datetime(?)
+        WHERE (? IS NULL OR datetime(visits.registered_at, ?) >= datetime(?))
+          AND (? IS NULL OR datetime(visits.registered_at, ?) < datetime(?))
         GROUP BY paths.path
         ORDER BY count DESC"#,
     )
     .bind(start_datetime)
     .bind(state.posix_utc_offset_str)
     .bind(start_datetime)
+    .bind(end_datetime)
+    .bind(state.posix_utc_offset_str)
+    .bind(end_datetime)
     .fetch_all(&state.pool)
     .await
     .ctx(StatusCode::INTERNAL_SERVER_ERROR)
     .log_msg("Page stats query failed!")?;
 
-    let fixed_denom: Option<f64> = match filter {
-        Filter::Last2Days => Some(2.0),
-        Filter::Last60Days => Some(60.0),
-        Filter::AllTime => None,
-    };
-
     Ok(rows
         .into_iter()
         .map(|row| {
             #[allow(clippy::cast_precision_loss)]
-            let per_day = if let Some(denom) = fixed_denom {
-                row.count as f64 / denom
-            } else {
-                let days = row
-                    .first_registered_at
+            let days = range.whole_days(now).unwrap_or_else(|| {
+                row.first_registered_at
                     .map(|fv| (now.date() - fv.date()).whole_days().max(1))
-                    .unwrap_or(1);
-                row.count as f64 / days as f64
-            };
+                    .unwrap_or(1)
+            }) as f64;
+            let per_day = row.count as f64 / days;
 
             PageStat {
                 path: row.path,

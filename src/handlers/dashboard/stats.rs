@@ -12,17 +12,16 @@ use crate::{
         base_template::Base,
         count_rows::CountRows,
         stats_data::{
-            Filter, WholeDaysSinceFirstVisit, build_chart, referrer_count::ReferrerCount,
-            start_datetime_for_filter,
+            DateRange, WholeDaysSinceFirstVisit, build_chart, referrer_count::ReferrerCount,
         },
     },
     states::{AppState, InnerAppState},
 };
 
 #[derive(Deserialize, Default)]
-pub struct FilterQuery {
-    #[serde(default)]
-    filter: Filter,
+pub struct RangeQuery {
+    pub from: Option<String>,
+    pub to: Option<String>,
 }
 
 pub struct Visits {
@@ -94,27 +93,31 @@ pub struct Stats {
     pub visits: Visits,
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
-    pub filter: Filter,
+    pub range: DateRange,
 }
 
 pub async fn get(
     State(state): AppState,
     Query(path_q): Query<QueryPath>,
-    Query(filter_q): Query<FilterQuery>,
+    Query(range_q): Query<RangeQuery>,
 ) -> RespResult<Stats> {
-    let filter = filter_q.filter;
+    let range = DateRange::from_params(range_q.from, range_q.to);
     let now = state.now_tz()?;
-    let start_datetime = start_datetime_for_filter(filter, now)?;
 
     let PathId { path, path_id } = path_q.normalized_with_id(&state.pool).await?;
 
     let visits = Visits::build(state, path_id).await?;
 
-    let referrers =
-        ReferrerCount::all_sorted_by_count(state, Some(path_id), start_datetime).await?;
+    let referrers = ReferrerCount::all_sorted_by_count(
+        state,
+        Some(path_id),
+        range.start_datetime(),
+        range.end_datetime(),
+    )
+    .await?;
     let referrers = CountRows::from(referrers);
 
-    let chart = build_chart(state, Some(path_id), filter).await?;
+    let chart = build_chart(state, Some(path_id), &range, now).await?;
 
     Ok(Stats {
         base: Base::new(state, "Stats"),
@@ -124,6 +127,6 @@ pub async fn get(
         visits,
         referrers,
         chart,
-        filter,
+        range,
     })
 }

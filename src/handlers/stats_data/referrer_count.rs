@@ -14,11 +14,14 @@ impl ReferrerCount {
         state: &'static InnerAppState,
         path_id: Option<i64>,
         start_datetime: Option<PrimitiveDateTime>,
+        end_datetime: Option<PrimitiveDateTime>,
     ) -> RespResult<Vec<Self>> {
         sqlx::query_as::<Db, Self>(
             r#"SELECT domain, COUNT(*) AS count FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
-            WHERE (? IS NULL OR path_id = ?) AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
+            WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR datetime(registered_at, ?) >= datetime(?))
+              AND (? IS NULL OR datetime(registered_at, ?) < datetime(?))
             GROUP BY domain
             ORDER BY count DESC"#,
         )
@@ -27,6 +30,9 @@ impl ReferrerCount {
         .bind(start_datetime)
         .bind(state.posix_utc_offset_str)
         .bind(start_datetime)
+        .bind(end_datetime)
+        .bind(state.posix_utc_offset_str)
+        .bind(end_datetime)
         .fetch_all(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
