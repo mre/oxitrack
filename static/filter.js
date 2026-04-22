@@ -1,17 +1,33 @@
 (function () {
   var PRESETS = {
-    today:  function (t) { return [t, t]; },
-    "7":    function (t) { return [daysAgo(t, 7),  t]; },
-    "30":   function (t) { return [daysAgo(t, 30), t]; },
-    "90":   function (t) { return [daysAgo(t, 90), t]; },
-    "365":  function (t) { return [daysAgo(t, 365), t]; },
-    "all":  function ()  { return ["", ""]; },
+    today: function (t) {
+      return [t, t];
+    },
+    7: function (t) {
+      return [daysAgo(t, 7), t];
+    },
+    30: function (t) {
+      return [daysAgo(t, 30), t];
+    },
+    90: function (t) {
+      return [daysAgo(t, 90), t];
+    },
+    365: function (t) {
+      return [daysAgo(t, 365), t];
+    },
+    all: function () {
+      return ["", ""];
+    },
   };
 
   function toISO(d) {
-    return d.getFullYear() + "-"
-      + String(d.getMonth() + 1).padStart(2, "0") + "-"
-      + String(d.getDate()).padStart(2, "0");
+    return (
+      d.getFullYear() +
+      "-" +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(d.getDate()).padStart(2, "0")
+    );
   }
 
   function daysAgo(todayStr, n) {
@@ -30,7 +46,7 @@
     var path = getPath();
     var params = [];
     if (from) params.push("from=" + from);
-    if (to)   params.push("to="   + to);
+    if (to) params.push("to=" + to);
     if (path) params.push("path=" + encodeURIComponent(path));
     return "/hx/stats" + (params.length ? "?" + params.join("&") : "");
   }
@@ -39,16 +55,16 @@
     var panel = document.getElementById("stats-panel");
     if (!panel) return;
     var curFrom = panel.getAttribute("data-from") || "";
-    var curTo   = panel.getAttribute("data-to")   || "";
-    var today   = toISO(new Date());
+    var curTo = panel.getAttribute("data-to") || "";
+    var today = toISO(new Date());
 
     document.querySelectorAll("[data-preset]").forEach(function (btn) {
-      var key    = btn.getAttribute("data-preset");
-      var fn     = PRESETS[key];
-      var dates  = fn ? fn(today) : null;
+      var key = btn.getAttribute("data-preset");
+      var fn = PRESETS[key];
+      var dates = fn ? fn(today) : null;
       var active = dates && dates[0] === curFrom && dates[1] === curTo;
       if (active) {
-        btn.removeAttribute("class");          // remove outline/secondary
+        btn.removeAttribute("class"); // remove outline/secondary
         btn.setAttribute("aria-current", "page");
       } else {
         btn.setAttribute("class", "outline secondary");
@@ -62,11 +78,13 @@
       if (btn._fb) return;
       btn._fb = true;
       btn.addEventListener("click", function () {
-        var key   = this.getAttribute("data-preset");
+        var key = this.getAttribute("data-preset");
         var today = toISO(new Date());
         var dates = PRESETS[key] ? PRESETS[key](today) : ["", ""];
-        htmx.ajax("GET", buildUrl(dates[0], dates[1]),
-                  { target: "#stats-panel", swap: "outerHTML" });
+        htmx.ajax("GET", buildUrl(dates[0], dates[1]), {
+          target: "#stats-panel",
+          swap: "outerHTML",
+        });
       });
     });
     markActive();
@@ -74,4 +92,17 @@
 
   document.addEventListener("DOMContentLoaded", init);
   document.addEventListener("htmx:afterSettle", init);
+
+  document.addEventListener("htmx:oobAfterSwap", function (e) {
+    if (!e.detail.target || e.detail.target.id !== "live-path-set") return;
+    var activePaths = new Set(
+      JSON.parse(e.detail.target.dataset.paths || "[]"),
+    );
+    document.querySelectorAll(".live-row-dot").forEach(function (dot) {
+      dot.classList.toggle(
+        "live-row-dot--active",
+        activePaths.has(dot.dataset.path),
+      );
+    });
+  });
 })();

@@ -3,7 +3,7 @@
 
     <div class="chart-wrap">
         <div class="chart-header">
-            <span class="muted-stat"><small>{{ total_visits }} total visits &mdash; {{ range.label() }}</small></span>
+            <span class="muted-stat"><small><span id="total-visits">{{ total_visits }}</span> total visits &mdash; {{ range.label() }}</small> <span id="live-count" hx-get="/api/live" hx-trigger="load, every 5s" hx-swap="innerHTML" hx-vals="js:{from:document.getElementById('stats-panel').dataset.from,to:document.getElementById('stats-panel').dataset.to}"></span></span>
             <div class="filter-buttons">
                 <button type="button" data-preset="today"  class="outline secondary">Today</button>
                 <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>
@@ -36,7 +36,7 @@
             <tbody>
                 {% for (vc, pct) in &pages %}
                 <tr>
-                    <td><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
+                    <td><span class="live-row-dot" data-path="{{ vc.path }}"></span><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
                     <td class="num">{{ vc.count }}</td>
                     <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
                     <td class="num">
@@ -78,4 +78,5 @@
         </table>
     </section>
     {% endif %}
+<div id="live-path-set" hidden></div>
 </div>

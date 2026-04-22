@@ -46,27 +46,22 @@ time = "0.3"
 unsafe_code = "forbid"
 
 [lints.clippy]
-# ── Lint groups ───────────────────────────────────────────────────────────────
 pedantic = { level = "warn", priority = -1 }
 nursery  = { level = "warn", priority = -1 }
 cargo    = { level = "warn", priority = -1 }
 
-# ── Intentional allow: axum_ctx re-exports ────────────────────────────────────
 # `axum_ctx::*` is a purpose-built re-export crate; glob import is intentional.
 wildcard_imports = "allow"
 
-# ── Intentional allow: numeric casts ──────────────────────────────────────────
 # SQLite returns i64; visit counts and durations realistically fit in f64/u64.
 # Each cast site is individually reviewed and annotated with #[allow(...)].
 cast_precision_loss    = "allow"
 cast_sign_loss         = "allow"
 cast_possible_truncation = "allow"
 
-# ── Intentional allow: axum error types ───────────────────────────────────────
 # RespErr from axum_ctx is large by design (carries HTTP status + message).
 result_large_err = "allow"
 multiple_crate_versions = "allow"
-
 
 [profile.dev]
 strip = "debuginfo"

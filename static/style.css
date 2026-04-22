@@ -184,6 +184,23 @@ th {
     background: var(--pico-muted-color);
     animation: none;
 }
+
+/* ─── live row dot (pages table) ─── */
+.live-row-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    opacity: 0;
+    transition: opacity 0.3s;
+    animation: pulse 2s ease-in-out infinite;
+}
+.live-row-dot--active {
+    opacity: 1;
+}
 @keyframes pulse {
     0%,
     100% {

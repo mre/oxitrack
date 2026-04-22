@@ -131,6 +131,24 @@ impl VisitorStateStore {
         *self.locked().get_mut(visitor_id) = VisitorState::PostSleep { visit_id };
     }
 
+    /// Returns the path IDs that currently have at least one visitor in the Sleeping state.
+    #[must_use]
+    pub fn live_path_ids(&self) -> Vec<PathId> {
+        let seen: std::collections::HashSet<PathId> = self
+            .locked()
+            .visitor_states
+            .iter()
+            .filter_map(|s| {
+                if let VisitorState::Sleeping(SleepingState { path_id, .. }) = s {
+                    Some(*path_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        seen.into_iter().collect()
+    }
+
     /// Returns the number of visitors currently active (registered but not yet gone).
     #[must_use]
     pub fn live_count(&self) -> usize {

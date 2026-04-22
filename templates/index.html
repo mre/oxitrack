@@ -46,7 +46,7 @@
                 <tbody>
                     {% for (vc, pct) in &pages %}
                     <tr>
-                        <td><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
+                        <td><span class="live-row-dot" data-path="{{ vc.path }}"></span><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
                         <td class="num">{{ vc.count }}</td>
                         <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
                         <td class="num">
@@ -98,4 +98,5 @@
     </section>
     {% endif %}
 </div>
+<div id="live-path-set" hidden></div>
 {% endblock %}
