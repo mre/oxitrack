@@ -101,8 +101,17 @@ pub async fn get(
     Query(path_q): Query<QueryPath>,
     Query(range_q): Query<RangeQuery>,
 ) -> RespResult<Stats> {
-    let range = DateRange::from_params(range_q.from, range_q.to);
     let now = state.now_tz()?;
+    let range = if range_q.from.is_none() && range_q.to.is_none() {
+        let fmt = time::macros::format_description!("[year]-[month]-[day]");
+        let from = (now.date() - time::Duration::days(90))
+            .format(fmt)
+            .unwrap_or_default();
+        let to = now.date().format(fmt).unwrap_or_default();
+        DateRange::from_params(Some(from), Some(to))
+    } else {
+        DateRange::from_params(range_q.from, range_q.to)
+    };
 
     let PathId { path, path_id } = path_q.normalized_with_id(&state.pool).await?;
 
