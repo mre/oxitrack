@@ -24,7 +24,7 @@ rand = { version = "0.9", default-features = false, features = ["thread_rng"] }
 # in duplicate old versions of thiserror, windows-sys, jni-sys, and getrandom.
 reqwest = { version = "0.13", default-features = false, features = ["native-tls"] }
 serde = { version = "1", features = ["derive"] }
-serde_urlencoded = "0.7"
+
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "migrate", "time", "sqlite"] }
 time = "0.3"
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "signal"] }
