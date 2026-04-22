@@ -14,7 +14,7 @@ impl<D> ChartDataAggregator<D>
 where
     D: ContiguousDatePart,
 {
-    pub const MAX_LEN: usize = 64;
+    pub const MAX_LEN: usize = 400;
 
     pub fn new(next_date_part: D) -> Self {
         Self {

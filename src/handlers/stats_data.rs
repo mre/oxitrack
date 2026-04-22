@@ -224,7 +224,7 @@ pub async fn build_chart(
         whole_days_since_first_visit
     };
 
-    if whole_days < 2 {
+    if whole_days < 3 {
         let start = if start_dt.is_none() {
             Some(hour_data_start_datetime(now)?)
         } else {
@@ -237,7 +237,7 @@ pub async fn build_chart(
         let points =
             DataPoint::<ContiguousHour>::all(state, path_id, now, start, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
-    } else if whole_days < 90 {
+    } else if whole_days < 91 {
         let trunc = format!(
             "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
             state.posix_utc_offset_str
@@ -245,7 +245,7 @@ pub async fn build_chart(
         let points =
             DataPoint::<ContiguousDay>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
-    } else if whole_days < 1461 {
+    } else if whole_days < 3653 {
         let trunc = format!(
             "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
             state.posix_utc_offset_str

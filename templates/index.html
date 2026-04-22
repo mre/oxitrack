@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<hgroup>
-    <h1>Dashboard</h1>
-    <p>Tracking <a href="{{ tracked_origin }}" target="_blank">{{ tracked_origin }}</a></p>
-</hgroup>
+<div class="page-header">
+    <hgroup>
+        <h1>Dashboard</h1>
+        <p>Tracking <a href="{{ tracked_origin }}" target="_blank">{{ tracked_origin }}</a></p>
+    </hgroup>
+    <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
+</div>
 
 <div id="stats-panel" data-from="{{ range.from_value() }}" data-to="{{ range.to_value() }}">
     <div class="chart-wrap">

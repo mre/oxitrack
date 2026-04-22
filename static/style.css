@@ -4,32 +4,36 @@
     --pico-spacing: 0.875rem;
 }
 
-/* ─── header ─── */
-header nav {
-    padding-block: 0.5rem;
-}
-.brand {
+/* ─── page header ─── */
+.page-header {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: inherit;
-    font-size: 1.1rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
 }
-.brand:hover {
-    color: var(--pico-primary);
-}
-.logo-icon {
-    width: 28px;
-    height: 28px;
-}
-#theme-toggle {
-    padding: 0.25rem 0.5rem;
-    font-size: 1rem;
-    min-width: unset;
-    width: auto;
-    border-radius: 50%;
+.page-header hgroup {
     margin-bottom: 0;
+}
+.page-header h1 {
+    margin-bottom: 0.15rem;
+}
+
+/* ─── theme toggle ─── */
+#theme-toggle {
+    background: none;
+    border: none;
+    padding: 0.1rem 0.25rem;
+    margin: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--pico-muted-color);
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+#theme-toggle:hover {
+    color: var(--pico-primary);
 }
 
 /* ─── footer ─── */

@@ -19,25 +19,6 @@
     </head>
 
     <body>
-        <header class="container-fluid">
-            <nav>
-                <ul>
-                    <li>
-                        <a href="/" class="brand">
-                            <img src="/static/logo.svg" alt="Logo" class="logo-icon">
-                            <strong>OxiTraffic</strong>
-                        </a>
-                    </li>
-                </ul>
-                <ul>
-                    <li><a href="{{ tracked_origin }}" target="_blank" class="secondary">{{ tracked_origin }}</a></li>
-                    <li>
-                        <button id="theme-toggle" class="outline secondary" aria-label="Toggle theme">&#x25D1;</button>
-                    </li>
-                </ul>
-            </nav>
-        </header>
-
         <main class="container">
             {% block content %}{% endblock %}
         </main>
