@@ -42,9 +42,7 @@ tower-http = { version = "0.6", default-features = false, features = ["fs"] }
 time = "0.3"
 
 [lints.rust]
-# Two deliberate unsafe blocks exist in `states/visitor_state.rs` with documented
-# safety invariants (bounds guaranteed by construction). All other unsafe is forbidden.
-unsafe_code = "warn"
+unsafe_code = "forbid"
 
 [lints.clippy]
 # ── Lint groups ───────────────────────────────────────────────────────────────
