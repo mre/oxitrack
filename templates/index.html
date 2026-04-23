@@ -1,31 +1,41 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <div class="page-header">
     <hgroup>
         <h1>Dashboard</h1>
-        <p>Tracking <a href="{{ tracked_origin }}" target="_blank">{{ tracked_origin }}</a></p>
+        <p>
+            Tracking
+            <a href="{{ tracked_origin }}" target="_blank"
+                >{{ tracked_origin }}</a
+            >
+        </p>
     </hgroup>
     <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
 </div>
 
-<div id="stats-panel" data-from="{{ range.from_input() }}" data-to="{{ range.to_input() }}">
+<div id="stats-panel">
     <div class="chart-wrap">
         <div class="chart-header">
-            <span class="muted-stat"><small><span id="total-visits">{{ total_visits }}</span> total visits &mdash; {{ range.label() }}</small> <span id="live-count" hx-get="/api/live" hx-trigger="load, every 5s" hx-swap="innerHTML" hx-vals="js:{from:document.getElementById('stats-panel').dataset.from,to:document.getElementById('stats-panel').dataset.to}"></span></span>
-            <div class="filter-buttons">
-                <button type="button" data-preset="today"  class="outline secondary">Today</button>
-                <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>
-                <button type="button" data-preset="30"     class="outline secondary">Last 30 days</button>
-                <button type="button" data-preset="90"     class="outline secondary">Last 90 days</button>
-                <button type="button" data-preset="365"    class="outline secondary">Last year</button>
-                <button type="button" data-preset="all"    class="outline secondary">All time</button>
-            </div>
+            <span class="muted-stat">
+                <small
+                    ><span id="total-visits">{{ total_visits }}</span> total
+                    visits &mdash; {{ range.label() }}</small
+                >
+                <span
+                    id="live-count"
+                    hx-get="{{ live_url }}"
+                    hx-trigger="load, every 5s"
+                    hx-swap="innerHTML"
+                ></span>
+            </span>
+            {% include "filter_buttons.html" %}
         </div>
         {% if !chart.is_empty() %}
-        <div id="visits-chart" class="visits-chart"
+        <div
+            id="visits-chart"
+            class="visits-chart"
             data-labels='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.label }}",{% else %}"{{ bar.label }}"{% endif %}{% endfor %}]'
-            data-counts='[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]'></div>
+            data-counts="[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]"
+        ></div>
         {% endif %}
     </div>
 
@@ -46,17 +56,29 @@
                 <tbody>
                     {% for (vc, pct) in &pages %}
                     <tr>
-                        <td><span class="live-row-dot" data-path="{{ vc.path }}"></span><a href="/stats?path={{ vc.path }}">{{ vc.path }}</a></td>
+                        <td>
+                            <span
+                                class="live-row-dot"
+                                data-path="{{ vc.path }}"
+                            ></span
+                            ><a
+                                href="/stats?path={{ vc.path }}{{ range.query_suffix()|safe }}"
+                                >{{ vc.path }}</a
+                            >
+                        </td>
                         <td class="num">{{ vc.count }}</td>
                         <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
                         <td class="num">
-                            {% match vc.avg_duration %}
-                            {% when Some with (d) %}{{ d }}
-                            {% when None %}&mdash;
-                            {% endmatch %}
+                            {% match vc.avg_duration %} {% when Some with (d)
+                            %}{{ d }} {% when None %}&mdash; {% endmatch %}
                         </td>
                         <td class="num pct-cell">
-                            <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+                            <span class="bar-bg"
+                                ><span
+                                    class="bar-fill"
+                                    style="width: {{ pct }}"
+                                ></span
+                            ></span>
                             {{ pct }}
                         </td>
                     </tr>
@@ -67,9 +89,7 @@
     </section>
     {% else %}
     <p class="muted-stat">No visits recorded yet.</p>
-    {% endif %}
-
-    {% if !referrers.is_empty() %}
+    {% endif %} {% if !referrers.is_empty() %}
     <section>
         <h3>Top referrers</h3>
         <figure>
@@ -87,7 +107,12 @@
                         <td>{{ rc.domain }}</td>
                         <td class="num">{{ rc.count }}</td>
                         <td class="num pct-cell">
-                            <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+                            <span class="bar-bg"
+                                ><span
+                                    class="bar-fill"
+                                    style="width: {{ pct }}"
+                                ></span
+                            ></span>
                             {{ pct }}
                         </td>
                     </tr>

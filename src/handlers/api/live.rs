@@ -3,33 +3,19 @@ use axum::{
     response::Html,
 };
 use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
-use serde::Deserialize;
-use time::{Date, Duration, PrimitiveDateTime, Time};
 
-use crate::{handlers::stats_data::local_to_utc, states::AppState};
+use crate::{handlers::stats_data::DateRange, states::AppState};
 
-#[derive(Deserialize)]
-pub struct LiveQuery {
-    pub from: Option<String>,
-    pub to: Option<String>,
-}
-
-pub async fn get(State(state): AppState, Query(q): Query<LiveQuery>) -> RespResult<Html<String>> {
-    let fmt = time::macros::format_description!("[year]-[month]-[day]");
-    let start_utc = q
-        .from
-        .filter(|s| !s.is_empty())
-        .and_then(|s| Date::parse(&s, fmt).ok())
-        .map(|d| local_to_utc(PrimitiveDateTime::new(d, Time::MIDNIGHT), state.utc_offset));
-    let end_utc =
-        q.to.filter(|s| !s.is_empty())
-            .and_then(|s| Date::parse(&s, fmt).ok())
-            .map(|d| {
-                local_to_utc(
-                    PrimitiveDateTime::new(d + Duration::days(1), Time::MIDNIGHT),
-                    state.utc_offset,
-                )
-            });
+pub async fn get(
+    State(state): AppState,
+    Query(range): Query<DateRange>,
+) -> RespResult<Html<String>> {
+    let start_utc = range
+        .start_datetime()
+        .map(|pdt| crate::handlers::stats_data::local_to_utc(pdt, state.utc_offset));
+    let end_utc = range
+        .end_datetime()
+        .map(|pdt| crate::handlers::stats_data::local_to_utc(pdt, state.utc_offset));
 
     // Total visits for the current range (OOB-swapped into #total-visits).
     let total: i64 = sqlx::query_scalar(

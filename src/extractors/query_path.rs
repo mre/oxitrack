@@ -5,7 +5,6 @@ use sqlx::Row;
 use crate::db::DbPool;
 
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct QueryPath {
     path: String,
 }

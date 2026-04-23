@@ -157,6 +157,10 @@ mod tests {
         status: StatusCode,
         mime: Option<Mime>,
         output: Option<&'static str>,
+        /// Optional `(header_name, expected_value)` assertion. Used to verify
+        /// htmx-driven endpoints set `HX-Push-Url` so the browser address bar
+        /// stays in sync with the active filter without any client-side glue.
+        header: Option<(&'static str, &'static str)>,
     }
 
     impl Req {
@@ -166,7 +170,13 @@ mod tests {
                 status: StatusCode::OK,
                 mime: None,
                 output: None,
+                header: None,
             }
+        }
+
+        fn header(mut self, name: &'static str, value: &'static str) -> Self {
+            self.header = Some((name, value));
+            self
         }
 
         fn status(mut self, status: StatusCode) -> Self {
@@ -202,8 +212,22 @@ mod tests {
             Req::new("/post-sleep/1").status(StatusCode::BAD_REQUEST),
             // Dashboard
             Req::new("/").mime(mime::TEXT_HTML_UTF_8),
+            Req::new("/?from=2026-03-24&to=2026-04-23").mime(mime::TEXT_HTML_UTF_8),
             // Stats
             Req::new("/stats?path=/").mime(mime::TEXT_HTML_UTF_8),
+            Req::new("/stats?path=/&from=2026-03-24&to=2026-04-23").mime(mime::TEXT_HTML_UTF_8),
+            Req::new("/stats?from=2026-03-24&to=2026-04-23&path=/").mime(mime::TEXT_HTML_UTF_8),
+            // htmx partial: must echo the canonical public URL via HX-Push-Url
+            // so the browser address bar updates without any client-side JS.
+            Req::new("/hx/stats?from=2026-03-24&to=2026-04-23")
+                .header("hx-push-url", "/?from=2026-03-24&to=2026-04-23"),
+            // `/` in `path` is percent-encoded by `serde_urlencoded`, which is
+            // valid per RFC 3986 and decoded transparently by axum on the next request.
+            Req::new("/hx/stats?path=/&from=2026-03-24&to=2026-04-23").header(
+                "hx-push-url",
+                "/stats?from=2026-03-24&to=2026-04-23&path=%2F",
+            ),
+            Req::new("/hx/stats").header("hx-push-url", "/"),
             // API
             Req::new("/api/counts").mime(mime::APPLICATION_JSON),
             Req::new("/api/history?path=/").mime(mime::APPLICATION_JSON),
@@ -260,6 +284,18 @@ mod tests {
                                 "path={}",
                                 req.path,
                             );
+                        }
+
+                        if let Some((name, expected)) = req.header {
+                            let actual = response
+                                .headers()
+                                .get(name)
+                                .unwrap_or_else(|| {
+                                    panic!("path={}: missing header {name}", req.path)
+                                })
+                                .to_str()
+                                .unwrap();
+                            assert_eq!(actual, expected, "path={} header={name}", req.path);
                         }
 
                         if let Some(output) = req.output {

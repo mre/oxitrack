@@ -1,6 +1,10 @@
 use askama::Template;
 use askama_web::WebTemplate;
-use axum::extract::{Query, State};
+use axum::{
+    extract::{Query, State},
+    http::{HeaderName, HeaderValue},
+    response::IntoResponse,
+};
 use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use serde::Deserialize;
 
@@ -8,15 +12,18 @@ use crate::{
     handlers::{
         count_rows::CountRows,
         dashboard::page_stats::{self, PageStat},
-        stats_data::{DateRange, build_chart, referrer_count::ReferrerCount},
+        stats_data::{
+            DateRange, PresetButton, StatsLink, build_chart, referrer_count::ReferrerCount,
+        },
     },
     states::AppState,
 };
 
+/// Path is the only hx-stats specific query parameter; the date range is parsed
+/// separately via the shared [`DateRange`] extractor so that adding more
+/// filter params later requires no changes here.
 #[derive(Deserialize, Default)]
-pub struct HxStatsQuery {
-    pub from: Option<String>,
-    pub to: Option<String>,
+pub struct PathQuery {
     pub path: Option<String>,
 }
 
@@ -29,10 +36,21 @@ pub struct HxStats {
     pub range: DateRange,
     pub total_visits: i64,
     pub path: Option<String>,
+    pub preset_buttons: Vec<PresetButton>,
+    /// URL the live indicator should poll, with the active range baked in.
+    pub live_url: String,
 }
 
-pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespResult<HxStats> {
-    let range = DateRange::from_params(q.from, q.to);
+/// `HX-Push-Url` tells htmx to update `window.location` to this URL after the
+/// swap, so the browser address bar reflects the active filter without any
+/// custom JS. See <https://htmx.org/headers/hx-push-url/>.
+const HX_PUSH_URL: HeaderName = HeaderName::from_static("hx-push-url");
+
+pub async fn get(
+    State(state): AppState,
+    Query(range): Query<DateRange>,
+    Query(q): Query<PathQuery>,
+) -> RespResult<impl IntoResponse> {
     let now = state.now_tz()?;
 
     let path_id: Option<i64> = if let Some(ref path) = q.path {
@@ -101,12 +119,35 @@ pub async fn get(State(state): AppState, Query(q): Query<HxStatsQuery>) -> RespR
     referrers_vec.truncate(5);
     let referrers = CountRows::from(referrers_vec);
 
-    Ok(HxStats {
+    let path_for_links = q.path.as_deref();
+
+    // Each preset button hits `/hx/stats` with the new range and the current
+    // path (if any), so the server keeps producing the right view on click.
+    let preset_buttons = StatsLink::preset_buttons("/hx/stats", path_for_links, now.date(), &range);
+
+    // Live indicator polls the same range as the current view so the totals
+    // stay in sync; passing the range via the URL means no client-side glue.
+    let live_url = StatsLink::new(&range, path_for_links).url("/api/live");
+
+    // Public URL the user should see in the address bar after the swap.
+    // Sub-pages render at `/stats?...`; otherwise we land on `/`.
+    let push_base = if is_subpage { "/stats" } else { "/" };
+    let push_url = StatsLink::new(&range, path_for_links).url(push_base);
+
+    let body = HxStats {
         pages,
         referrers,
         chart,
         range,
         total_visits,
         path: q.path,
-    })
+        preset_buttons,
+        live_url,
+    };
+
+    let push_header = HeaderValue::try_from(push_url)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to build HX-Push-Url header")?;
+
+    Ok(([(HX_PUSH_URL, push_header)], body))
 }

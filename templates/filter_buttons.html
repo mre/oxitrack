@@ -1,8 +1,22 @@
+{#
+  Filter button bar, fully rendered server-side. Each button hits the URL the
+  server prepared for it (btn.hx_url), targets #stats-panel for in-place
+  replacement via htmx, and lets the response's HX-Push-Url header update the
+  browser's address bar -- no client JS needed. The active button is also
+  marked server-side.
+
+  Required context: preset_buttons (a list of PresetButton).
+#}
 <div class="filter-buttons">
-    <button type="button" data-preset="today"  class="outline secondary">Today</button>
-    <button type="button" data-preset="7"      class="outline secondary">Last 7 days</button>
-    <button type="button" data-preset="30"     class="outline secondary">Last 30 days</button>
-    <button type="button" data-preset="90"     class="outline secondary">Last 90 days</button>
-    <button type="button" data-preset="365"    class="outline secondary">Last year</button>
-    <button type="button" data-preset="all"    class="outline secondary">All time</button>
+{%- for btn in preset_buttons -%}
+<button
+    type="button"
+    data-preset="{{ btn.key }}"
+    class="{% if btn.active %}contrast{% else %}outline secondary{% endif %}"
+    {%- if btn.active %} aria-current="page"{% endif %}
+    hx-get="{{ btn.hx_url }}"
+    hx-target="#stats-panel"
+    hx-swap="outerHTML"
+>{{ btn.label }}</button>
+{%- endfor -%}
 </div>

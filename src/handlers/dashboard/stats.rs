@@ -2,7 +2,6 @@ use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::{Query, State};
 use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult, StatusCode};
-use serde::Deserialize;
 use sqlx::Row;
 
 use crate::{
@@ -12,17 +11,12 @@ use crate::{
         base_template::Base,
         count_rows::CountRows,
         stats_data::{
-            DateRange, WholeDaysSinceFirstVisit, build_chart, referrer_count::ReferrerCount,
+            DateRange, PresetButton, StatsLink, WholeDaysSinceFirstVisit, build_chart,
+            referrer_count::ReferrerCount,
         },
     },
     states::{AppState, InnerAppState},
 };
-
-#[derive(Deserialize, Default)]
-pub struct RangeQuery {
-    pub from: Option<String>,
-    pub to: Option<String>,
-}
 
 pub struct Visits {
     pub first: DateTimeVerboseFormatter,
@@ -86,23 +80,29 @@ pub struct Stats {
     pub referrers: CountRows<ReferrerCount>,
     pub chart: Vec<crate::handlers::stats_data::ChartBar>,
     pub range: DateRange,
+    /// Filter buttons rendered server-side so the template stays logic-free.
+    pub preset_buttons: Vec<PresetButton>,
+    /// URL the live indicator should poll; carries the active range and the
+    /// current path so totals stay in sync with the current filter without
+    /// any client-side glue.
+    pub live_url: String,
 }
 
 pub async fn get(
     State(state): AppState,
     Query(path_q): Query<QueryPath>,
-    Query(range_q): Query<RangeQuery>,
+    Query(range): Query<DateRange>,
 ) -> RespResult<Stats> {
     let now = state.now_tz()?;
-    let range = if range_q.from.is_none() && range_q.to.is_none() {
-        let fmt = time::macros::format_description!("[year]-[month]-[day]");
-        let from = (now.date() - time::Duration::days(90))
-            .format(fmt)
-            .unwrap_or_default();
-        let to = now.date().format(fmt).unwrap_or_default();
-        DateRange::from_params(Some(from), Some(to))
+    let range = if range.from.is_none() && range.to.is_none() {
+        let to = now.date();
+        let from = to - time::Duration::days(90);
+        DateRange {
+            from: Some(from),
+            to: Some(to),
+        }
     } else {
-        DateRange::from_params(range_q.from, range_q.to)
+        range
     };
 
     let PathId { path, path_id } = path_q.normalized_with_id(&state.pool).await?;
@@ -120,6 +120,9 @@ pub async fn get(
 
     let chart = build_chart(state, Some(path_id), &range, now).await?;
 
+    let preset_buttons = StatsLink::preset_buttons("/hx/stats", Some(path), now.date(), &range);
+    let live_url = StatsLink::new(&range, Some(path)).url("/api/live");
+
     Ok(Stats {
         base: Base::new(state, "Stats"),
         tracked_origin: state.tracked_origin,
@@ -128,5 +131,7 @@ pub async fn get(
         referrers,
         chart,
         range,
+        preset_buttons,
+        live_url,
     })
 }

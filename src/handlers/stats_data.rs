@@ -6,6 +6,7 @@ pub mod whole_days_since_first_visit;
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
 use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
+use serde::{Deserialize, Deserializer, Serialize};
 use time::macros::format_description;
 use time::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
@@ -28,26 +29,44 @@ pub struct ChartBar {
     pub count: u64,
 }
 
+/// Deserialize an `Option<Date>` from the ISO 8601 representation used by the
+/// dashboard's `from`/`to` query parameters.
+///
+/// Missing keys, empty strings, and unparseable values all map to `None`, so a
+/// stray or invalid `from=`/`to=` never breaks the page. Serialization uses
+/// `Date`'s built-in `Serialize` impl (enabled by `time`'s `serde-human-readable`
+/// feature), which already produces the `YYYY-MM-DD` form.
+fn deserialize_opt_date<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Date>, D::Error> {
+    let opt = Option::<String>::deserialize(d)?;
+    let fmt = format_description!("[year]-[month]-[day]");
+    Ok(opt
+        .filter(|s| !s.is_empty())
+        .and_then(|s| Date::parse(&s, fmt).ok()))
+}
+
 /// Arbitrary date range filter for chart/stats queries.
-#[derive(Clone, Default)]
+///
+/// Implements `Serialize`/`Deserialize` so it can be used directly as an axum
+/// `Query` extractor and round-tripped back to a URL query string via
+/// [`Self::query_string`]. Adding more filter parameters in the future is just a
+/// matter of extending this struct.
+#[derive(Clone, Default, Serialize, Deserialize)]
 pub struct DateRange {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_opt_date",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub from: Option<Date>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_opt_date",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub to: Option<Date>,
 }
 
 impl DateRange {
-    pub fn from_params(from: Option<String>, to: Option<String>) -> Self {
-        let fmt = format_description!("[year]-[month]-[day]");
-        Self {
-            from: from
-                .filter(|s| !s.is_empty())
-                .and_then(|s| Date::parse(&s, fmt).ok()),
-            to: to
-                .filter(|s| !s.is_empty())
-                .and_then(|s| Date::parse(&s, fmt).ok()),
-        }
-    }
-
     pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
         self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
     }
@@ -64,19 +83,9 @@ impl DateRange {
     }
 
     pub fn label(&self) -> String {
-        // Try to identify common presets and give them a friendly name.
-        // The "today" preset sends from=today&to=today (0-day span).
-        // Other presets send from=N-days-ago&to=today (N-day span).
-        if let (Some(from), Some(to)) = (self.from, self.to) {
-            let days = (to - from).whole_days();
-            match days {
-                0 => return "Today".to_string(),
-                7 => return "Last 7 days".to_string(),
-                30 => return "Last 30 days".to_string(),
-                90 => return "Last 90 days".to_string(),
-                365 => return "Last year".to_string(),
-                _ => {}
-            }
+        // Friendly label for common presets.
+        if let Some(p) = self.matched_preset() {
+            return p.label().to_string();
         }
 
         let fmt = format_description!("[year]-[month]-[day]");
@@ -91,17 +100,205 @@ impl DateRange {
         }
     }
 
-    #[allow(clippy::wrong_self_convention)]
-    pub fn from_input(&self) -> String {
-        let fmt = format_description!("[year]-[month]-[day]");
-        self.from
-            .and_then(|d| d.format(fmt).ok())
-            .unwrap_or_default()
+    /// Returns the [`Preset`] this range corresponds to, if any.
+    ///
+    /// Used by templates to render the active filter button server-side without
+    /// any client-side logic.
+    pub fn matched_preset(&self) -> Option<Preset> {
+        Preset::ALL
+            .iter()
+            .copied()
+            .find(|p| p.matches(self.from, self.to))
     }
 
-    pub fn to_input(&self) -> String {
-        let fmt = format_description!("[year]-[month]-[day]");
-        self.to.and_then(|d| d.format(fmt).ok()).unwrap_or_default()
+    /// Returns the range as URL query parameters (without leading `?` or `&`).
+    ///
+    /// Serialization goes through `serde_urlencoded`, so adding new fields to
+    /// `DateRange` (or any future combined query type) automatically extends the
+    /// produced query string without requiring manual concatenation here.
+    /// Only fields that are `Some` are included; an empty string is returned if
+    /// no fields are set.
+    pub fn query_string(&self) -> String {
+        serde_urlencoded::to_string(self).unwrap_or_default()
+    }
+
+    /// Returns the range as URL query parameters with a leading `&`,
+    /// suitable for appending to an existing query string. Empty if no params are set.
+    pub fn query_suffix(&self) -> String {
+        let qs = self.query_string();
+        if qs.is_empty() {
+            String::new()
+        } else {
+            format!("&{qs}")
+        }
+    }
+}
+
+/// A built-in date-range filter preset, rendered as one of the buttons in the
+/// dashboard's filter bar.
+///
+/// Defining the presets server-side keeps the templates and the JS-free htmx
+/// flow in sync: the server is the single source of truth for which presets
+/// exist, what their labels are, and which one is currently active.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Preset {
+    Today,
+    Last7,
+    Last30,
+    Last90,
+    Last365,
+    AllTime,
+}
+
+impl Preset {
+    /// All presets in display order.
+    pub const ALL: [Self; 6] = [
+        Self::Today,
+        Self::Last7,
+        Self::Last30,
+        Self::Last90,
+        Self::Last365,
+        Self::AllTime,
+    ];
+
+    /// Stable identifier used as the `data-preset` attribute and (optionally)
+    /// in URLs. Not currently parsed back, but useful for tests / debugging.
+    pub const fn key(self) -> &'static str {
+        match self {
+            Self::Today => "today",
+            Self::Last7 => "7",
+            Self::Last30 => "30",
+            Self::Last90 => "90",
+            Self::Last365 => "365",
+            Self::AllTime => "all",
+        }
+    }
+
+    /// Human-readable button label.
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Today => "Today",
+            Self::Last7 => "Last 7 days",
+            Self::Last30 => "Last 30 days",
+            Self::Last90 => "Last 90 days",
+            Self::Last365 => "Last year",
+            Self::AllTime => "All time",
+        }
+    }
+
+    /// Number of days back from `today` this preset covers, or `None` for
+    /// "all time" (which translates to no `from`/`to`).
+    const fn days_back(self) -> Option<i64> {
+        match self {
+            Self::Today => Some(0),
+            Self::Last7 => Some(7),
+            Self::Last30 => Some(30),
+            Self::Last90 => Some(90),
+            Self::Last365 => Some(365),
+            Self::AllTime => None,
+        }
+    }
+
+    /// Builds the concrete [`DateRange`] this preset represents, given today.
+    pub fn date_range(self, today: Date) -> DateRange {
+        self.days_back()
+            .map_or_else(DateRange::default, |days| DateRange {
+                from: Some(today - Duration::days(days)),
+                to: Some(today),
+            })
+    }
+
+    /// Returns `true` if `(from, to)` matches this preset's shape.
+    ///
+    /// "All time" matches when both bounds are unset; the others match when
+    /// `to - from` equals the preset's day-span (the absolute date doesn't
+    /// matter, so cached buttons still light up correctly across midnight).
+    fn matches(self, from: Option<Date>, to: Option<Date>) -> bool {
+        match (self.days_back(), from, to) {
+            (None, None, None) => true,
+            (Some(days), Some(f), Some(t)) => (t - f).whole_days() == days,
+            _ => false,
+        }
+    }
+}
+
+/// A preset rendered as one filter button, fully prepared by the server so
+/// the template can stay logic-free and the frontend needs no JS to wire it up.
+///
+/// `hx_url` is the URL the button hits via `hx-get`; `active` controls the
+/// CSS state. Handlers build these (one per [`Preset`]) and pass them to the
+/// template.
+pub struct PresetButton {
+    pub key: &'static str,
+    pub label: &'static str,
+    pub hx_url: String,
+    pub active: bool,
+}
+
+/// Serializable view of the dashboard's query parameters, used by handlers
+/// to build URLs for filter buttons, the live indicator, and the
+/// `HX-Push-Url` response header.
+///
+/// Flattening [`DateRange`] keeps `from`/`to` at the top level while letting
+/// `serde_urlencoded` handle all encoding/skipping concerns. Adding more
+/// filter parameters in the future just means adding fields here, and every
+/// URL the dashboard generates will pick them up automatically.
+#[derive(Serialize)]
+pub struct StatsLink<'a> {
+    #[serde(flatten)]
+    pub range: &'a DateRange,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub path: Option<&'a str>,
+}
+
+impl<'a> StatsLink<'a> {
+    pub const fn new(range: &'a DateRange, path: Option<&'a str>) -> Self {
+        Self { range, path }
+    }
+
+    /// Builds a URL of the form `{base}?from=...&to=...&path=...`, omitting
+    /// the query string entirely when no parameters are set.
+    pub fn url(&self, base: &str) -> String {
+        build_url(base, self.range, self.path)
+    }
+
+    /// Convenience: build the full set of filter buttons for the given
+    /// endpoint. `today` anchors the relative ranges; `current` is the active
+    /// range used to highlight the matching button.
+    pub fn preset_buttons(
+        hx_endpoint: &str,
+        path: Option<&'a str>,
+        today: Date,
+        current: &DateRange,
+    ) -> Vec<PresetButton> {
+        let active = current.matched_preset();
+        Preset::ALL
+            .iter()
+            .copied()
+            .map(|preset| {
+                let preset_range = preset.date_range(today);
+                PresetButton {
+                    key: preset.key(),
+                    label: preset.label(),
+                    hx_url: build_url(hx_endpoint, &preset_range, path),
+                    active: active == Some(preset),
+                }
+            })
+            .collect()
+    }
+}
+
+/// Free-form variant of [`StatsLink::url`] that doesn't tie the borrow of
+/// `range` to the `'a` lifetime of any surrounding `StatsLink`. Lets callers
+/// build URLs from short-lived `DateRange` values (e.g. preset buttons) without
+/// fighting the borrow checker.
+fn build_url(base: &str, range: &DateRange, path: Option<&str>) -> String {
+    let link = StatsLink { range, path };
+    let qs = serde_urlencoded::to_string(&link).unwrap_or_default();
+    if qs.is_empty() {
+        base.to_string()
+    } else {
+        format!("{base}?{qs}")
     }
 }
 
@@ -292,4 +489,83 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
         .log_msg("Failed to create Time for hour data!")?;
     Ok(PrimitiveDateTime::new(date, time))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DateRange;
+    use time::macros::date;
+
+    #[test]
+    fn date_range_deserializes_from_query_string() {
+        let r: DateRange = serde_urlencoded::from_str("from=2026-03-24&to=2026-04-23").unwrap();
+        assert_eq!(r.from, Some(date!(2026 - 03 - 24)));
+        assert_eq!(r.to, Some(date!(2026 - 04 - 23)));
+    }
+
+    #[test]
+    fn date_range_deserializes_empty_and_missing_as_none() {
+        let r: DateRange = serde_urlencoded::from_str("").unwrap();
+        assert_eq!(r.from, None);
+        assert_eq!(r.to, None);
+
+        let r: DateRange = serde_urlencoded::from_str("from=&to=").unwrap();
+        assert_eq!(r.from, None);
+        assert_eq!(r.to, None);
+
+        let r: DateRange = serde_urlencoded::from_str("from=2026-03-24").unwrap();
+        assert_eq!(r.from, Some(date!(2026 - 03 - 24)));
+        assert_eq!(r.to, None);
+    }
+
+    #[test]
+    fn date_range_deserializes_invalid_as_none() {
+        // Garbage input should not blow up the page; treat as no filter.
+        let r: DateRange = serde_urlencoded::from_str("from=not-a-date&to=2026-04-23").unwrap();
+        assert_eq!(r.from, None);
+        assert_eq!(r.to, Some(date!(2026 - 04 - 23)));
+    }
+
+    #[test]
+    fn date_range_query_string_round_trips() {
+        let original = DateRange {
+            from: Some(date!(2026 - 03 - 24)),
+            to: Some(date!(2026 - 04 - 23)),
+        };
+        let qs = original.query_string();
+        assert_eq!(qs, "from=2026-03-24&to=2026-04-23");
+
+        let parsed: DateRange = serde_urlencoded::from_str(&qs).unwrap();
+        assert_eq!(parsed.from, original.from);
+        assert_eq!(parsed.to, original.to);
+    }
+
+    #[test]
+    fn date_range_query_string_skips_none_fields() {
+        let only_from = DateRange {
+            from: Some(date!(2026 - 03 - 24)),
+            to: None,
+        };
+        assert_eq!(only_from.query_string(), "from=2026-03-24");
+
+        let only_to = DateRange {
+            from: None,
+            to: Some(date!(2026 - 04 - 23)),
+        };
+        assert_eq!(only_to.query_string(), "to=2026-04-23");
+
+        let empty = DateRange::default();
+        assert_eq!(empty.query_string(), "");
+    }
+
+    #[test]
+    fn date_range_query_suffix_prefixes_ampersand() {
+        let r = DateRange {
+            from: Some(date!(2026 - 03 - 24)),
+            to: Some(date!(2026 - 04 - 23)),
+        };
+        assert_eq!(r.query_suffix(), "&from=2026-03-24&to=2026-04-23");
+
+        assert_eq!(DateRange::default().query_suffix(), "");
+    }
 }
