@@ -1,5 +1,5 @@
 -- Persist visitor sessions so in-flight visitors survive a service restart.
--- The `sessions_ttl` trigger sweeps rows older than 1 hour on every INSERT,
+-- The `sessions_ttl` trigger sweeps rows older than 24 hours on every INSERT,
 -- so cleanup is automatic without a background task.
 
 CREATE TABLE IF NOT EXISTS sessions (
@@ -16,5 +16,5 @@ CREATE TRIGGER IF NOT EXISTS sessions_ttl
 AFTER INSERT ON sessions
 BEGIN
     DELETE FROM sessions
-    WHERE datetime(registered_at) < datetime('now', '-1 hour');
+    WHERE datetime(registered_at) < datetime('now', '-24 hours');
 END;
