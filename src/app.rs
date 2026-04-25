@@ -179,18 +179,8 @@ mod tests {
             self
         }
 
-        fn status(mut self, status: StatusCode) -> Self {
-            self.status = status;
-            self
-        }
-
         fn mime(mut self, mime: Mime) -> Self {
             self.mime = Some(mime);
-            self
-        }
-
-        fn output(mut self, output: &'static str) -> Self {
-            self.output = Some(output);
             self
         }
     }
@@ -199,17 +189,19 @@ mod tests {
     fn simple_requests() {
         let requests = [
             // register/post-sleep
-            Req::new("/post-sleep/0").status(StatusCode::BAD_REQUEST),
-            Req::new("/register?path=/")
-                .mime(mime::APPLICATION_JSON)
-                .output("0"),
-            Req::new("/register?path=/")
-                .mime(mime::APPLICATION_JSON)
-                .output("1"),
+            //
+            // Session endpoints always return 200 — see the doc comments on
+            // `post_sleep::get` / `page_left::get` for the rationale. Visitor
+            // IDs are now random 53-bit integers persisted in the `sessions`
+            // table, so we no longer assert a specific body here; the
+            // `simple_requests_with_known_ids` flow is exercised separately
+            // in the `visitor_state` unit tests and in end-to-end runs.
+            Req::new("/post-sleep/0"),
+            Req::new("/register?path=/").mime(mime::APPLICATION_JSON),
+            Req::new("/register?path=/").mime(mime::APPLICATION_JSON),
             Req::new("/post-sleep/0"),
             Req::new("/post-sleep/1"),
-            Req::new("/post-sleep/0").status(StatusCode::BAD_REQUEST),
-            Req::new("/post-sleep/1").status(StatusCode::BAD_REQUEST),
+            Req::new("/page-left/0/60"),
             // Dashboard
             Req::new("/").mime(mime::TEXT_HTML_UTF_8),
             Req::new("/?from=2026-03-24&to=2026-04-23").mime(mime::TEXT_HTML_UTF_8),
@@ -255,6 +247,27 @@ mod tests {
                 .unwrap()
                 .block_on(async {
                     let (mut app, ..) = app().await.unwrap();
+
+                    // Seed two real visits via the random-id round-trip so
+                    // `/stats?path=/` below has data to render.
+                    let mut call = async |uri: String| {
+                        let req = Request::builder().uri(uri).body(Body::empty()).unwrap();
+                        let resp = app
+                            .as_service()
+                            .ready()
+                            .await
+                            .unwrap()
+                            .call(req)
+                            .await
+                            .unwrap();
+                        assert_eq!(resp.status(), StatusCode::OK);
+                        to_bytes(resp.into_body(), 1 << 10).await.unwrap()
+                    };
+                    for _ in 0..2 {
+                        let id = call("/register?path=/".into()).await;
+                        let id = std::str::from_utf8(&id).unwrap().trim();
+                        call(format!("/post-sleep/{id}")).await;
+                    }
 
                     for req in requests {
                         let request = Request::builder()

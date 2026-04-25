@@ -2,16 +2,16 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
 };
-use axum_ctx::{RespErrCtx, RespErrExt, RespResult};
 use serde::Deserialize;
 use sqlx::Row;
+use tracing::error;
 use url::Url;
 
 use crate::{
     db::DbConnection,
     states::{
         AppState, InnerAppState,
-        visitor_state::{SleepingState, VisitorId},
+        visitor_state::{self, SleepingState, VisitorId},
     },
 };
 
@@ -87,26 +87,32 @@ impl Params {
     }
 }
 
+/// `/post-sleep/{visitor_id}` — always returns 200. Real errors are logged.
 pub async fn get(
     State(state): AppState,
     Query(params): Query<Params>,
     Path(visitor_id): Path<VisitorId>,
-) -> RespResult<StatusCode> {
-    let SleepingState {
+) -> StatusCode {
+    if let Err(err) = record(state, params, visitor_id).await {
+        error!("post-sleep failed for visitor_id {visitor_id}: {err:#}");
+    }
+    StatusCode::OK
+}
+
+async fn record(
+    state: &'static InnerAppState,
+    params: Params,
+    visitor_id: VisitorId,
+) -> anyhow::Result<()> {
+    let mut tx = state.pool.begin().await?;
+
+    let Some(SleepingState {
         path_id,
         registered_at,
-    } = state
-        .visitor_states
-        .post_sleep(visitor_id)
-        .ctx(StatusCode::BAD_REQUEST)
-        .user_msg("The visitor ID is invalid or has expired!")?;
-
-    let mut tx = state
-        .pool
-        .begin()
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg("Failed to begin a transaction!")?;
+    }) = visitor_state::post_sleep(&mut tx, visitor_id, i64::from(state.min_delay_sec)).await?
+    else {
+        return Ok(());
+    };
 
     let referrer_id = params.referrer_id(state, &mut tx).await;
 
@@ -119,21 +125,12 @@ pub async fn get(
     .bind(registered_at)
     .bind(referrer_id)
     .fetch_one(&mut *tx)
-    .await
-    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-    .log_msg(|| format!("Failed to insert a visit for the path_id {path_id}!"))?
+    .await?
     .get("id");
 
-    tx.commit()
-        .await
-        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-        .log_msg(|| {
-            format!("Failed to commit the post-sleep transaction for the path_id {path_id}!")
-        })?;
+    visitor_state::post_visit_insertion(&mut tx, visitor_id, visit_id).await?;
 
-    state
-        .visitor_states
-        .post_visit_insertion(visitor_id, visit_id);
+    tx.commit().await?;
 
-    Ok(StatusCode::OK)
+    Ok(())
 }
