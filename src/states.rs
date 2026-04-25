@@ -10,7 +10,6 @@ use url::Url;
 
 use crate::config::Config;
 use crate::db::DbPool;
-use visitor_state::VisitorStateStore;
 
 #[derive(Template)]
 #[template(path = "count.js", escape = "none")]
@@ -24,7 +23,6 @@ pub struct InnerAppState {
     pub pool: DbPool,
     pub tracked_origin: &'static str,
     pub tracked_origin_callback: &'static str,
-    pub visitor_states: VisitorStateStore,
     pub min_delay_sec: u16,
     pub utc_offset: UtcOffset,
     pub utc_offset_str: &'static str,
@@ -72,8 +70,6 @@ impl InnerAppState {
             }
         }
 
-        let visitor_states = VisitorStateStore::new(config.min_delay_secs);
-
         let base_url = config.base_url.leak();
         let base_origin = Url::parse(base_url)
             .context("Failed to parse the base URL configuration value!")?
@@ -109,7 +105,6 @@ impl InnerAppState {
             pool,
             tracked_origin,
             tracked_origin_callback,
-            visitor_states,
             min_delay_sec: config.min_delay_secs,
             utc_offset,
             utc_offset_str,

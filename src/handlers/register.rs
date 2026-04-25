@@ -10,7 +10,7 @@ use crate::{
     extractors::query_path::QueryPath,
     states::{
         AppState,
-        visitor_state::{SleepingState, VisitorId},
+        visitor_state::{self, SleepingState, VisitorId},
     },
 };
 
@@ -78,10 +78,23 @@ pub async fn get(
         }
     };
 
-    let visitor_id = state.visitor_states.register(SleepingState {
-        path_id,
-        registered_at,
-    });
+    let mut conn = state
+        .pool
+        .acquire()
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to acquire a DB connection!")?;
+
+    let visitor_id = visitor_state::register(
+        &mut conn,
+        &SleepingState {
+            path_id,
+            registered_at,
+        },
+    )
+    .await
+    .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+    .log_msg(|| format!("Failed to persist a new session for path_id {path_id}!"))?;
 
     Ok(Json(visitor_id))
 }

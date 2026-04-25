@@ -1,17 +1,28 @@
-use rand::{rng, seq::SliceRandom};
-use std::{
-    mem, process,
-    sync::{Mutex, MutexGuard},
-};
+//! Persistent visitor session storage backed by the `sessions` `SQLite` table.
+//!
+//! Lifecycle:
+//! 1. `/register`   → [`register`] inserts a row with `visit_id IS NULL`.
+//! 2. `/post-sleep` → [`post_sleep`] reads it, then [`post_visit_insertion`]
+//!    links the freshly inserted `visits.id`.
+//! 3. `/page-left`  → [`page_left`] returns `visit_id` and deletes the row.
+//!
+//! Missing / expired / already-consumed sessions return `Ok(None)` so callers
+//! can log-and-200 instead of 4xx-ing the user.
+
+use rand::Rng;
 use time::OffsetDateTime;
-use tracing::error;
 
-pub type VisitorId = u16;
-// +1 because the minimum index is 0 which has to be counted too.
-const MAX_N_CONCURRENT_VISITORS: usize = VisitorId::MAX as usize + 1;
+use crate::db::{DbConnection, DbPool};
 
+pub type VisitorId = i64;
 pub type VisitId = i64;
 pub type PathId = i64;
+
+/// Upper bound (exclusive) for minted [`VisitorId`]s. 2^53 is the largest
+/// integer a JS `Number` can hold losslessly, so ids round-trip through the
+/// browser's JSON parser without precision loss.
+const VISITOR_ID_UPPER_EXCL: i64 = 1_i64 << 53;
+const REGISTER_MAX_RETRIES: u8 = 5;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SleepingState {
@@ -19,234 +30,103 @@ pub struct SleepingState {
     pub registered_at: OffsetDateTime,
 }
 
-#[cfg(test)]
-impl SleepingState {
-    fn new(path_id: PathId) -> Self {
-        Self {
-            path_id,
-            registered_at: OffsetDateTime::now_utc(),
+/// Insert a new session and return its id. Retries on the vanishingly unlikely
+/// PK collision. The insert also trips the `sessions_ttl` trigger.
+pub async fn register(
+    conn: &mut DbConnection,
+    sleeping: &SleepingState,
+) -> Result<VisitorId, sqlx::Error> {
+    for _ in 0..REGISTER_MAX_RETRIES {
+        let id = rand::rng().random_range(1..VISITOR_ID_UPPER_EXCL);
+
+        let res = sqlx::query(
+            "INSERT INTO sessions(visitor_id, path_id, registered_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(visitor_id) DO NOTHING",
+        )
+        .bind(id)
+        .bind(sleeping.path_id)
+        .bind(sleeping.registered_at)
+        .execute(&mut *conn)
+        .await?;
+
+        if res.rows_affected() > 0 {
+            return Ok(id);
         }
     }
+
+    Err(sqlx::Error::Protocol(format!(
+        "Failed to mint a unique visitor_id after {REGISTER_MAX_RETRIES} attempts"
+    )))
 }
 
-#[derive(Default)]
-enum VisitorState {
-    #[default]
-    None,
-    Sleeping(SleepingState),
-    PostSleep {
-        visit_id: VisitId,
-    },
-}
-
-struct VisitorStateStoreInner {
-    last_id_ind: VisitorId,
-    visitor_states: Box<[VisitorState; MAX_N_CONCURRENT_VISITORS]>,
-}
-
-impl VisitorStateStoreInner {
-    #[must_use]
-    fn get_mut(&mut self, id: VisitorId) -> &mut VisitorState {
-        &mut self.visitor_states[usize::from(id)]
-    }
-}
-
-pub struct VisitorStateStore {
-    inner: Mutex<VisitorStateStoreInner>,
-    ind_to_id_map: Box<[VisitorId; MAX_N_CONCURRENT_VISITORS]>,
+/// Returns the sleeping state if the session exists, has not been promoted yet,
+/// and has waited at least `min_secs`. The row is left in place; the caller
+/// promotes it via [`post_visit_insertion`] after the `visits` INSERT commits.
+pub async fn post_sleep(
+    conn: &mut DbConnection,
+    visitor_id: VisitorId,
     min_secs: i64,
+) -> Result<Option<SleepingState>, sqlx::Error> {
+    let row: Option<(PathId, OffsetDateTime, Option<VisitId>)> = sqlx::query_as(
+        "SELECT path_id, registered_at, visit_id FROM sessions WHERE visitor_id = ?",
+    )
+    .bind(visitor_id)
+    .fetch_optional(&mut *conn)
+    .await?;
+
+    let Some((path_id, registered_at, None)) = row else {
+        return Ok(None);
+    };
+
+    if (OffsetDateTime::now_utc() - registered_at).whole_seconds() < min_secs {
+        return Ok(None);
+    }
+
+    Ok(Some(SleepingState {
+        path_id,
+        registered_at,
+    }))
 }
 
-impl VisitorStateStore {
-    #[must_use]
-    pub fn new(min_secs: u16) -> Self {
-        let visitor_states = (0..MAX_N_CONCURRENT_VISITORS)
-            .map(|_| VisitorState::None)
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
-
-        let inner = Mutex::new(VisitorStateStoreInner {
-            last_id_ind: 0,
-            visitor_states,
-        });
-
-        let mut ind_to_id_map: Box<[VisitorId; MAX_N_CONCURRENT_VISITORS]> = (VisitorId::MIN
-            ..=VisitorId::MAX)
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap_or_else(|_| panic!("Conversion into Box<[_, N]> should not fail!"));
-
-        // No protection needed during development.
-        if !cfg!(debug_assertions) {
-            let mut rng = rng();
-            ind_to_id_map.shuffle(&mut rng);
-        }
-
-        Self {
-            inner,
-            ind_to_id_map,
-            min_secs: i64::from(min_secs),
-        }
-    }
-
-    fn locked(&self) -> MutexGuard<'_, VisitorStateStoreInner> {
-        self.inner.lock().unwrap_or_else(|_| {
-            error!("Visitor state store mutex poisoned!");
-            process::exit(1);
-        })
-    }
-
-    #[must_use]
-    pub fn register(&self, sleeping_state: SleepingState) -> VisitorId {
-        let state = VisitorState::Sleeping(sleeping_state);
-
-        let mut inner = self.locked();
-        let id = self.ind_to_id_map[usize::from(inner.last_id_ind)];
-
-        *inner.get_mut(id) = state;
-        inner.last_id_ind = inner.last_id_ind.wrapping_add(1);
-
-        id
-    }
-
-    /// Returns the DB path ID and datetime of registration if the visitor
-    /// waited at least the minimum delay.
-    /// Returns `None` otherwise after clearing the visitor state.
-    #[must_use]
-    pub fn post_sleep(&self, visitor_id: VisitorId) -> Option<SleepingState> {
-        let state = mem::take(self.locked().get_mut(visitor_id));
-
-        let VisitorState::Sleeping(sleeping_state) = state else {
-            return None;
-        };
-
-        let elapsed = (OffsetDateTime::now_utc() - sleeping_state.registered_at).whole_seconds();
-        let slept_well = elapsed >= self.min_secs;
-
-        slept_well.then_some(sleeping_state)
-    }
-
-    pub fn post_visit_insertion(&self, visitor_id: VisitorId, visit_id: VisitId) {
-        *self.locked().get_mut(visitor_id) = VisitorState::PostSleep { visit_id };
-    }
-
-    /// Returns the path IDs that currently have at least one visitor in the Sleeping state.
-    #[must_use]
-    pub fn live_path_ids(&self) -> Vec<PathId> {
-        let seen: std::collections::HashSet<PathId> = self
-            .locked()
-            .visitor_states
-            .iter()
-            .filter_map(|s| {
-                if let VisitorState::Sleeping(SleepingState { path_id, .. }) = s {
-                    Some(*path_id)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        seen.into_iter().collect()
-    }
-
-    /// Returns the number of visitors currently active (sleeping on a page).
-    #[must_use]
-    pub fn live_count(&self) -> usize {
-        self.locked()
-            .visitor_states
-            .iter()
-            .filter(|s| matches!(s, VisitorState::Sleeping(_)))
-            .count()
-    }
-
-    /// Returns the DB visit ID if the visitor already successfully called `post_delay`.
-    /// Returns `None` otherwise after clearing the visitor state.
-    #[must_use]
-    pub fn page_left(&self, visitor_id: VisitorId) -> Option<VisitId> {
-        let state = mem::take(self.locked().get_mut(visitor_id));
-
-        let VisitorState::PostSleep { visit_id } = state else {
-            return None;
-        };
-
-        Some(visit_id)
-    }
+/// Link a sleeping session to its freshly inserted `visits.id`.
+pub async fn post_visit_insertion(
+    conn: &mut DbConnection,
+    visitor_id: VisitorId,
+    visit_id: VisitId,
+) -> Result<(), sqlx::Error> {
+    sqlx::query("UPDATE sessions SET visit_id = ? WHERE visitor_id = ?")
+        .bind(visit_id)
+        .bind(visitor_id)
+        .execute(&mut *conn)
+        .await?;
+    Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{SleepingState, VisitorId, VisitorStateStore};
+/// Delete the session and return its `visit_id` if it had been promoted.
+pub async fn page_left(
+    conn: &mut DbConnection,
+    visitor_id: VisitorId,
+) -> Result<Option<VisitId>, sqlx::Error> {
+    let row: Option<(Option<VisitId>,)> =
+        sqlx::query_as("DELETE FROM sessions WHERE visitor_id = ? RETURNING visit_id")
+            .bind(visitor_id)
+            .fetch_optional(&mut *conn)
+            .await?;
 
-    #[test]
-    fn ids() {
-        let store = VisitorStateStore::new(0);
-        let sleeping_state = SleepingState::new(42);
+    Ok(row.and_then(|(visit_id,)| visit_id))
+}
 
-        assert_eq!(store.register(sleeping_state.clone()), 0);
-        assert_eq!(store.register(sleeping_state.clone()), 1);
+/// Number of `Sleeping` sessions (registered, not yet promoted).
+pub async fn live_count(pool: &DbPool) -> Result<i64, sqlx::Error> {
+    sqlx::query_scalar("SELECT COUNT(*) FROM sessions WHERE visit_id IS NULL")
+        .fetch_one(pool)
+        .await
+}
 
-        store.locked().last_id_ind = VisitorId::MAX;
-
-        assert_eq!(store.register(sleeping_state.clone()), VisitorId::MAX);
-        assert_eq!(store.register(sleeping_state), 0);
-    }
-
-    #[test]
-    fn no_delay() {
-        let store = VisitorStateStore::new(0);
-        let sleeping_state = SleepingState::new(42);
-
-        let id = store.register(sleeping_state.clone());
-
-        assert_eq!(store.post_sleep(id), Some(sleeping_state));
-        assert_eq!(store.post_sleep(id), None);
-    }
-
-    #[test]
-    fn pre_min_delay() {
-        let store = VisitorStateStore::new(100);
-        let sleeping_state = SleepingState::new(42);
-
-        let id = store.register(sleeping_state);
-
-        assert_eq!(store.post_sleep(id), None);
-    }
-
-    #[test]
-    fn post_min_delay() {
-        let min_delay = 1;
-        let store = VisitorStateStore::new(min_delay);
-        let sleeping_state = SleepingState::new(42);
-
-        let id = store.register(sleeping_state.clone());
-
-        std::thread::sleep(std::time::Duration::new(u64::from(min_delay), 1));
-
-        assert_eq!(store.post_sleep(id), Some(sleeping_state));
-        assert_eq!(store.post_sleep(id), None);
-    }
-
-    #[test]
-    fn page_left() {
-        let store = VisitorStateStore::new(0);
-        let sleeping_state = SleepingState::new(42);
-
-        let visit_id = 13;
-        let id = store.register(sleeping_state.clone());
-
-        assert_eq!(store.post_sleep(id), Some(sleeping_state));
-        store.post_visit_insertion(id, visit_id);
-        assert_eq!(store.page_left(id), Some(visit_id));
-    }
-
-    #[test]
-    fn no_post_visit_insertion() {
-        let store = VisitorStateStore::new(0);
-        let sleeping_state = SleepingState::new(42);
-
-        let id = store.register(sleeping_state.clone());
-
-        assert_eq!(store.post_sleep(id), Some(sleeping_state));
-        assert_eq!(store.page_left(id), None);
-    }
+/// Distinct `path_id`s with at least one `Sleeping` session.
+pub async fn live_path_ids(pool: &DbPool) -> Result<Vec<PathId>, sqlx::Error> {
+    sqlx::query_scalar("SELECT DISTINCT path_id FROM sessions WHERE visit_id IS NULL")
+        .fetch_all(pool)
+        .await
 }

@@ -33,7 +33,12 @@ pub async fn get(
     .log_msg("Live total-visits query failed!")?;
 
     // Active path strings for row dots (OOB-swapped into #live-path-set).
-    let path_ids = state.visitor_states.live_path_ids();
+    // Sourced from the persisted `sessions` table so a restart does not
+    // briefly blank out the dashboard until new visitors arrive.
+    let path_ids = crate::states::visitor_state::live_path_ids(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Live path-ids query failed!")?;
     let active_paths: Vec<String> = if path_ids.is_empty() {
         vec![]
     } else {
@@ -59,7 +64,13 @@ pub async fn get(
         format!("[{items}]")
     };
 
-    let count = state.visitor_states.live_count();
+    let count = crate::states::visitor_state::live_count(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Live count query failed!")?;
+    // `COUNT(*)` is non-negative by construction; the cast is safe.
+    #[allow(clippy::cast_sign_loss)]
+    let count = count as usize;
     let live_html = live_indicator(count);
 
     let total_oob = format!(r#"<span id="total-visits" hx-swap-oob="true">{total}</span>"#);

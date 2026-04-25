@@ -93,6 +93,4 @@ OxiTrack logs to stdout at the `info` level by default. Set `RUST_LOG` to one of
 
 ## Limitations
 
-**Concurrent visitors:** Counting may behave unexpectedly above 65,536 concurrent visitors, as visitor IDs are 16-bit and recycled periodically. This is unlikely to matter for a self-hosted single-site deployment.
-
-**Single instance:** OxiTrack keeps an in-memory cache of pending visits for performance. Running multiple instances against the same database is not supported. If you need horizontal scaling, open an issue.
+**Single instance:** OxiTrack writes to a single SQLite database file. Running multiple instances against the same database is not supported. If you need horizontal scaling, open an issue.
