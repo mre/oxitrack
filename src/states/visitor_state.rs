@@ -117,16 +117,18 @@ pub async fn page_left(
     Ok(row.and_then(|(visit_id,)| visit_id))
 }
 
-/// Number of `Sleeping` sessions (registered, not yet promoted).
+/// Number of live sessions (registered and not yet `/page-left`). Stale rows
+/// from visitors who bounced without firing `beforeunload` are tolerated;
+/// the `sessions_ttl` trigger sweeps them after 24 hours.
 pub async fn live_count(pool: &DbPool) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar("SELECT COUNT(*) FROM sessions WHERE visit_id IS NULL")
+    sqlx::query_scalar("SELECT COUNT(*) FROM sessions")
         .fetch_one(pool)
         .await
 }
 
-/// Distinct `path_id`s with at least one `Sleeping` session.
+/// Distinct `path_id`s with at least one live session.
 pub async fn live_path_ids(pool: &DbPool) -> Result<Vec<PathId>, sqlx::Error> {
-    sqlx::query_scalar("SELECT DISTINCT path_id FROM sessions WHERE visit_id IS NULL")
+    sqlx::query_scalar("SELECT DISTINCT path_id FROM sessions")
         .fetch_all(pool)
         .await
 }
