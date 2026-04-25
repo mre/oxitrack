@@ -186,6 +186,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn simple_requests() {
         let requests = [
             // register/post-sleep
