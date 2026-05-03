@@ -1,5 +1,11 @@
 # OxiTrack
 
+> [!IMPORTANT]
+> 
+> This is a personal fork of OxiTraffic by @mo8it. Do not use this fork in production; it may contain breaking changes and is not actively maintained.
+> For the official project, see [OxiTraffic](https://codeberg.org/mo8it/oxitraffic).
+> Thanks to the original maintainers.
+
 Self-hosted, privacy-respecting website traffic tracker.
 
 ## Features
