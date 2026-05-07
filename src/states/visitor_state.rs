@@ -117,18 +117,37 @@ pub async fn page_left(
     Ok(row.and_then(|(visit_id,)| visit_id))
 }
 
-/// Number of live sessions (registered and not yet `/page-left`). Stale rows
-/// from visitors who bounced without firing `beforeunload` are tolerated;
-/// the `sessions_ttl` trigger sweeps them after 24 hours.
+/// How recent a session's `registered_at` must be to be considered "live".
+///
+/// `/page-left` is fired from `beforeunload`, which is unreliable (mobile
+/// browsers, crashes, lost network, etc.), so the `sessions` table inevitably
+/// accumulates orphaned rows that the 24h `sessions_ttl` trigger has not yet
+/// swept. Counting all rows would massively over-report the number of people
+/// currently on the site, so we bound it to a short recent window.
+const LIVE_WINDOW_SECS: i64 = 5 * 60;
+
+/// Number of live sessions: rows registered within the last
+/// [`LIVE_WINDOW_SECS`] seconds and not yet `/page-left`. Older rows are
+/// considered stale and ignored regardless of whether the TTL trigger has
+/// swept them yet.
 pub async fn live_count(pool: &DbPool) -> Result<i64, sqlx::Error> {
-    sqlx::query_scalar("SELECT COUNT(*) FROM sessions")
-        .fetch_one(pool)
-        .await
+    sqlx::query_scalar(
+        "SELECT COUNT(*) FROM sessions
+         WHERE datetime(registered_at) >= datetime('now', ?)",
+    )
+    .bind(format!("-{LIVE_WINDOW_SECS} seconds"))
+    .fetch_one(pool)
+    .await
 }
 
-/// Distinct `path_id`s with at least one live session.
+/// Distinct `path_id`s with at least one live session, using the same
+/// recency window as [`live_count`].
 pub async fn live_path_ids(pool: &DbPool) -> Result<Vec<PathId>, sqlx::Error> {
-    sqlx::query_scalar("SELECT DISTINCT path_id FROM sessions")
-        .fetch_all(pool)
-        .await
+    sqlx::query_scalar(
+        "SELECT DISTINCT path_id FROM sessions
+         WHERE datetime(registered_at) >= datetime('now', ?)",
+    )
+    .bind(format!("-{LIVE_WINDOW_SECS} seconds"))
+    .fetch_all(pool)
+    .await
 }
