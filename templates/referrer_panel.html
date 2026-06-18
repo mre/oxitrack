@@ -1,0 +1,66 @@
+{#
+  Per-referrer ("reverse") panel: traffic this referrer drove and the pages it
+  linked to. Shared by the full page (referrer.html) and the htmx partial
+  returned by /hx/referrer, so preset-button swaps keep working.
+
+  Required context: total_visits, range, chart, pages (CountRows<LinkedPage>),
+  preset_buttons.
+#}
+<div id="stats-panel">
+    <div class="chart-wrap">
+        <div class="chart-header">
+            <span class="muted-stat">
+                <small
+                    ><span id="total-visits">{{ total_visits }}</span> total
+                    visits &mdash; {{ range.label() }}</small
+                >
+            </span>
+            {% include "filter_buttons.html" %}
+        </div>
+        {% if !chart.is_empty() %}
+        <div
+            id="visits-chart"
+            class="visits-chart"
+            data-labels='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.label }}",{% else %}"{{ bar.label }}"{% endif %}{% endfor %}]'
+            data-counts="[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]"
+        ></div>
+        {% endif %}
+    </div>
+
+    {% if !pages.is_empty() %}
+    <section>
+        <h3>Pages linked</h3>
+        <figure>
+            <table class="striped">
+                <thead>
+                    <tr>
+                        <th>Path</th>
+                        <th class="num">Visits</th>
+                        <th class="num">Share</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for (vc, pct) in &pages %}
+                    <tr>
+                        <td>
+                            <a href="/stats?path={{ vc.path }}{{ range.query_suffix()|safe }}"
+                                >{{ vc.path }}</a
+                            >
+                        </td>
+                        <td class="num">{{ vc.count }}</td>
+                        <td class="num pct-cell">
+                            <span class="bar-bg"
+                                ><span class="bar-fill" style="width: {{ pct }}"></span
+                            ></span>
+                            {{ pct }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+    </section>
+    {% else %}
+    <p class="muted-stat">No visits from this referrer in this range.</p>
+    {% endif %}
+</div>

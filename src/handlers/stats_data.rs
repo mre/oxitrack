@@ -29,6 +29,89 @@ pub struct ChartBar {
     pub count: u64,
 }
 
+/// Optional dimension filters shared by the chart and aggregate queries.
+///
+/// A `None` field means "don't filter on this dimension", so
+/// `VisitFilter::default()` matches every visit. Threading one struct instead
+/// of a growing list of `Option<i64>` parameters keeps call sites unambiguous
+/// as new drill-down views (per-path, per-referrer, …) are added.
+#[derive(Clone, Copy, Default)]
+pub struct VisitFilter {
+    pub path_id: Option<i64>,
+    pub referrer_id: Option<i64>,
+}
+
+impl VisitFilter {
+    /// Filter to a single path.
+    pub const fn path(path_id: i64) -> Self {
+        Self {
+            path_id: Some(path_id),
+            referrer_id: None,
+        }
+    }
+
+    /// Filter to a single referrer (the "reverse" view).
+    pub const fn referrer(referrer_id: i64) -> Self {
+        Self {
+            path_id: None,
+            referrer_id: Some(referrer_id),
+        }
+    }
+
+    /// Filter to an optional path; `None` matches every path.
+    pub const fn from_path_opt(path_id: Option<i64>) -> Self {
+        Self {
+            path_id,
+            referrer_id: None,
+        }
+    }
+}
+
+/// Which table the dashboard's tab strip is currently showing. Parsed leniently
+/// from the `view` query parameter so a stray value never 400s — it just falls
+/// back to the default [`Pages`](Self::Pages) view.
+#[derive(Clone, Copy, PartialEq, Eq, Default)]
+pub enum PanelView {
+    #[default]
+    Pages,
+    Referrers,
+}
+
+impl PanelView {
+    pub fn from_opt(raw: Option<&str>) -> Self {
+        match raw {
+            Some("referrers") => Self::Referrers,
+            _ => Self::Pages,
+        }
+    }
+
+    /// Stable key used in URLs (`?view=...`). The default `Pages` view returns
+    /// `None` so its URLs stay clean (no redundant `view=pages`).
+    pub const fn url_value(self) -> Option<&'static str> {
+        match self {
+            Self::Pages => None,
+            Self::Referrers => Some("referrers"),
+        }
+    }
+
+    pub const fn is_referrers(self) -> bool {
+        matches!(self, Self::Referrers)
+    }
+}
+
+/// Query extractor for the dashboard tab. Lenient: any unrecognized `view`
+/// value falls back to [`PanelView::Pages`] via [`PanelView::from_opt`].
+#[derive(Deserialize, Default)]
+pub struct ViewQuery {
+    pub view: Option<String>,
+}
+
+impl ViewQuery {
+    pub fn panel(&self) -> PanelView {
+        PanelView::from_opt(self.view.as_deref())
+    }
+}
+
 /// Deserialize an `Option<Date>` from the ISO 8601 representation used by the
 /// dashboard's `from`/`to` query parameters.
 ///
@@ -67,6 +150,23 @@ pub struct DateRange {
 }
 
 impl DateRange {
+    /// The dashboard's default window: when neither bound is set, fall back to
+    /// the last 90 days (anchored at `now`). An explicit range is returned
+    /// unchanged. Shared by every dashboard entry point so the default stays
+    /// consistent.
+    #[must_use]
+    pub fn or_last_90_days(self, now: OffsetDateTime) -> Self {
+        if self.from.is_none() && self.to.is_none() {
+            let to = now.date();
+            Self {
+                from: Some(to - Duration::days(90)),
+                to: Some(to),
+            }
+        } else {
+            self
+        }
+    }
+
     pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
         self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
     }
@@ -249,38 +349,64 @@ pub struct StatsLink<'a> {
     pub range: &'a DateRange,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub path: Option<&'a str>,
+    /// Serialized as `domain=...` to match the `/referrer` route's parameter.
+    #[serde(rename = "domain", skip_serializing_if = "Option::is_none")]
+    pub referrer: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub view: Option<&'a str>,
 }
 
 impl<'a> StatsLink<'a> {
     pub const fn new(range: &'a DateRange, path: Option<&'a str>) -> Self {
-        Self { range, path }
+        Self {
+            range,
+            path,
+            referrer: None,
+            view: None,
+        }
+    }
+
+    /// Attach the active dashboard tab so range/tab changes preserve each other.
+    #[must_use]
+    pub const fn with_view(mut self, view: PanelView) -> Self {
+        self.view = view.url_value();
+        self
+    }
+
+    /// Attach a referrer domain (used by the reverse, per-referrer view).
+    #[must_use]
+    pub const fn with_referrer(mut self, referrer: Option<&'a str>) -> Self {
+        self.referrer = referrer;
+        self
     }
 
     /// Builds a URL of the form `{base}?from=...&to=...&path=...`, omitting
     /// the query string entirely when no parameters are set.
     pub fn url(&self, base: &str) -> String {
-        build_url(base, self.range, self.path)
+        build_url(base, self)
     }
 
     /// Convenience: build the full set of filter buttons for the given
-    /// endpoint. `today` anchors the relative ranges; `current` is the active
-    /// range used to highlight the matching button.
-    pub fn preset_buttons(
-        hx_endpoint: &str,
-        path: Option<&'a str>,
-        today: Date,
-        current: &DateRange,
-    ) -> Vec<PresetButton> {
-        let active = current.matched_preset();
+    /// endpoint, preserving this link's `path`/`referrer`/`view` while varying
+    /// only the date range. `today` anchors the relative ranges; the link's own
+    /// range is used to highlight the matching button.
+    pub fn preset_buttons(&self, hx_endpoint: &str, today: Date) -> Vec<PresetButton> {
+        let active = self.range.matched_preset();
         Preset::ALL
             .iter()
             .copied()
             .map(|preset| {
                 let preset_range = preset.date_range(today);
+                let link = StatsLink {
+                    range: &preset_range,
+                    path: self.path,
+                    referrer: self.referrer,
+                    view: self.view,
+                };
                 PresetButton {
                     key: preset.key(),
                     label: preset.label(),
-                    hx_url: build_url(hx_endpoint, &preset_range, path),
+                    hx_url: build_url(hx_endpoint, &link),
                     active: active == Some(preset),
                 }
             })
@@ -288,13 +414,10 @@ impl<'a> StatsLink<'a> {
     }
 }
 
-/// Free-form variant of [`StatsLink::url`] that doesn't tie the borrow of
-/// `range` to the `'a` lifetime of any surrounding `StatsLink`. Lets callers
-/// build URLs from short-lived `DateRange` values (e.g. preset buttons) without
-/// fighting the borrow checker.
-fn build_url(base: &str, range: &DateRange, path: Option<&str>) -> String {
-    let link = StatsLink { range, path };
-    let qs = serde_urlencoded::to_string(&link).unwrap_or_default();
+/// Serializes a [`StatsLink`] onto `base` as a query string, returning `base`
+/// unchanged when no parameters are set.
+fn build_url(base: &str, link: &StatsLink) -> String {
+    let qs = serde_urlencoded::to_string(link).unwrap_or_default();
     if qs.is_empty() {
         base.to_string()
     } else {
@@ -313,7 +436,7 @@ where
 {
     async fn all(
         state: &InnerAppState,
-        path_id: Option<i64>,
+        filter: VisitFilter,
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
         end_datetime: Option<PrimitiveDateTime>,
@@ -326,6 +449,7 @@ where
             r"SELECT {trunc_sql} AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
             WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR referrer_id = ?)
               AND (? IS NULL OR registered_at >= ?)
               AND (? IS NULL OR registered_at < ?)
             GROUP BY trunc_registered_at
@@ -333,8 +457,10 @@ where
         );
 
         let rows = sqlx::query_as::<Db, TruncDateCount>(&sql)
-            .bind(path_id)
-            .bind(path_id)
+            .bind(filter.path_id)
+            .bind(filter.path_id)
+            .bind(filter.referrer_id)
+            .bind(filter.referrer_id)
             .bind(start_utc)
             .bind(start_utc)
             .bind(end_utc)
@@ -422,7 +548,7 @@ fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
 
 pub async fn build_chart(
     state: &'static InnerAppState,
-    path_id: Option<i64>,
+    filter: VisitFilter,
     range: &DateRange,
     now: OffsetDateTime,
 ) -> RespResult<Vec<ChartBar>> {
@@ -435,7 +561,7 @@ pub async fn build_chart(
         let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             ..
-        }) = WholeDaysSinceFirstVisit::build(state, path_id, now).await?
+        }) = WholeDaysSinceFirstVisit::build(state, filter, now).await?
         else {
             return Ok(vec![]);
         };
@@ -453,7 +579,7 @@ pub async fn build_chart(
             state.posix_utc_offset_str
         );
         let points =
-            DataPoint::<ContiguousHour>::all(state, path_id, now, start, end_dt, &trunc).await?;
+            DataPoint::<ContiguousHour>::all(state, filter, now, start, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
     } else if whole_days < 91 {
         let trunc = format!(
@@ -461,7 +587,7 @@ pub async fn build_chart(
             state.posix_utc_offset_str
         );
         let points =
-            DataPoint::<ContiguousDay>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+            DataPoint::<ContiguousDay>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
     } else if whole_days < 3653 {
         let trunc = format!(
@@ -469,8 +595,7 @@ pub async fn build_chart(
             state.posix_utc_offset_str
         );
         let points =
-            DataPoint::<ContiguousMonth>::all(state, path_id, now, start_dt, end_dt, &trunc)
-                .await?;
+            DataPoint::<ContiguousMonth>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
     } else {
         let trunc = format!(
@@ -478,7 +603,7 @@ pub async fn build_chart(
             state.posix_utc_offset_str
         );
         let points =
-            DataPoint::<ContiguousYear>::all(state, path_id, now, start_dt, end_dt, &trunc).await?;
+            DataPoint::<ContiguousYear>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
         Ok(to_chart_bars(points))
     }
 }

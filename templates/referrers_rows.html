@@ -1,0 +1,25 @@
+{#
+  Referrers table rows — the active-search target swapped into `#referrers-rows`.
+  Also included on first render by pages_referrers.html.
+  Required context: referrers (CountRows<ReferrerCount>), range (DateRange).
+#}
+{% if referrers.is_empty() %}
+<tr>
+    <td colspan="3" class="filter-empty">No matching referrers.</td>
+</tr>
+{% else %}
+{% for (rc, pct) in &referrers %}
+<tr>
+    <td>
+        <a href="/referrer?domain={{ rc.domain }}{{ range.query_suffix()|safe }}"
+            >{{ rc.domain }}</a
+        >
+    </td>
+    <td class="num">{{ rc.count }}</td>
+    <td class="num pct-cell">
+        <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+        {{ pct }}
+    </td>
+</tr>
+{% endfor %}
+{% endif %}

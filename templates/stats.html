@@ -90,7 +90,12 @@
                 <tbody>
                     {% for (rc, pct) in &referrers %}
                     <tr>
-                        <td>{{ rc.domain }}</td>
+                        <td>
+                            <a
+                                href="/referrer?domain={{ rc.domain }}{{ range.query_suffix()|safe }}"
+                                >{{ rc.domain }}</a
+                            >
+                        </td>
                         <td class="num">{{ rc.count }}</td>
                         <td class="num pct-cell">
                             <span class="bar-bg"

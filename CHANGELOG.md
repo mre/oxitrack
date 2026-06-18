@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0
+
+### Features
+
+- Add a per-referrer ("reverse") view: clicking a referrer shows which pages it drives traffic to, with a chart and totals.
+- Add a Pages / Referrers tab switcher on the dashboard; the active tab is preserved across date-range changes and is bookmarkable.
+- Add traffic trend indicators (up/down arrows) next to each page's visits/day.
+- Filter the Pages and Referrers tables with server-side active search (htmx).
+
 ## 0.11.0
 
 ### BREAKING CHANGES

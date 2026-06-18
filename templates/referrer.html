@@ -1,0 +1,42 @@
+{% extends "base.html" %} {% block content %}
+<nav class="breadcrumb">
+    <a href="{{ back_url }}">&#8592; Referrers</a>
+</nav>
+
+<div class="page-header">
+    <hgroup>
+        <h1>{{ domain }}</h1>
+        <p>
+            <a href="https://{{ domain }}" target="_blank" rel="noopener noreferrer"
+                >{{ domain }}</a
+            >
+        </p>
+    </hgroup>
+    <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
+</div>
+
+<section>
+    <figure>
+        <table class="meta-table">
+            <tbody>
+                {% if let Some(fv) = first_visit %}
+                <tr>
+                    <td>First visit</td>
+                    <td>{{ fv }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td>Total visits</td>
+                    <td>{{ total_visits }}</td>
+                </tr>
+                <tr>
+                    <td>Visits / day</td>
+                    <td>{{ "{:.2}"|format(per_day) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </figure>
+</section>
+
+{% include "referrer_panel.html" %}
+{% endblock %}

@@ -1,0 +1,117 @@
+{# Shared dashboard panel body: a Pages / Referrers tab strip and whichever
+table is active. Used by both the full dashboard page (index.html) and the htmx
+partial (hx_stats.html), so the tab state survives every range/tab swap. Each
+filter input uses the htmx active-search pattern
+(https://htmx.org/examples/active-search/): typing issues a GET to a per-table
+endpoint that returns just the filtered rows, swapped into the table body. The
+active range is baked into the input's hx-get URL; htmx appends the typed "q"
+term automatically. Required context: is_referrers, pages_tab_url,
+referrers_tab_url, pages_search_url, referrers_search_url, pages, referrers,
+range. #}
+<section>
+    <div class="section-header">
+        <div class="view-tabs" role="tablist">
+            <button
+                type="button"
+                role="tab"
+                aria-selected="{% if !is_referrers %}true{% else %}false{% endif %}"
+                class="view-tab{% if !is_referrers %} view-tab--active{% endif %}"
+                hx-get="{{ pages_tab_url }}"
+                hx-target="#stats-panel"
+                hx-swap="outerHTML"
+            >
+                Pages
+            </button>
+            <button
+                type="button"
+                role="tab"
+                aria-selected="{% if is_referrers %}true{% else %}false{% endif %}"
+                class="view-tab{% if is_referrers %} view-tab--active{% endif %}"
+                hx-get="{{ referrers_tab_url }}"
+                hx-target="#stats-panel"
+                hx-swap="outerHTML"
+            >
+                Referrers
+            </button>
+        </div>
+        <label class="path-filter">
+            <svg
+                class="path-filter__icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+            >
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            {% if is_referrers %}
+            <input
+                type="search"
+                class="path-filter__field"
+                name="q"
+                placeholder="Filter by referrer&hellip;"
+                aria-label="Filter referrers by domain"
+                autocomplete="off"
+                hx-get="{{ referrers_search_url }}"
+                hx-trigger="input changed delay:250ms, search"
+                hx-target="#referrers-rows"
+                hx-swap="innerHTML"
+            />
+            {% else %}
+            <input
+                type="search"
+                class="path-filter__field"
+                name="q"
+                placeholder="Filter by path&hellip;"
+                aria-label="Filter pages by path"
+                autocomplete="off"
+                hx-get="{{ pages_search_url }}"
+                hx-trigger="input changed delay:250ms, search"
+                hx-target="#pages-rows"
+                hx-swap="innerHTML"
+            />
+            {% endif %}
+        </label>
+    </div>
+
+    {% if is_referrers %}
+    <figure>
+        <table class="striped">
+            <thead>
+                <tr>
+                    <th>Domain</th>
+                    <th class="num">Visits</th>
+                    <th class="num">Share</th>
+                </tr>
+            </thead>
+            <tbody id="referrers-rows">
+                {% include "referrers_rows.html" %}
+            </tbody>
+        </table>
+    </figure>
+    {% else %}
+    <figure>
+        <table class="striped">
+            <thead>
+                <tr>
+                    <th>Path</th>
+                    <th class="num">Visits</th>
+                    <th class="num">Visits/day</th>
+                    <th class="num">Avg. duration</th>
+                    <th class="num">Share</th>
+                </tr>
+            </thead>
+            <tbody id="pages-rows">
+                {% include "pages_rows.html" %}
+            </tbody>
+        </table>
+    </figure>
+    {% endif %}
+</section>
