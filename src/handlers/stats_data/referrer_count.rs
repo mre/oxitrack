@@ -9,6 +9,7 @@ use crate::{db::Db, handlers::count_rows::Count, states::InnerAppState};
 pub struct ReferrerCount {
     pub domain: String,
     pub count: i64,
+    pub pages: i64,
 }
 
 impl ReferrerCount {
@@ -22,7 +23,7 @@ impl ReferrerCount {
         let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
 
         sqlx::query_as::<Db, Self>(
-            r"SELECT domain, COUNT(*) AS count FROM visits
+            r"SELECT domain, COUNT(*) AS count, COUNT(DISTINCT path_id) AS pages FROM visits
             INNER JOIN referrers ON referrers.id = referrer_id
             WHERE (? IS NULL OR path_id = ?)
               AND (? IS NULL OR registered_at >= ?)
