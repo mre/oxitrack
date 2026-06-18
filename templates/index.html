@@ -41,7 +41,34 @@
 
     {% if !pages.is_empty() %}
     <section>
-        <h3>Pages</h3>
+        <div class="section-header">
+            <h3>Pages</h3>
+            <label class="path-filter">
+                <svg
+                    class="path-filter__icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input
+                    type="search"
+                    class="path-filter__field"
+                    placeholder="Filter by path&hellip;"
+                    aria-label="Filter pages by path"
+                    autocomplete="off"
+                />
+            </label>
+        </div>
         <figure>
             <table class="striped">
                 <thead>
@@ -67,7 +94,13 @@
                             >
                         </td>
                         <td class="num">{{ vc.count }}</td>
-                        <td class="num">{{ "{:.1}"|format(vc.per_day) }}</td>
+                        <td class="num">
+                            {{ "{:.1}"|format(vc.per_day) }}<span
+                                class="trend {{ vc.trend.class() }}"
+                                title="{{ vc.trend.label() }}"
+                                >{{ vc.trend.arrow() }}</span
+                            >
+                        </td>
                         <td class="num">
                             {% match vc.avg_duration %} {% when Some with (d)
                             %}{{ d }} {% when None %}&mdash; {% endmatch %}

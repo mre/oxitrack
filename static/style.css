@@ -165,6 +165,86 @@ th[data-sort-dir="desc"] .sort-arrow {
     opacity: 1;
 }
 
+/* ─── trend arrows ─── */
+.trend {
+    font-size: 0.7em;
+    margin-left: 0.3em;
+    vertical-align: middle;
+}
+.trend-up {
+    color: #22c55e;
+}
+.trend-down {
+    color: #ef4444;
+}
+.trend-flat {
+    /* No glyph rendered; keep selector for completeness. */
+    display: none;
+}
+
+/* ─── path filter ─── */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.section-header h3 {
+    margin-bottom: 0;
+}
+
+/* The whole control is the bordered label; the input inside is chrome-free so
+   the icon and text read as a single unit. Mirrors the filter-button toolbar. */
+.path-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    max-width: 16rem;
+    margin: 0;
+    padding: 0.25rem 0.6rem;
+    color: var(--pico-muted-color);
+    background: transparent;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    transition:
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+.path-filter:focus-within {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+}
+.path-filter__icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+.path-filter__field[type="search"] {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--pico-color);
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+.path-filter__field[type="search"]:focus {
+    border: none;
+    box-shadow: none;
+}
+.path-filter__field[type="search"]::placeholder {
+    color: var(--pico-muted-color);
+    opacity: 0.7;
+}
+
 /* ─── responsive ─── */
 figure {
     overflow-x: auto;
