@@ -10,7 +10,7 @@ use serde::Deserialize;
 
 use crate::{
     handlers::{
-        count_rows::CountRows,
+        count_rows::{Count, CountRows},
         dashboard::page_stats::{self, PageStat},
         stats_data::{DateRange, referrer_count::ReferrerCount},
     },
@@ -37,7 +37,7 @@ impl SearchQuery {
 }
 
 #[allow(clippy::cast_precision_loss)]
-fn total_of<T: crate::handlers::count_rows::Count>(items: &[T]) -> f64 {
+fn total_of<T: Count>(items: &[T]) -> f64 {
     items.iter().map(|i| i.count() as f64).sum()
 }
 

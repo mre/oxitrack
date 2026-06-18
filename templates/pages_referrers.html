@@ -14,15 +14,8 @@ range. #}
             <button
                 type="button"
                 role="tab"
+                aria-selected="{% if !is_referrers %}true{% else %}false{% endif %}"
                 class="view-tab{% if !is_referrers %} view-tab--active{% endif %}"
-                {%-
-                if
-                !is_referrers
-                %}
-                aria-selected="true"
-                {%
-                endif
-                %}
                 hx-get="{{ pages_tab_url }}"
                 hx-target="#stats-panel"
                 hx-swap="outerHTML"
@@ -32,15 +25,8 @@ range. #}
             <button
                 type="button"
                 role="tab"
+                aria-selected="{% if is_referrers %}true{% else %}false{% endif %}"
                 class="view-tab{% if is_referrers %} view-tab--active{% endif %}"
-                {%-
-                if
-                is_referrers
-                %}
-                aria-selected="true"
-                {%
-                endif
-                %}
                 hx-get="{{ referrers_tab_url }}"
                 hx-target="#stats-panel"
                 hx-swap="outerHTML"

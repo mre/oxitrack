@@ -75,12 +75,13 @@ impl ReferrerData {
             _ => total_visits as f64,
         };
 
-        let first_visit = match first {
-            Some(f) => Some(DateTimeVerboseFormatter(
-                state.apply_utc_offset(f.first_visit)?,
-            )),
-            None => None,
-        };
+        let first_visit = first
+            .map(|f| {
+                state
+                    .apply_utc_offset(f.first_visit)
+                    .map(DateTimeVerboseFormatter)
+            })
+            .transpose()?;
 
         let pages = CountRows::from(pages_vec);
 
