@@ -11,7 +11,7 @@ use crate::{
         base_template::Base,
         count_rows::CountRows,
         stats_data::{
-            DateRange, PresetButton, StatsLink, WholeDaysSinceFirstVisit, build_chart,
+            DateRange, PresetButton, StatsLink, VisitFilter, WholeDaysSinceFirstVisit, build_chart,
             referrer_count::ReferrerCount,
         },
     },
@@ -32,7 +32,7 @@ impl Visits {
         let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             first_visit,
-        }) = WholeDaysSinceFirstVisit::build(state, Some(path_id), now).await?
+        }) = WholeDaysSinceFirstVisit::build(state, VisitFilter::path(path_id), now).await?
         else {
             return Err(RespErr::new(StatusCode::NOT_FOUND)
                 .user_msg("The requested path has no counted visits yet."));
@@ -118,9 +118,9 @@ pub async fn get(
     .await?;
     let referrers = CountRows::from(referrers);
 
-    let chart = build_chart(state, Some(path_id), &range, now).await?;
+    let chart = build_chart(state, VisitFilter::path(path_id), &range, now).await?;
 
-    let preset_buttons = StatsLink::preset_buttons("/hx/stats", Some(path), now.date(), &range);
+    let preset_buttons = StatsLink::new(&range, Some(path)).preset_buttons("/hx/stats", now.date());
     let live_url = StatsLink::new(&range, Some(path)).url("/api/live");
 
     Ok(Stats {

@@ -48,3 +48,62 @@ impl Count for ReferrerCount {
         self.count
     }
 }
+
+/// One page a given referrer drives traffic to — the "reverse" view of the
+/// referrers table. Produced by [`LinkedPage::all_for_referrer`].
+#[derive(sqlx::FromRow)]
+pub struct LinkedPage {
+    pub path: String,
+    pub count: i64,
+}
+
+impl Count for LinkedPage {
+    fn count(&self) -> i64 {
+        self.count
+    }
+}
+
+impl LinkedPage {
+    /// Resolves a referrer `domain` to its id, or `None` if it was never seen.
+    pub async fn id_for_domain(
+        state: &'static InnerAppState,
+        domain: &str,
+    ) -> RespResult<Option<i64>> {
+        sqlx::query_scalar::<Db, i64>("SELECT id FROM referrers WHERE domain = ? LIMIT 1")
+            .bind(domain)
+            .fetch_optional(&state.pool)
+            .await
+            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Failed to look up referrer id")
+    }
+
+    /// Pages this referrer linked to within the range, most-visited first.
+    pub async fn all_for_referrer(
+        state: &'static InnerAppState,
+        referrer_id: i64,
+        start_datetime: Option<PrimitiveDateTime>,
+        end_datetime: Option<PrimitiveDateTime>,
+    ) -> RespResult<Vec<Self>> {
+        let start_utc = start_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
+        let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
+
+        sqlx::query_as::<Db, Self>(
+            r"SELECT paths.path, COUNT(*) AS count FROM visits
+            INNER JOIN paths ON paths.id = visits.path_id
+            WHERE visits.referrer_id = ?
+              AND (? IS NULL OR registered_at >= ?)
+              AND (? IS NULL OR registered_at < ?)
+            GROUP BY paths.path
+            ORDER BY count DESC",
+        )
+        .bind(referrer_id)
+        .bind(start_utc)
+        .bind(start_utc)
+        .bind(end_utc)
+        .bind(end_utc)
+        .fetch_all(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to query pages for referrer!")
+    }
+}

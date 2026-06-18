@@ -2,6 +2,7 @@ use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 use sqlx::Row;
 use time::OffsetDateTime;
 
+use super::VisitFilter;
 use crate::states::InnerAppState;
 
 pub struct WholeDaysSinceFirstVisit {
@@ -12,17 +13,20 @@ pub struct WholeDaysSinceFirstVisit {
 impl WholeDaysSinceFirstVisit {
     pub async fn build(
         state: &'static InnerAppState,
-        path_id: Option<i64>,
+        filter: VisitFilter,
         now: OffsetDateTime,
     ) -> RespResult<Option<Self>> {
         let first_visit_row = sqlx::query(
             "SELECT registered_at FROM visits
             WHERE (? IS NULL OR path_id = ?)
+              AND (? IS NULL OR referrer_id = ?)
             ORDER BY registered_at
             LIMIT 1",
         )
-        .bind(path_id)
-        .bind(path_id)
+        .bind(filter.path_id)
+        .bind(filter.path_id)
+        .bind(filter.referrer_id)
+        .bind(filter.referrer_id)
         .fetch_optional(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)

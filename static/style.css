@@ -182,6 +182,39 @@ th[data-sort-dir="desc"] .sort-arrow {
     display: none;
 }
 
+/* ─── view tabs (Pages / Referrers) ─── */
+.view-tabs {
+    display: inline-flex;
+    gap: 0.25rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+}
+.view-tab {
+    margin: 0;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--pico-muted-color);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+.view-tab:hover {
+    /* Pico sets --pico-color to the (white) primary-inverse on button:hover, so
+       resolving var(--pico-color) here would be unreadable on the light theme.
+       Use the contrast color, which stays legible in both themes. */
+    color: var(--pico-contrast);
+}
+.view-tab--active {
+    color: var(--pico-primary);
+    border-bottom-color: var(--pico-primary);
+}
+
 /* ─── path filter ─── */
 .section-header {
     display: flex;
@@ -243,6 +276,11 @@ th[data-sort-dir="desc"] .sort-arrow {
 .path-filter__field[type="search"]::placeholder {
     color: var(--pico-muted-color);
     opacity: 0.7;
+}
+.filter-empty {
+    color: var(--pico-muted-color);
+    text-align: left;
+    font-style: italic;
 }
 
 /* ─── responsive ─── */

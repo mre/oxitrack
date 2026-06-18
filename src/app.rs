@@ -101,11 +101,15 @@ pub async fn app() -> Result<(Router, SocketAddr)> {
 
     let hx_router = Router::new()
         .route("/stats", get(handlers::dashboard::hx_stats::get))
+        .route("/referrer", get(handlers::dashboard::hx_referrer::get))
+        .route("/pages", get(handlers::dashboard::hx_filter::pages))
+        .route("/referrers", get(handlers::dashboard::hx_filter::referrers))
         .layer(compression_layer.clone());
 
     let dashboard_router = Router::new()
         .route("/", get(handlers::dashboard::index::get))
         .route("/stats", get(handlers::dashboard::stats::get))
+        .route("/referrer", get(handlers::dashboard::referrer::get))
         .layer(compression_layer);
 
     let static_service = ServeDir::new("static");

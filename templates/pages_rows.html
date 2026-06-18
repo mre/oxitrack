@@ -1,0 +1,35 @@
+{#
+  Pages table rows — the active-search target swapped into `#pages-rows`.
+  Also included on first render by pages_referrers.html.
+  Required context: pages (CountRows<PageStat>), range (DateRange).
+#}
+{% if pages.is_empty() %}
+<tr>
+    <td colspan="5" class="filter-empty">No matching pages.</td>
+</tr>
+{% else %}
+{% for (vc, pct) in &pages %}
+<tr>
+    <td>
+        <span class="live-row-dot" data-path="{{ vc.path }}"></span
+        ><a href="/stats?path={{ vc.path }}{{ range.query_suffix()|safe }}">{{ vc.path }}</a>
+    </td>
+    <td class="num">{{ vc.count }}</td>
+    <td class="num">
+        {{ "{:.1}"|format(vc.per_day) }}<span
+            class="trend {{ vc.trend.class() }}"
+            title="{{ vc.trend.label() }}"
+            >{{ vc.trend.arrow() }}</span
+        >
+    </td>
+    <td class="num">
+        {% match vc.avg_duration %} {% when Some with (d) %}{{ d }} {% when None %}&mdash; {%
+        endmatch %}
+    </td>
+    <td class="num pct-cell">
+        <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
+        {{ pct }}
+    </td>
+</tr>
+{% endfor %}
+{% endif %}

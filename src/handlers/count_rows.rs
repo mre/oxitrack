@@ -16,6 +16,22 @@ impl<T> CountRows<T> {
     pub const fn is_empty(&self) -> bool {
         self.counts.is_empty()
     }
+
+    /// Builds rows with an explicit denominator so the `Share` percentages stay
+    /// relative to a larger total (e.g. all pages) even when `counts` has been
+    /// filtered down to a subset by the active-search endpoints.
+    pub fn with_total(counts: Vec<T>, total_count: f64) -> Self {
+        let perc_factor = if total_count > 0.0 {
+            100.0 / total_count
+        } else {
+            0.0
+        };
+
+        Self {
+            counts,
+            perc_factor,
+        }
+    }
 }
 
 impl<T> From<Vec<T>> for CountRows<T>
