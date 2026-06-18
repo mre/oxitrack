@@ -1,7 +1,7 @@
 [package]
 name = "oxitrack"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Mo Bitar <mo8it@proton.me>, Matthias Endler <matthias@endler.dev>"]
 repository = "https://github.com/mre/oxitrack"
 license = "AGPL-3.0"
