@@ -150,6 +150,23 @@ pub struct DateRange {
 }
 
 impl DateRange {
+    /// The dashboard's default window: when neither bound is set, fall back to
+    /// the last 90 days (anchored at `now`). An explicit range is returned
+    /// unchanged. Shared by every dashboard entry point so the default stays
+    /// consistent.
+    #[must_use]
+    pub fn or_last_90_days(self, now: OffsetDateTime) -> Self {
+        if self.from.is_none() && self.to.is_none() {
+            let to = now.date();
+            Self {
+                from: Some(to - Duration::days(90)),
+                to: Some(to),
+            }
+        } else {
+            self
+        }
+    }
+
     pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
         self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
     }

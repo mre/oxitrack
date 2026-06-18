@@ -94,16 +94,7 @@ pub async fn get(
     Query(range): Query<DateRange>,
 ) -> RespResult<Stats> {
     let now = state.now_tz()?;
-    let range = if range.from.is_none() && range.to.is_none() {
-        let to = now.date();
-        let from = to - time::Duration::days(90);
-        DateRange {
-            from: Some(from),
-            to: Some(to),
-        }
-    } else {
-        range
-    };
+    let range = range.or_last_90_days(now);
 
     let PathId { path, path_id } = path_q.normalized_with_id(&state.pool).await?;
 

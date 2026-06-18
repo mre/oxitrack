@@ -3,7 +3,7 @@ use askama_web::WebTemplate;
 use axum::extract::{Query, State};
 use axum_ctx::{RespErr, RespResult, StatusCode};
 use serde::Deserialize;
-use time::{Duration, OffsetDateTime};
+use time::OffsetDateTime;
 
 use crate::{
     formatters::DateTimeVerboseFormatter,
@@ -102,19 +102,6 @@ impl ReferrerData {
     }
 }
 
-/// Applies the dashboard's "default to the last 90 days" rule.
-pub fn default_range(range: DateRange, now: OffsetDateTime) -> DateRange {
-    if range.from.is_none() && range.to.is_none() {
-        let to = now.date();
-        DateRange {
-            from: Some(to - Duration::days(90)),
-            to: Some(to),
-        }
-    } else {
-        range
-    }
-}
-
 #[derive(Template, WebTemplate)]
 #[template(path = "referrer.html")]
 pub struct Referrer {
@@ -137,7 +124,7 @@ pub async fn get(
     Query(range): Query<DateRange>,
 ) -> RespResult<Referrer> {
     let now = state.now_tz()?;
-    let range = default_range(range, now);
+    let range = range.or_last_90_days(now);
 
     let back_url = StatsLink::new(&range, None)
         .with_view(PanelView::Referrers)

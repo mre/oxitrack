@@ -10,7 +10,7 @@ use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult, StatusCode};
 use crate::{
     handlers::{
         count_rows::CountRows,
-        dashboard::referrer::{QueryReferrer, ReferrerData, default_range},
+        dashboard::referrer::{QueryReferrer, ReferrerData},
         stats_data::{ChartBar, DateRange, PresetButton, StatsLink, referrer_count::LinkedPage},
     },
     states::AppState,
@@ -34,7 +34,7 @@ pub async fn get(
     Query(range): Query<DateRange>,
 ) -> RespResult<impl IntoResponse> {
     let now = state.now_tz()?;
-    let range = default_range(range, now);
+    let range = range.or_last_90_days(now);
 
     // Address bar after the swap: the canonical full-page referrer URL.
     let push_url = StatsLink::new(&range, None)

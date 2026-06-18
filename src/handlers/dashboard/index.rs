@@ -2,7 +2,6 @@ use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::{Query, State};
 use axum_ctx::RespResult;
-use time::Duration;
 
 use crate::{
     handlers::{
@@ -48,16 +47,7 @@ pub async fn get(
     Query(view_q): Query<ViewQuery>,
 ) -> RespResult<Index> {
     let now = state.now_tz()?;
-    let range = if range.from.is_none() && range.to.is_none() {
-        let to = now.date();
-        let from = to - Duration::days(90);
-        DateRange {
-            from: Some(from),
-            to: Some(to),
-        }
-    } else {
-        range
-    };
+    let range = range.or_last_90_days(now);
     let view = view_q.panel();
 
     let (page_stats_vec, referrers_vec, chart) = tokio::try_join!(
