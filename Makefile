@@ -25,7 +25,7 @@ build: ## Build release binary
 check: ## Check for errors and warnings
 	cargo clippy
 
-deploy: ## Deploy by pushing to main — Coolify auto-deploys on git push
+deploy: ## Deploy by pushing to main — GitHub Actions builds the image, Coolify pulls it
 	git push
 
 db-backup: ## Pull the live database from the server to backups/

@@ -2,7 +2,7 @@
 services:
   oxitrack:
     container_name: oxitrack
-    image: docker.io/mo8it/oxitrack:latest
+    image: ghcr.io/mre/oxitrack:latest
     restart: unless-stopped
     volumes:
       # You can change the source to point to your configuration file.
