@@ -1,14 +1,14 @@
 use crate::states::InnerAppState;
 
-pub struct Base<'a> {
-    pub title: &'a str,
+pub struct Base {
+    pub title: String,
     pub utc_offset: &'static str,
 }
 
-impl<'a> Base<'a> {
-    pub const fn new(state: &'static InnerAppState, title: &'a str) -> Self {
+impl Base {
+    pub fn new(state: &'static InnerAppState, title: impl Into<String>) -> Self {
         Self {
-            title,
+            title: title.into(),
             utc_offset: state.utc_offset_str,
         }
     }

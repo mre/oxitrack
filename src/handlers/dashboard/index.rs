@@ -19,7 +19,7 @@ use crate::{
 #[derive(Template, WebTemplate)]
 #[template(path = "index.html")]
 pub struct Index {
-    pub base: Base<'static>,
+    pub base: Base,
     pub tracked_origin: &'static str,
     pub pages: CountRows<PageStat>,
     pub referrers: CountRows<ReferrerCount>,

@@ -26,9 +26,12 @@ pub struct Visits {
 }
 
 impl Visits {
-    async fn build(state: &'static InnerAppState, path_id: i64) -> RespResult<Self> {
-        let now = state.now_tz()?;
-
+    async fn build(
+        state: &'static InnerAppState,
+        path_id: i64,
+        range: &DateRange,
+        now: time::OffsetDateTime,
+    ) -> RespResult<Self> {
         let Some(WholeDaysSinceFirstVisit {
             whole_days_since_first_visit,
             first_visit,
@@ -39,9 +42,17 @@ impl Visits {
         };
 
         let stats_row = sqlx::query(
-            "SELECT COUNT(*) AS total_n, AVG(time_s) AS avg FROM visits WHERE path_id = ?",
+            r"SELECT COUNT(*) AS total_n, AVG(time_s) AS avg
+              FROM visits
+              WHERE path_id = ?
+                AND (? IS NULL OR registered_at >= ?)
+                AND (? IS NULL OR registered_at < ?)",
         )
         .bind(path_id)
+        .bind(range.start_datetime())
+        .bind(range.start_datetime())
+        .bind(range.end_datetime())
+        .bind(range.end_datetime())
         .fetch_one(&state.pool)
         .await
         .ctx(StatusCode::INTERNAL_SERVER_ERROR)
@@ -53,8 +64,11 @@ impl Visits {
         let average_time_spent = average_time_spent_raw.map(|f| SecondsFormatter(f as u64));
 
         #[allow(clippy::cast_precision_loss)]
-        let visits_per_day = if whole_days_since_first_visit > 0 {
-            total_n_visits as f64 / whole_days_since_first_visit as f64
+        let days = range
+            .whole_days(now)
+            .unwrap_or(whole_days_since_first_visit);
+        let visits_per_day = if days > 0 {
+            total_n_visits as f64 / days as f64
         } else {
             total_n_visits as f64
         };
@@ -73,7 +87,7 @@ impl Visits {
 #[derive(Template, WebTemplate)]
 #[template(path = "stats.html")]
 pub struct Stats {
-    pub base: Base<'static>,
+    pub base: Base,
     pub tracked_origin: &'static str,
     pub path: String,
     pub visits: Visits,
@@ -98,7 +112,7 @@ pub async fn get(
 
     let PathId { path, path_id } = path_q.normalized_with_id(&state.pool).await?;
 
-    let visits = Visits::build(state, path_id).await?;
+    let visits = Visits::build(state, path_id, &range, now).await?;
 
     let referrers = ReferrerCount::all_sorted_by_count(
         state,
@@ -115,7 +129,7 @@ pub async fn get(
     let live_url = StatsLink::new(&range, Some(path)).url("/api/live");
 
     Ok(Stats {
-        base: Base::new(state, "Stats"),
+        base: Base::new(state, path),
         tracked_origin: state.tracked_origin,
         path: path.to_owned(),
         visits,

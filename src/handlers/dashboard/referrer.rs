@@ -105,7 +105,7 @@ impl ReferrerData {
 #[derive(Template, WebTemplate)]
 #[template(path = "referrer.html")]
 pub struct Referrer {
-    pub base: Base<'static>,
+    pub base: Base,
     /// URL of the dashboard's Referrers tab, for the back breadcrumb.
     pub back_url: String,
     pub domain: String,
@@ -137,7 +137,7 @@ pub async fn get(
         })?;
 
     Ok(Referrer {
-        base: Base::new(state, "Referrer"),
+        base: Base::new(state, data.domain.clone()),
         back_url,
         domain: data.domain,
         total_visits: data.total_visits,
