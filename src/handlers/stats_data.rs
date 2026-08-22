@@ -182,6 +182,17 @@ impl DateRange {
         Some((to - from).whole_days().max(1))
     }
 
+    /// Number of active days in this range, excluding days before the tracked
+    /// entity's first visit. This keeps visits/day from being diluted by
+    /// pre-launch zero-traffic days when a page or referrer appeared after the
+    /// selected range started.
+    pub fn whole_days_since_first_visit(&self, first_visit: Date, now: OffsetDateTime) -> i64 {
+        let from = self.from.map_or(first_visit, |from| from.max(first_visit));
+        let to = self.to.unwrap_or_else(|| now.date());
+
+        (to - from).whole_days().max(1)
+    }
+
     pub fn label(&self) -> String {
         // Friendly label for common presets.
         if let Some(p) = self.matched_preset() {
@@ -619,7 +630,7 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
 #[cfg(test)]
 mod tests {
     use super::DateRange;
-    use time::macros::date;
+    use time::macros::{date, datetime};
 
     #[test]
     fn date_range_deserializes_from_query_string() {
@@ -692,5 +703,48 @@ mod tests {
         assert_eq!(r.query_suffix(), "&from=2026-03-24&to=2026-04-23");
 
         assert_eq!(DateRange::default().query_suffix(), "");
+    }
+
+    #[test]
+    fn whole_days_since_first_visit_excludes_pre_launch_days() {
+        let range = DateRange {
+            from: Some(date!(2026 - 05 - 21)),
+            to: Some(date!(2026 - 08 - 19)),
+        };
+
+        assert_eq!(
+            range.whole_days_since_first_visit(
+                date!(2026 - 06 - 17),
+                datetime!(2026-08-19 00:00 UTC),
+            ),
+            63
+        );
+    }
+
+    #[test]
+    fn whole_days_since_first_visit_keeps_range_start_for_existing_pages() {
+        let range = DateRange {
+            from: Some(date!(2026 - 05 - 21)),
+            to: Some(date!(2026 - 08 - 19)),
+        };
+
+        assert_eq!(
+            range.whole_days_since_first_visit(
+                date!(2026 - 05 - 01),
+                datetime!(2026-08-19 00:00 UTC),
+            ),
+            90
+        );
+    }
+
+    #[test]
+    fn whole_days_since_first_visit_uses_now_for_open_ended_ranges() {
+        assert_eq!(
+            DateRange::default().whole_days_since_first_visit(
+                date!(2026 - 08 - 10),
+                datetime!(2026-08-19 00:00 UTC),
+            ),
+            9
+        );
     }
 }

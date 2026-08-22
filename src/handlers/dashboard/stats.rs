@@ -63,17 +63,17 @@ impl Visits {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let average_time_spent = average_time_spent_raw.map(|f| SecondsFormatter(f as u64));
 
+        let first_visit = state.apply_utc_offset(first_visit)?;
+
         #[allow(clippy::cast_precision_loss)]
         let days = range
-            .whole_days(now)
-            .unwrap_or(whole_days_since_first_visit);
+            .whole_days_since_first_visit(first_visit.date(), now)
+            .min(whole_days_since_first_visit.max(1));
         let visits_per_day = if days > 0 {
             total_n_visits as f64 / days as f64
         } else {
             total_n_visits as f64
         };
-
-        let first_visit = state.apply_utc_offset(first_visit)?;
 
         Ok(Self {
             first: DateTimeVerboseFormatter(first_visit),

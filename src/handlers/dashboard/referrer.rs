@@ -64,24 +64,26 @@ impl ReferrerData {
 
         let total_visits: i64 = pages_vec.iter().map(|p| p.count).sum();
 
-        let days = range.whole_days(now).or_else(|| {
-            first
-                .as_ref()
-                .map(|f| f.whole_days_since_first_visit.max(1))
-        });
-        #[allow(clippy::cast_precision_loss)]
-        let per_day = match days {
-            Some(d) if d > 0 => total_visits as f64 / d as f64,
-            _ => total_visits as f64,
-        };
-
         let first_visit = first
             .map(|f| {
                 state
                     .apply_utc_offset(f.first_visit)
-                    .map(DateTimeVerboseFormatter)
+                    .map(|first_visit| (first_visit, f.whole_days_since_first_visit))
             })
             .transpose()?;
+
+        #[allow(clippy::cast_precision_loss)]
+        let per_day = match first_visit {
+            Some((first_visit, whole_days_since_first_visit)) => {
+                let days = range
+                    .whole_days_since_first_visit(first_visit.date(), now)
+                    .min(whole_days_since_first_visit.max(1));
+                total_visits as f64 / days as f64
+            }
+            None => total_visits as f64,
+        };
+
+        let first_visit = first_visit.map(|(first_visit, _)| DateTimeVerboseFormatter(first_visit));
 
         let pages = CountRows::from(pages_vec);
 

@@ -103,7 +103,11 @@ pub async fn all_sorted_by_count(
         r"SELECT paths.path,
             COUNT(*) AS count,
             AVG(visits.time_s) AS avg_time_s,
-            MIN(visits.registered_at) AS first_registered_at,
+            (
+                SELECT MIN(all_visits.registered_at)
+                FROM visits AS all_visits
+                WHERE all_visits.path_id = paths.id
+            ) AS first_registered_at,
             SUM(CASE WHEN ? IS NOT NULL AND visits.registered_at < ? THEN 1 ELSE 0 END) AS first_half,
             SUM(CASE WHEN ? IS NOT NULL AND visits.registered_at >= ? THEN 1 ELSE 0 END) AS second_half
         FROM paths
@@ -130,10 +134,10 @@ pub async fn all_sorted_by_count(
         .into_iter()
         .map(|row| {
             #[allow(clippy::cast_precision_loss)]
-            let days = range.whole_days(now).unwrap_or_else(|| {
-                row.first_registered_at
-                    .map_or(1, |fv| (now.date() - fv.date()).whole_days().max(1))
-            }) as f64;
+            let days = row.first_registered_at.map_or_else(
+                || range.whole_days(now).unwrap_or(1),
+                |fv| range.whole_days_since_first_visit(fv.date(), now),
+            ) as f64;
             #[allow(clippy::cast_precision_loss)]
             let per_day = row.count as f64 / days;
 
