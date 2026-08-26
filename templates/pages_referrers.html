@@ -19,6 +19,7 @@ range. #}
                 hx-get="{{ pages_tab_url }}"
                 hx-target="#stats-panel"
                 hx-swap="outerHTML"
+                hx-sync="#stats-panel:replace"
             >
                 Pages
             </button>
@@ -30,6 +31,7 @@ range. #}
                 hx-get="{{ referrers_tab_url }}"
                 hx-target="#stats-panel"
                 hx-swap="outerHTML"
+                hx-sync="#stats-panel:replace"
             >
                 Referrers
             </button>

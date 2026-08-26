@@ -17,6 +17,7 @@
     hx-get="{{ btn.hx_url }}"
     hx-target="#stats-panel"
     hx-swap="outerHTML"
+    hx-sync="#stats-panel:replace"
 >{{ btn.label }}</button>
 {%- endfor -%}
 </div>

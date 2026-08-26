@@ -1,12 +1,28 @@
 use axum_ctx::{RespErr, RespResult, StatusCode};
 use serde::{Serialize, Serializer};
 use std::{cmp::Ordering, fmt};
-use time::{Date, Month, OffsetDateTime, PrimitiveDateTime};
+use time::{Date, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
 pub trait ContiguousDatePart:
     From<OffsetDateTime> + From<PrimitiveDateTime> + Serialize + Copy + Eq + Ord + fmt::Display
 {
     fn next(&mut self) -> RespResult<()>;
+    fn start_datetime(self) -> RespResult<PrimitiveDateTime>;
+
+    fn end_datetime(self) -> RespResult<PrimitiveDateTime> {
+        let mut next = self;
+        next.next()?;
+        next.start_datetime()
+    }
+}
+
+fn first_of_month(year: i32, month: Month) -> RespResult<PrimitiveDateTime> {
+    Date::from_calendar_date(year, month, 1)
+        .map(|date| PrimitiveDateTime::new(date, Time::MIDNIGHT))
+        .map_err(|_| {
+            RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .log_msg("Failed to determine chart bucket boundary!")
+        })
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -40,6 +56,10 @@ impl ContiguousDatePart for ContiguousYear {
     fn next(&mut self) -> RespResult<()> {
         self.0 += 1;
         Ok(())
+    }
+
+    fn start_datetime(self) -> RespResult<PrimitiveDateTime> {
+        first_of_month(self.0, Month::January)
     }
 }
 
@@ -115,6 +135,10 @@ impl ContiguousDatePart for ContiguousMonth {
         }
         Ok(())
     }
+
+    fn start_datetime(self) -> RespResult<PrimitiveDateTime> {
+        first_of_month(self.year, self.month)
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -154,6 +178,10 @@ impl ContiguousDatePart for ContiguousDay {
             None => Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
                 .log_msg("Failed to get the next day!")),
         }
+    }
+
+    fn start_datetime(self) -> RespResult<PrimitiveDateTime> {
+        Ok(PrimitiveDateTime::new(self.0, Time::MIDNIGHT))
     }
 }
 
@@ -202,5 +230,13 @@ impl ContiguousDatePart for ContiguousHour {
             self.hour = 0;
             self.day.next()
         }
+    }
+
+    fn start_datetime(self) -> RespResult<PrimitiveDateTime> {
+        let time = Time::from_hms(self.hour, 0, 0).map_err(|_| {
+            RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .log_msg("Failed to determine chart bucket boundary!")
+        })?;
+        Ok(PrimitiveDateTime::new(self.day.0, time))
     }
 }
