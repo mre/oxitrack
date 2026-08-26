@@ -96,6 +96,8 @@ pub struct Stats {
     pub range: DateRange,
     /// Filter buttons rendered server-side so the template stays logic-free.
     pub preset_buttons: Vec<PresetButton>,
+    /// URL chart selections should refresh, with the path filter preserved.
+    pub zoom_url: String,
     /// URL the live indicator should poll; carries the active range and the
     /// current path so totals stay in sync with the current filter without
     /// any client-side glue.
@@ -125,8 +127,10 @@ pub async fn get(
 
     let chart = build_chart(state, VisitFilter::path(path_id), &range, now).await?;
 
-    let preset_buttons = StatsLink::new(&range, Some(path)).preset_buttons("/hx/stats", now.date());
-    let live_url = StatsLink::new(&range, Some(path)).url("/api/live");
+    let stats_link = StatsLink::new(&range, Some(path));
+    let preset_buttons = stats_link.preset_buttons("/hx/stats", now.date());
+    let zoom_url = stats_link.url("/hx/stats");
+    let live_url = stats_link.url("/api/live");
 
     Ok(Stats {
         base: Base::new(state, path),
@@ -137,6 +141,7 @@ pub async fn get(
         chart,
         range,
         preset_buttons,
+        zoom_url,
         live_url,
     })
 }

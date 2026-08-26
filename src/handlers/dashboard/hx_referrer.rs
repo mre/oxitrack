@@ -26,6 +26,7 @@ pub struct HxReferrer {
     pub chart: Vec<ChartBar>,
     pub range: DateRange,
     pub preset_buttons: Vec<PresetButton>,
+    pub zoom_url: String,
 }
 
 pub async fn get(
@@ -53,6 +54,7 @@ pub async fn get(
         chart: data.chart,
         range: data.range,
         preset_buttons: data.preset_buttons,
+        zoom_url: data.zoom_url,
     };
 
     let push_header = HeaderValue::try_from(push_url)

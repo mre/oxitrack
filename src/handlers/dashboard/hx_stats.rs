@@ -44,6 +44,8 @@ pub struct HxStats {
     pub pages_search_url: String,
     pub referrers_search_url: String,
     pub preset_buttons: Vec<PresetButton>,
+    /// URL chart selections should refresh, with non-range filters preserved.
+    pub zoom_url: String,
     /// URL the live indicator should poll, with the active range baked in.
     pub live_url: String,
 }
@@ -137,9 +139,8 @@ pub async fn get(
 
     // Each preset button hits `/hx/stats` with the new range and the current
     // path / tab (if any), so the server keeps producing the right view on click.
-    let preset_buttons = StatsLink::new(&range, path_for_links)
-        .with_view(view)
-        .preset_buttons("/hx/stats", now.date());
+    let stats_link = StatsLink::new(&range, path_for_links).with_view(view);
+    let preset_buttons = stats_link.preset_buttons("/hx/stats", now.date());
 
     let pages_tab_url = StatsLink::new(&range, None)
         .with_view(PanelView::Pages)
@@ -149,6 +150,8 @@ pub async fn get(
         .url("/hx/stats");
     let pages_search_url = StatsLink::new(&range, None).url("/hx/pages");
     let referrers_search_url = StatsLink::new(&range, None).url("/hx/referrers");
+
+    let zoom_url = stats_link.url("/hx/stats");
 
     // Live indicator polls the same range as the current view so the totals
     // stay in sync; passing the range via the URL means no client-side glue.
@@ -176,6 +179,7 @@ pub async fn get(
         pages_search_url,
         referrers_search_url,
         preset_buttons,
+        zoom_url,
         live_url,
     };
 

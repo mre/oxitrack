@@ -36,6 +36,8 @@ pub struct Index {
     pub referrers_search_url: String,
     /// Filter buttons rendered server-side so the template stays logic-free.
     pub preset_buttons: Vec<PresetButton>,
+    /// URL chart selections should refresh, with non-range filters preserved.
+    pub zoom_url: String,
     /// URL the live indicator should poll; carries the active range so the
     /// totals stay in sync with the current filter without any client-side glue.
     pub live_url: String,
@@ -65,9 +67,9 @@ pub async fn get(
     let pages = CountRows::from(page_stats_vec);
     let referrers = CountRows::from(referrers_vec);
 
-    let preset_buttons = StatsLink::new(&range, None)
-        .with_view(view)
-        .preset_buttons("/hx/stats", now.date());
+    let stats_link = StatsLink::new(&range, None).with_view(view);
+    let preset_buttons = stats_link.preset_buttons("/hx/stats", now.date());
+    let zoom_url = stats_link.url("/hx/stats");
     let live_url = StatsLink::new(&range, None).url("/api/live");
     let pages_tab_url = StatsLink::new(&range, None)
         .with_view(PanelView::Pages)
@@ -92,6 +94,7 @@ pub async fn get(
         pages_search_url,
         referrers_search_url,
         preset_buttons,
+        zoom_url,
         live_url,
     })
 }

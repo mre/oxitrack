@@ -37,6 +37,7 @@
             data-counts="[{% for bar in &chart %}{% if !loop.last %}{{ bar.count }},{% else %}{{ bar.count }}{% endif %}{% endfor %}]"
             data-bucket-ranges='[{% for bar in &chart %}{% if !loop.last %}"{{ bar.range_query }}",{% else %}"{{ bar.range_query }}"{% endif %}{% endfor %}]'
             data-range-query="{{ range.query_string() }}"
+            data-zoom-url="{{ zoom_url }}"
             hx-sync="#stats-panel:replace"
         ></div>
         {% endif %}

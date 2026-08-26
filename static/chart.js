@@ -1,4 +1,13 @@
 (function () {
+  if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+      selectedIndices: selectedIndices,
+      selectedRange: selectedRange,
+      selectedRangeUrl: selectedRangeUrl,
+    };
+  }
+  if (typeof document === "undefined") return;
+
   var ZOOM_REQUEST_DELAY_MS = 250;
   var CHART_SELECTOR = ".visits-chart[data-labels]";
   var zoomRequestTimer;
@@ -61,7 +70,7 @@
     };
   }
 
-  function selectedRange(el, bucketRanges, indices) {
+  function selectedRange(currentRangeQuery, bucketRanges, indices) {
     if (indices.start === 0 && indices.end === bucketRanges.length - 1) {
       return null;
     }
@@ -79,9 +88,7 @@
       toHour = toHour || "23";
     }
 
-    var current = new URLSearchParams(
-      el.getAttribute("data-range-query") || "",
-    );
+    var current = new URLSearchParams(currentRangeQuery || "");
     if (
       from === current.get("from") &&
       to === current.get("to") &&
@@ -99,13 +106,8 @@
     };
   }
 
-  function refreshStats(source, range) {
-    if (typeof htmx === "undefined") return;
-
-    var endpoint =
-      window.location.pathname === "/referrer" ? "/hx/referrer" : "/hx/stats";
-    var url = new URL(endpoint, window.location.origin);
-    url.search = window.location.search;
+  function selectedRangeUrl(baseUrl, range) {
+    var url = new URL(baseUrl, "http://localhost");
     url.searchParams.set("from", range.from);
     url.searchParams.set("to", range.to);
     if (range.fromHour && range.toHour) {
@@ -115,8 +117,16 @@
       url.searchParams.delete("from_hour");
       url.searchParams.delete("to_hour");
     }
+    return url.pathname + url.search;
+  }
 
-    htmx.ajax("GET", url.pathname + url.search, {
+  function refreshStats(source, range) {
+    if (typeof htmx === "undefined") return;
+
+    var baseUrl = source.getAttribute("data-zoom-url");
+    if (!baseUrl) return;
+
+    htmx.ajax("GET", selectedRangeUrl(baseUrl, range), {
       source: source,
       target: "#stats-panel",
       swap: "outerHTML",
@@ -260,7 +270,11 @@
 
       clearTimeout(zoomRequestTimer);
       zoomRequestTimer = setTimeout(function () {
-        var range = selectedRange(el, bucketRanges, indices);
+        var range = selectedRange(
+          el.getAttribute("data-range-query"),
+          bucketRanges,
+          indices,
+        );
         if (range) refreshStats(el, range);
       }, ZOOM_REQUEST_DELAY_MS);
     });
