@@ -18,6 +18,7 @@ watch: ## Run the server with auto-reload on source/template changes
 
 test: ## Run tests
 	cargo test
+	node --test tests/*.test.js
 
 build: ## Build release binary
 	cargo build --release

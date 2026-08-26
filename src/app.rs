@@ -218,6 +218,10 @@ mod tests {
             // so the browser address bar updates without any client-side JS.
             Req::new("/hx/stats?from=2026-03-24&to=2026-04-23")
                 .header("hx-push-url", "/?from=2026-03-24&to=2026-04-23"),
+            Req::new("/hx/stats?from=2026-03-24&to=2026-03-24&from_hour=14&to_hour=16").header(
+                "hx-push-url",
+                "/?from=2026-03-24&to=2026-03-24&from_hour=14&to_hour=16",
+            ),
             // `/` in `path` is percent-encoded by `serde_urlencoded`, which is
             // valid per RFC 3986 and decoded transparently by axum on the next request.
             Req::new("/hx/stats?path=/&from=2026-03-24&to=2026-04-23").header(
@@ -228,6 +232,8 @@ mod tests {
             // API
             Req::new("/api/counts").mime(mime::APPLICATION_JSON),
             Req::new("/api/history?path=/").mime(mime::APPLICATION_JSON),
+            Req::new("/api/live?from=2026-03-24&to=2026-03-24&from_hour=14&to_hour=16")
+                .mime(mime::TEXT_HTML_UTF_8),
         ];
 
         Jail::expect_with(|jail| {

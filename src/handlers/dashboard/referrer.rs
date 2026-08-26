@@ -34,6 +34,7 @@ pub struct ReferrerData {
     pub chart: Vec<ChartBar>,
     pub range: DateRange,
     pub preset_buttons: Vec<PresetButton>,
+    pub zoom_url: String,
 }
 
 impl ReferrerData {
@@ -87,9 +88,9 @@ impl ReferrerData {
 
         let pages = CountRows::from(pages_vec);
 
-        let preset_buttons = StatsLink::new(&range, None)
-            .with_referrer(Some(&domain))
-            .preset_buttons("/hx/referrer", now.date());
+        let link = StatsLink::new(&range, None).with_referrer(Some(&domain));
+        let preset_buttons = link.preset_buttons("/hx/referrer", now.date());
+        let zoom_url = link.url("/hx/referrer");
 
         Ok(Some(Self {
             domain,
@@ -100,6 +101,7 @@ impl ReferrerData {
             chart,
             range,
             preset_buttons,
+            zoom_url,
         }))
     }
 }
@@ -118,6 +120,7 @@ pub struct Referrer {
     pub chart: Vec<ChartBar>,
     pub range: DateRange,
     pub preset_buttons: Vec<PresetButton>,
+    pub zoom_url: String,
 }
 
 pub async fn get(
@@ -149,5 +152,6 @@ pub async fn get(
         chart: data.chart,
         range: data.range,
         preset_buttons: data.preset_buttons,
+        zoom_url: data.zoom_url,
     })
 }

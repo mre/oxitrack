@@ -5,8 +5,8 @@ pub mod whole_days_since_first_visit;
 
 pub use whole_days_since_first_visit::WholeDaysSinceFirstVisit;
 
-use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
-use serde::{Deserialize, Deserializer, Serialize};
+use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult, StatusCode};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeStruct};
 use time::macros::format_description;
 use time::{Date, Duration, OffsetDateTime, PrimitiveDateTime, Time};
 
@@ -27,6 +27,7 @@ struct TruncDateCount {
 pub struct ChartBar {
     pub label: String,
     pub count: u64,
+    pub range_query: String,
 }
 
 /// Optional dimension filters shared by the chart and aggregate queries.
@@ -127,13 +128,20 @@ fn deserialize_opt_date<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Date>,
         .and_then(|s| Date::parse(&s, fmt).ok()))
 }
 
+/// Deserialize an optional hour while treating invalid input as unset, matching
+/// the lenient behavior of the date bounds above.
+fn deserialize_opt_hour<'de, D: Deserializer<'de>>(d: D) -> Result<Option<u8>, D::Error> {
+    let opt = Option::<String>::deserialize(d)?;
+    Ok(opt.and_then(|s| s.parse().ok()).filter(|hour| *hour < 24))
+}
+
 /// Arbitrary date range filter for chart/stats queries.
 ///
 /// Implements `Serialize`/`Deserialize` so it can be used directly as an axum
 /// `Query` extractor and round-tripped back to a URL query string via
 /// [`Self::query_string`]. Adding more filter parameters in the future is just a
 /// matter of extending this struct.
-#[derive(Clone, Default, Serialize, Deserialize)]
+#[derive(Clone, Default, Deserialize)]
 pub struct DateRange {
     #[serde(
         default,
@@ -147,6 +155,38 @@ pub struct DateRange {
         skip_serializing_if = "Option::is_none"
     )]
     pub to: Option<Date>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_opt_hour",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub from_hour: Option<u8>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_opt_hour",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub to_hour: Option<u8>,
+}
+
+impl Serialize for DateRange {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut range = serializer.serialize_struct("DateRange", 4)?;
+        if let Some(from) = self.from {
+            range.serialize_field("from", &from)?;
+        }
+        if let Some(to) = self.to {
+            range.serialize_field("to", &to)?;
+        }
+        if let Some((from_hour, to_hour)) = self.hour_bounds() {
+            range.serialize_field("from_hour", &from_hour)?;
+            range.serialize_field("to_hour", &to_hour)?;
+        }
+        range.end()
+    }
 }
 
 impl DateRange {
@@ -161,19 +201,43 @@ impl DateRange {
             Self {
                 from: Some(to - Duration::days(90)),
                 to: Some(to),
+                from_hour: None,
+                to_hour: None,
             }
         } else {
             self
         }
     }
 
+    fn hour_bounds(&self) -> Option<(u8, u8)> {
+        match (self.from, self.to, self.from_hour, self.to_hour) {
+            (Some(from), Some(to), Some(from_hour), Some(to_hour))
+                if from < to || (from == to && from_hour <= to_hour) =>
+            {
+                Some((from_hour, to_hour))
+            }
+            _ => None,
+        }
+    }
+
     pub fn start_datetime(&self) -> Option<PrimitiveDateTime> {
-        self.from.map(|d| PrimitiveDateTime::new(d, Time::MIDNIGHT))
+        self.from.map(|date| {
+            let hour = self.hour_bounds().map_or(0, |(from_hour, _)| from_hour);
+            let time = Time::from_hms(hour, 0, 0).unwrap_or(Time::MIDNIGHT);
+            PrimitiveDateTime::new(date, time)
+        })
     }
 
     pub fn end_datetime(&self) -> Option<PrimitiveDateTime> {
-        self.to
-            .map(|d| PrimitiveDateTime::new(d + Duration::days(1), Time::MIDNIGHT))
+        self.to.map(|date| {
+            self.hour_bounds().map_or_else(
+                || PrimitiveDateTime::new(date + Duration::days(1), Time::MIDNIGHT),
+                |(_, to_hour)| {
+                    let time = Time::from_hms(to_hour, 0, 0).unwrap_or(Time::MIDNIGHT);
+                    PrimitiveDateTime::new(date, time) + Duration::hours(1)
+                },
+            )
+        })
     }
 
     pub fn whole_days(&self, now: OffsetDateTime) -> Option<i64> {
@@ -200,6 +264,16 @@ impl DateRange {
         }
 
         let fmt = format_description!("[year]-[month]-[day]");
+        if let (Some(from), Some(to), Some((from_hour, to_hour))) =
+            (self.from, self.to, self.hour_bounds())
+        {
+            return format!(
+                "{} {from_hour:02}:00 – {} {to_hour:02}:59",
+                from.format(fmt).unwrap_or_default(),
+                to.format(fmt).unwrap_or_default(),
+            );
+        }
+
         match (self.from, self.to) {
             (None, _) => "All time".to_string(),
             (Some(f), None) => format!("Since {}", f.format(fmt).unwrap_or_default()),
@@ -216,6 +290,10 @@ impl DateRange {
     /// Used by templates to render the active filter button server-side without
     /// any client-side logic.
     pub fn matched_preset(&self) -> Option<Preset> {
+        if self.hour_bounds().is_some() {
+            return None;
+        }
+
         Preset::ALL
             .iter()
             .copied()
@@ -316,6 +394,8 @@ impl Preset {
             .map_or_else(DateRange::default, |days| DateRange {
                 from: Some(today - Duration::days(days)),
                 to: Some(today),
+                from_hour: None,
+                to_hour: None,
             })
     }
 
@@ -482,13 +562,18 @@ where
             .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
-        let terminal_date_part = end_datetime.map(D::from).map_or(now_date_part, |ep| {
-            if ep < now_date_part {
-                ep
-            } else {
-                now_date_part
-            }
-        });
+        // `end_datetime` is exclusive; use the preceding instant so the chart
+        // does not render an extra empty bucket at the right edge.
+        let terminal_date_part = end_datetime
+            .and_then(|end| end.checked_sub(Duration::nanoseconds(1)))
+            .map(D::from)
+            .map_or(now_date_part, |ep| {
+                if ep < now_date_part {
+                    ep
+                } else {
+                    now_date_part
+                }
+            });
 
         let first_date_part = if let Some(start_datetime) = start_datetime {
             D::from(start_datetime)
@@ -545,16 +630,61 @@ pub fn local_to_utc(pdt: PrimitiveDateTime, offset: time::UtcOffset) -> Primitiv
     pdt - time::Duration::seconds(i64::from(offset.whole_seconds()))
 }
 
-fn to_chart_bars<D: ContiguousDatePart + std::fmt::Display>(
+fn chart_bar_range(start: PrimitiveDateTime, end: PrimitiveDateTime) -> RespResult<DateRange> {
+    if start >= end {
+        return Err(RespErr::new(StatusCode::INTERNAL_SERVER_ERROR)
+            .log_msg("Chart bucket has invalid boundaries!"));
+    }
+
+    let inclusive_end = end
+        .checked_sub(Duration::nanoseconds(1))
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to determine chart bucket boundary!")?;
+    let has_hour_bounds = start.time() != Time::MIDNIGHT || end.time() != Time::MIDNIGHT;
+
+    Ok(DateRange {
+        from: Some(start.date()),
+        to: Some(inclusive_end.date()),
+        from_hour: has_hour_bounds.then_some(start.hour()),
+        to_hour: has_hour_bounds.then_some(inclusive_end.hour()),
+    })
+}
+
+fn current_hour_end(now: OffsetDateTime) -> RespResult<PrimitiveDateTime> {
+    let time = Time::from_hms(now.hour(), 0, 0)
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to determine current chart bucket!")?;
+    Ok(PrimitiveDateTime::new(now.date(), time) + Duration::hours(1))
+}
+
+fn to_chart_bars<D: ContiguousDatePart>(
     points: Vec<DataPoint<D>>,
-) -> Vec<ChartBar> {
-    points
-        .into_iter()
-        .map(|p| ChartBar {
-            label: p.x.to_string(),
-            count: p.y,
-        })
-        .collect()
+    range: &DateRange,
+    now: OffsetDateTime,
+) -> RespResult<Vec<ChartBar>> {
+    let range_start = range.start_datetime();
+    let current_end = current_hour_end(now)?;
+    let range_end = range.end_datetime().unwrap_or(current_end);
+    let mut bars = Vec::with_capacity(points.len());
+
+    for point in points {
+        let bucket_start = point.x.start_datetime()?;
+        let bucket_end = point.x.end_datetime()?;
+        let start = range_start.map_or(bucket_start, |range_start| bucket_start.max(range_start));
+        let end = bucket_end.min(range_end);
+        if start >= end {
+            continue;
+        }
+
+        let bar_range = chart_bar_range(start, end)?;
+        bars.push(ChartBar {
+            label: point.x.to_string(),
+            count: point.y,
+            range_query: bar_range.query_string(),
+        });
+    }
+
+    Ok(bars)
 }
 
 pub async fn build_chart(
@@ -591,7 +721,7 @@ pub async fn build_chart(
         );
         let points =
             DataPoint::<ContiguousHour>::all(state, filter, now, start, end_dt, &trunc).await?;
-        Ok(to_chart_bars(points))
+        to_chart_bars(points, range, now)
     } else if whole_days < 91 {
         let trunc = format!(
             "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
@@ -599,7 +729,7 @@ pub async fn build_chart(
         );
         let points =
             DataPoint::<ContiguousDay>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
-        Ok(to_chart_bars(points))
+        to_chart_bars(points, range, now)
     } else if whole_days < 3653 {
         let trunc = format!(
             "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
@@ -607,7 +737,7 @@ pub async fn build_chart(
         );
         let points =
             DataPoint::<ContiguousMonth>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
-        Ok(to_chart_bars(points))
+        to_chart_bars(points, range, now)
     } else {
         let trunc = format!(
             "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
@@ -615,7 +745,7 @@ pub async fn build_chart(
         );
         let points =
             DataPoint::<ContiguousYear>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
-        Ok(to_chart_bars(points))
+        to_chart_bars(points, range, now)
     }
 }
 
@@ -629,8 +759,44 @@ fn hour_data_start_datetime(now: OffsetDateTime) -> RespResult<PrimitiveDateTime
 
 #[cfg(test)]
 mod tests {
-    use super::DateRange;
+    use super::{DataPoint, DateRange, contiguous_date_part::ContiguousMonth, to_chart_bars};
     use time::macros::{date, datetime};
+
+    #[test]
+    fn chart_bar_ranges_are_structured_and_clamped_by_the_server() {
+        let range = DateRange {
+            from: Some(date!(2026 - 05 - 21)),
+            to: Some(date!(2026 - 08 - 19)),
+            from_hour: Some(5),
+            to_hour: Some(16),
+        };
+        let points = vec![
+            DataPoint {
+                x: ContiguousMonth::from(datetime!(2026-05-01 00:00)),
+                y: 1,
+            },
+            DataPoint {
+                x: ContiguousMonth::from(datetime!(2026-06-01 00:00)),
+                y: 2,
+            },
+            DataPoint {
+                x: ContiguousMonth::from(datetime!(2026-08-01 00:00)),
+                y: 3,
+            },
+        ];
+
+        let bars = to_chart_bars(points, &range, datetime!(2026-08-19 16:37 UTC)).unwrap();
+        let queries: Vec<_> = bars.iter().map(|bar| bar.range_query.as_str()).collect();
+
+        assert_eq!(
+            queries,
+            [
+                "from=2026-05-21&to=2026-05-31&from_hour=5&to_hour=23",
+                "from=2026-06-01&to=2026-06-30",
+                "from=2026-08-01&to=2026-08-19&from_hour=0&to_hour=16",
+            ]
+        );
+    }
 
     #[test]
     fn date_range_deserializes_from_query_string() {
@@ -663,10 +829,47 @@ mod tests {
     }
 
     #[test]
+    fn date_range_deserializes_hour_bounds() {
+        let range: DateRange =
+            serde_urlencoded::from_str("from=2026-03-24&to=2026-03-24&from_hour=14&to_hour=16")
+                .unwrap();
+
+        assert_eq!(range.start_datetime(), Some(datetime!(2026-03-24 14:00)));
+        assert_eq!(range.end_datetime(), Some(datetime!(2026-03-24 17:00)));
+        assert_eq!(
+            range.query_string(),
+            "from=2026-03-24&to=2026-03-24&from_hour=14&to_hour=16"
+        );
+    }
+
+    #[test]
+    fn date_range_ignores_invalid_hour_bounds() {
+        let range: DateRange =
+            serde_urlencoded::from_str("from=2026-03-24&to=2026-03-24&from_hour=24&to_hour=nope")
+                .unwrap();
+
+        assert_eq!(range.from_hour, None);
+        assert_eq!(range.to_hour, None);
+        assert_eq!(range.query_string(), "from=2026-03-24&to=2026-03-24");
+    }
+
+    #[test]
+    fn date_range_ignores_inverted_hour_bounds() {
+        let range: DateRange =
+            serde_urlencoded::from_str("from=2026-03-24&to=2026-03-24&from_hour=16&to_hour=14")
+                .unwrap();
+
+        assert_eq!(range.start_datetime(), Some(datetime!(2026-03-24 00:00)));
+        assert_eq!(range.end_datetime(), Some(datetime!(2026-03-25 00:00)));
+        assert_eq!(range.query_string(), "from=2026-03-24&to=2026-03-24");
+    }
+
+    #[test]
     fn date_range_query_string_round_trips() {
         let original = DateRange {
             from: Some(date!(2026 - 03 - 24)),
             to: Some(date!(2026 - 04 - 23)),
+            ..DateRange::default()
         };
         let qs = original.query_string();
         assert_eq!(qs, "from=2026-03-24&to=2026-04-23");
@@ -680,13 +883,13 @@ mod tests {
     fn date_range_query_string_skips_none_fields() {
         let only_from = DateRange {
             from: Some(date!(2026 - 03 - 24)),
-            to: None,
+            ..DateRange::default()
         };
         assert_eq!(only_from.query_string(), "from=2026-03-24");
 
         let only_to = DateRange {
-            from: None,
             to: Some(date!(2026 - 04 - 23)),
+            ..DateRange::default()
         };
         assert_eq!(only_to.query_string(), "to=2026-04-23");
 
@@ -699,6 +902,7 @@ mod tests {
         let r = DateRange {
             from: Some(date!(2026 - 03 - 24)),
             to: Some(date!(2026 - 04 - 23)),
+            ..DateRange::default()
         };
         assert_eq!(r.query_suffix(), "&from=2026-03-24&to=2026-04-23");
 
@@ -710,6 +914,7 @@ mod tests {
         let range = DateRange {
             from: Some(date!(2026 - 05 - 21)),
             to: Some(date!(2026 - 08 - 19)),
+            ..DateRange::default()
         };
 
         assert_eq!(
@@ -726,6 +931,7 @@ mod tests {
         let range = DateRange {
             from: Some(date!(2026 - 05 - 21)),
             to: Some(date!(2026 - 08 - 19)),
+            ..DateRange::default()
         };
 
         assert_eq!(
