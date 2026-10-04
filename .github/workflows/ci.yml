@@ -14,22 +14,22 @@ env:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - uses: dtolnay/rust-toolchain@1.99.0
-      - uses: Swatinem/rust-cache@v2
-      - uses: actions/setup-node@v4
+      - uses: Swatinem/rust-cache@v2.9.2
+      - uses: actions/setup-node@v7.0.0
         with:
-          node-version: 22
+          node-version: 24
       - run: cargo test --locked
       - run: node --test tests/*.test.js
 
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: rustfmt
@@ -37,38 +37,38 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: clippy
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.2
       - run: cargo clippy --locked --all-targets -- -D warnings
 
   image:
     name: Build container image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [test, fmt, clippy]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/login-action@v4.6.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/metadata-action@v5
+      - uses: docker/metadata-action@v6.2.0
         id: meta
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
             type=sha,prefix=
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7.4.0
         with:
           context: .
           file: ./Containerfile
