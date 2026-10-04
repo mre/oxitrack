@@ -358,10 +358,10 @@ figure {
     vertical-align: middle;
     opacity: 0;
     transition: opacity 0.3s;
-    animation: pulse 2s ease-in-out infinite;
 }
 .live-row-dot--active {
     opacity: 1;
+    animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
     0%,
