@@ -4,14 +4,17 @@
 </nav>
 
 <div class="page-header">
-    <hgroup>
-        <h1>{{ domain }}</h1>
-        <p>
-            <a href="https://{{ domain }}" target="_blank" rel="noopener noreferrer"
-                >{{ domain }}</a
-            >
-        </p>
-    </hgroup>
+    <div class="page-header__identity">
+        {% include "brand_mark.html" %}
+        <hgroup>
+            <h1>{{ domain }}</h1>
+            <p>
+                <a href="https://{{ domain }}" target="_blank" rel="noopener noreferrer"
+                    >{{ domain }}</a
+                >
+            </p>
+        </hgroup>
+    </div>
     <button id="theme-toggle" aria-label="Toggle theme">&#x25D1;</button>
 </div>
 

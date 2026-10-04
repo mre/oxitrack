@@ -8,7 +8,11 @@
 
         <title>{{ base.title }} | oxitrack</title>
 
-        <link rel="icon" href="/static/logo.svg">
+        <link
+            rel="icon"
+            type="image/svg+xml"
+            href='/static/oxitrack-mark.svg?v={{ env!("BUILD_TIMESTAMP") }}'
+        >
         <link rel="stylesheet" href="/static/pico.min.css?v={{ env!("BUILD_TIMESTAMP") }}">
         <link rel="stylesheet" href="/static/style.css?v={{ env!("BUILD_TIMESTAMP") }}">
         <script src="/static/theme.js?v={{ env!("BUILD_TIMESTAMP") }}"></script>
