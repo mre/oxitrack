@@ -75,3 +75,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Deploy to Coolify
+        run: |
+          curl --fail-with-body --silent --show-error \
+            --header "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+            "https://admin.corrode.dev/api/v1/deploy?uuid=vg91n6ofqwle2ws39q8py1tt&force=false"
