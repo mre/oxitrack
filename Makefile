@@ -17,14 +17,14 @@ watch: ## Run the server with auto-reload on source/template changes
 	watchexec -nr -w src -w templates -w static make run
 
 test: ## Run tests
-	cargo test
+	cargo test --locked
 	node --test tests/*.test.js
 
 build: ## Build release binary
-	cargo build --release
+	cargo build --release --locked
 
 check: ## Check for errors and warnings
-	cargo clippy
+	cargo clippy --locked --all-targets -- -D warnings
 
 deploy: ## Deploy by pushing to main — GitHub Actions builds the image, Coolify pulls it
 	git push

@@ -4,7 +4,7 @@ use axum::{
 };
 use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 
-use crate::{handlers::stats_data::DateRange, states::AppState};
+use crate::{db::Db, handlers::stats_data::DateRange, states::AppState};
 
 pub async fn get(
     State(state): AppState,
@@ -42,13 +42,16 @@ pub async fn get(
     let active_paths: Vec<String> = if path_ids.is_empty() {
         vec![]
     } else {
-        let placeholders = path_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
-        let sql = format!("SELECT path FROM paths WHERE id IN ({placeholders})");
-        let mut q = sqlx::query_scalar::<_, String>(&sql);
-        for id in &path_ids {
-            q = q.bind(id);
+        let mut query = sqlx::QueryBuilder::<Db>::new("SELECT path FROM paths WHERE id IN (");
+        let mut ids = query.separated(", ");
+        for id in path_ids {
+            ids.push_bind(id);
         }
-        q.fetch_all(&state.pool)
+        ids.push_unseparated(")");
+
+        query
+            .build_query_scalar::<String>()
+            .fetch_all(&state.pool)
             .await
             .ctx(StatusCode::INTERNAL_SERVER_ERROR)
             .log_msg("Live active-paths query failed!")?

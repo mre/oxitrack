@@ -1,389 +1,389 @@
 /* ─── density ─── */
 :root {
-    --pico-font-size: 93.75%;
-    --pico-spacing: 0.875rem;
+  --pico-font-size: 93.75%;
+  --pico-spacing: 0.875rem;
 }
 
 /* ─── page header ─── */
 .page-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 .page-header hgroup {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 .page-header h1 {
-    margin-bottom: 0.15rem;
+  margin-bottom: 0.15rem;
 }
 
 /* ─── theme toggle ─── */
 #theme-toggle {
-    background: none;
-    border: none;
-    padding: 0.1rem 0.25rem;
-    margin: 0;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-    color: var(--pico-muted-color);
-    flex-shrink: 0;
-    margin-top: 0.2rem;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.25rem;
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--pico-muted-color);
+  flex-shrink: 0;
+  margin-top: 0.2rem;
 }
 #theme-toggle:hover {
-    color: var(--pico-primary);
+  color: var(--pico-primary);
 }
 
 /* ─── footer ─── */
 footer {
-    margin-top: 3rem;
-    padding-block: 1rem;
-    color: var(--pico-muted-color);
-    text-align: center;
-    border-top: 1px solid var(--pico-muted-border-color);
+  margin-top: 3rem;
+  padding-block: 1rem;
+  color: var(--pico-muted-color);
+  text-align: center;
+  border-top: 1px solid var(--pico-muted-border-color);
 }
 
 /* ─── chart header + filter buttons ─── */
 .chart-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
 }
 .filter-buttons {
-    display: flex;
-    gap: 0.3rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .filter-buttons button {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.65rem;
-    margin-bottom: 0;
-    white-space: nowrap;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.65rem;
+  margin-bottom: 0;
+  white-space: nowrap;
 }
 
 /* ─── chart ─── */
 .chart-wrap {
-    margin-bottom: 1.5rem;
-    border-radius: var(--pico-border-radius);
-    background: var(--pico-card-sectioning-background-color);
-    padding: 1rem 1rem 0.75rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--pico-border-radius);
+  background: var(--pico-card-sectioning-background-color);
+  padding: 1rem 1rem 0.75rem;
 }
 .visits-chart {
-    width: 100%;
-    height: 200px;
-    display: block;
+  width: 100%;
+  height: 200px;
+  display: block;
 }
 
 /* ─── muted stat ─── */
 .muted-stat {
-    color: var(--pico-muted-color);
-    margin-bottom: 1rem;
+  color: var(--pico-muted-color);
+  margin-bottom: 1rem;
 }
 
 /* ─── tables ─── */
 figure {
-    margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 table {
-    font-size: 0.9rem;
+  font-size: 0.9rem;
 }
 th {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--pico-muted-color);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pico-muted-color);
 }
 td,
 th {
-    padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.75rem;
 }
 
 .num {
-    text-align: right;
-    font-family: var(--pico-font-family-monospace);
-    font-size: 0.85rem;
-    white-space: nowrap;
+  text-align: right;
+  font-family: var(--pico-font-family-monospace);
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 /* ─── inline bar ─── */
 .pct-cell {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 .bar-bg {
-    display: inline-block;
-    width: 80px;
-    height: 6px;
-    background: var(--pico-muted-border-color);
-    border-radius: 3px;
-    overflow: hidden;
-    flex-shrink: 0;
+  display: inline-block;
+  width: 80px;
+  height: 6px;
+  background: var(--pico-muted-border-color);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 .bar-fill {
-    display: block;
-    height: 100%;
-    width: var(--bar-pct, 0%);
-    background: var(--pico-primary);
-    border-radius: 3px;
-    min-width: 1px;
+  display: block;
+  height: 100%;
+  width: var(--bar-pct, 0%);
+  background: var(--pico-primary);
+  border-radius: 3px;
+  min-width: 1px;
 }
 
 /* ─── per-page meta table ─── */
 .meta-table td:first-child {
-    color: var(--pico-muted-color);
-    font-size: 0.85rem;
-    padding-right: 1.5rem;
-    white-space: nowrap;
+  color: var(--pico-muted-color);
+  font-size: 0.85rem;
+  padding-right: 1.5rem;
+  white-space: nowrap;
 }
 .meta-table td:last-child {
-    font-family: var(--pico-font-family-monospace);
+  font-family: var(--pico-font-family-monospace);
 }
 
 /* ─── sort arrows ─── */
 th[data-sort-dir] {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 th[data-sort-dir="asc"],
 th[data-sort-dir="desc"] {
-    color: var(--pico-primary);
+  color: var(--pico-primary);
 }
 .sort-arrow {
-    font-size: 0.7em;
-    margin-left: 0.15em;
-    opacity: 0.5;
+  font-size: 0.7em;
+  margin-left: 0.15em;
+  opacity: 0.5;
 }
 th[data-sort-dir="asc"] .sort-arrow,
 th[data-sort-dir="desc"] .sort-arrow {
-    opacity: 1;
+  opacity: 1;
 }
 
 /* ─── trend arrows ─── */
 .trend {
-    font-size: 0.7em;
-    margin-left: 0.3em;
-    vertical-align: middle;
+  font-size: 0.7em;
+  margin-left: 0.3em;
+  vertical-align: middle;
 }
 .trend-up {
-    color: #22c55e;
+  color: #22c55e;
 }
 .trend-down {
-    color: #ef4444;
+  color: #ef4444;
 }
 .trend-flat {
-    /* No glyph rendered; keep selector for completeness. */
-    display: none;
+  /* No glyph rendered; keep selector for completeness. */
+  display: none;
 }
 
 /* ─── view tabs (Pages / Referrers) ─── */
 .view-tabs {
-    display: inline-flex;
-    gap: 0.25rem;
-    border-bottom: 1px solid var(--pico-muted-border-color);
+  display: inline-flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--pico-muted-border-color);
 }
 .view-tab {
-    margin: 0;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    line-height: 1.4;
-    color: var(--pico-muted-color);
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    border-radius: 0;
-    cursor: pointer;
-    transition:
-        color 0.15s ease,
-        border-color 0.15s ease;
+  margin: 0;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--pico-muted-color);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
 .view-tab:hover {
-    /* Pico sets --pico-color to the (white) primary-inverse on button:hover, so
+  /* Pico sets --pico-color to the (white) primary-inverse on button:hover, so
        resolving var(--pico-color) here would be unreadable on the light theme.
        Use the contrast color, which stays legible in both themes. */
-    color: var(--pico-contrast);
+  color: var(--pico-contrast);
 }
 .view-tab--active {
-    color: var(--pico-primary);
-    border-bottom-color: var(--pico-primary);
+  color: var(--pico-primary);
+  border-bottom-color: var(--pico-primary);
 }
 
 /* ─── path filter ─── */
 .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
 }
 .section-header h3 {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 /* The whole control is the bordered label; the input inside is chrome-free so
    the icon and text read as a single unit. Mirrors the filter-button toolbar. */
 .path-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    width: 100%;
-    max-width: 16rem;
-    margin: 0;
-    padding: 0.25rem 0.6rem;
-    color: var(--pico-muted-color);
-    background: transparent;
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: var(--pico-border-radius);
-    transition:
-        border-color 0.15s ease,
-        color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 16rem;
+  margin: 0;
+  padding: 0.25rem 0.6rem;
+  color: var(--pico-muted-color);
+  background: transparent;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: var(--pico-border-radius);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 .path-filter:focus-within {
-    border-color: var(--pico-primary);
-    color: var(--pico-primary);
+  border-color: var(--pico-primary);
+  color: var(--pico-primary);
 }
 .path-filter__icon {
-    flex-shrink: 0;
-    opacity: 0.75;
+  flex-shrink: 0;
+  opacity: 0.75;
 }
 .path-filter__field[type="search"] {
-    flex: 1;
-    width: 100%;
-    min-width: 0;
-    height: auto;
-    margin: 0;
-    padding: 0;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    color: var(--pico-color);
-    background: none;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--pico-color);
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 .path-filter__field[type="search"]:focus {
-    border: none;
-    box-shadow: none;
+  border: none;
+  box-shadow: none;
 }
 .path-filter__field[type="search"]::placeholder {
-    color: var(--pico-muted-color);
-    opacity: 0.7;
+  color: var(--pico-muted-color);
+  opacity: 0.7;
 }
 .filter-empty {
-    color: var(--pico-muted-color);
-    text-align: left;
-    font-style: italic;
+  color: var(--pico-muted-color);
+  text-align: left;
+  font-style: italic;
 }
 
 /* ─── responsive ─── */
 figure {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 600px) {
-    .bar-bg {
-        width: 40px;
-    }
-    h1 {
-        font-size: 1.5rem;
-    }
-    .chart-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .filter-buttons {
-        justify-content: flex-start;
-    }
-    td,
-    th {
-        padding: 0.4rem 0.5rem;
-    }
-    .pct-cell {
-        gap: 0.3rem;
-    }
-    /* hide the bar column on very small screens to save space */
-    .bar-bg {
-        display: none;
-    }
-    .page-header {
-        flex-wrap: wrap;
-    }
+  .bar-bg {
+    width: 40px;
+  }
+  h1 {
+    font-size: 1.5rem;
+  }
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .filter-buttons {
+    justify-content: flex-start;
+  }
+  td,
+  th {
+    padding: 0.4rem 0.5rem;
+  }
+  .pct-cell {
+    gap: 0.3rem;
+  }
+  /* hide the bar column on very small screens to save space */
+  .bar-bg {
+    display: none;
+  }
+  .page-header {
+    flex-wrap: wrap;
+  }
 }
 
 /* ─── live indicator ─── */
 .live-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.8rem;
-    color: var(--pico-muted-color);
-    white-space: nowrap;
-    vertical-align: middle;
-    margin-left: 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+  white-space: nowrap;
+  vertical-align: middle;
+  margin-left: 0.4rem;
 }
 .live-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #22c55e;
-    flex-shrink: 0;
-    animation: pulse 2s ease-in-out infinite;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
 }
 .live-indicator--dim {
-    opacity: 0.35;
+  opacity: 0.35;
 }
 .live-indicator--dim .live-dot {
-    background: var(--pico-muted-color);
-    animation: none;
+  background: var(--pico-muted-color);
+  animation: none;
 }
 
 /* ─── live row dot (pages table) ─── */
 .live-row-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #22c55e;
-    margin-right: 0.4rem;
-    vertical-align: middle;
-    opacity: 0;
-    transition: opacity 0.3s;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 .live-row-dot--active {
-    opacity: 1;
-    animation: pulse 2s ease-in-out infinite;
+  opacity: 1;
+  animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.4;
-        transform: scale(0.75);
-    }
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
 }
 
 /* ─── breadcrumb ─── */
 .breadcrumb {
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
 }
 .breadcrumb a {
-    color: var(--pico-muted-color);
-    text-decoration: none;
+  color: var(--pico-muted-color);
+  text-decoration: none;
 }
 .breadcrumb a:hover {
-    color: var(--pico-primary);
+  color: var(--pico-primary);
 }

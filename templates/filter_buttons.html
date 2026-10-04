@@ -11,7 +11,6 @@
 {%- for btn in preset_buttons -%}
 <button
     type="button"
-    data-preset="{{ btn.key }}"
     class="{% if btn.active %}contrast{% else %}outline secondary{% endif %}"
     {%- if btn.active %} aria-current="page"{% endif %}
     hx-get="{{ btn.hx_url }}"

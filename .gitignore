@@ -9,9 +9,7 @@ target/
 /dev/
 /backups/
 .env
+.DS_Store
 
 # Auto-generated
-/static/main.css
-/static/stats.js
-/static/stats.js.map
 /static/*.gz

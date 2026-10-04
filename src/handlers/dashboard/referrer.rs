@@ -38,16 +38,16 @@ pub struct ReferrerData {
 }
 
 impl ReferrerData {
-    /// Builds the per-referrer ("reverse") view, or returns `None` if the
-    /// domain was never recorded as a referrer.
+    /// Builds the per-referrer ("reverse") view.
     pub async fn build(
         state: &'static InnerAppState,
         domain: String,
         range: DateRange,
         now: OffsetDateTime,
-    ) -> RespResult<Option<Self>> {
+    ) -> RespResult<Self> {
         let Some(referrer_id) = LinkedPage::id_for_domain(state, &domain).await? else {
-            return Ok(None);
+            return Err(RespErr::new(StatusCode::NOT_FOUND)
+                .user_msg("That referrer has no recorded visits."));
         };
 
         let filter = VisitFilter::referrer(referrer_id);
@@ -92,7 +92,7 @@ impl ReferrerData {
         let preset_buttons = link.preset_buttons("/hx/referrer", now.date());
         let zoom_url = link.url("/hx/referrer");
 
-        Ok(Some(Self {
+        Ok(Self {
             domain,
             total_visits,
             per_day,
@@ -102,7 +102,7 @@ impl ReferrerData {
             range,
             preset_buttons,
             zoom_url,
-        }))
+        })
     }
 }
 
@@ -135,11 +135,7 @@ pub async fn get(
         .with_view(PanelView::Referrers)
         .url("/");
 
-    let data = ReferrerData::build(state, q.domain, range, now)
-        .await?
-        .ok_or_else(|| {
-            RespErr::new(StatusCode::NOT_FOUND).user_msg("That referrer has no recorded visits.")
-        })?;
+    let data = ReferrerData::build(state, q.domain, range, now).await?;
 
     Ok(Referrer {
         base: Base::new(state, data.domain.clone()),

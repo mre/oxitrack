@@ -50,7 +50,8 @@
         // Reset all headers
         headers.forEach(function (h) {
           h.setAttribute("data-sort-dir", "");
-          h.querySelector(".sort-arrow") && (h.querySelector(".sort-arrow").textContent = "");
+          var arrow = h.querySelector(".sort-arrow");
+          if (arrow) arrow.textContent = "";
         });
 
         th.setAttribute("data-sort-dir", newDir);

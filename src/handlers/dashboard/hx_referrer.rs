@@ -5,7 +5,7 @@ use axum::{
     http::{HeaderName, HeaderValue},
     response::IntoResponse,
 };
-use axum_ctx::{RespErr, RespErrCtx, RespErrExt, RespResult, StatusCode};
+use axum_ctx::{RespErrCtx, RespErrExt, RespResult, StatusCode};
 
 use crate::{
     handlers::{
@@ -42,11 +42,7 @@ pub async fn get(
         .with_referrer(Some(&q.domain))
         .url("/referrer");
 
-    let data = ReferrerData::build(state, q.domain, range, now)
-        .await?
-        .ok_or_else(|| {
-            RespErr::new(StatusCode::NOT_FOUND).user_msg("That referrer has no recorded visits.")
-        })?;
+    let data = ReferrerData::build(state, q.domain, range, now).await?;
 
     let body = HxReferrer {
         total_visits: data.total_visits,

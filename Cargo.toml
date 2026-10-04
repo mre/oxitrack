@@ -2,24 +2,22 @@
 name = "oxitrack"
 description = "Self-hosted, simple and privacy respecting website traffic tracker"
 version = "0.12.0"
-authors = ["Mo Bitar <mo8it@proton.me>, Matthias Endler <matthias@endler.dev>"]
+authors = ["Mo Bitar <mo8it@proton.me>", "Matthias Endler <matthias@endler.dev>"]
 repository = "https://github.com/mre/oxitrack"
 license = "AGPL-3.0"
 keywords = ["selfhosted", "analytics", "traffic"]
 categories = ["web-programming", "web-programming::http-server"]
 edition = "2024"
+rust-version = "1.99"
 
 [dependencies]
 anyhow = "1"
-figment = { version = "0.10", features = ["toml", "env"] }
-askama = { version = "0.15", default-features = false, features = ["derive", "std"] }
-askama_web = { version = "0.15", features = ["axum-0.8"] }
-axum-ctx = "0.5"
+askama = { version = "0.16", default-features = false, features = ["derive", "std"] }
+askama_web = { version = "0.16", features = ["axum-0.8"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio", "json", "query"] }
-
-
-tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
-rand = { version = "0.9", default-features = false, features = ["thread_rng"] }
+axum-ctx = "0.5"
+figment = { version = "0.10", features = ["toml", "env"] }
+rand = { version = "0.10", default-features = false, features = ["thread_rng"] }
 # native-tls uses the OS TLS stack (SecureTransport / SChannel / OpenSSL) and
 # avoids pulling in rustls-platform-verifier → jni, which would otherwise bring
 # in duplicate old versions of thiserror, windows-sys, jni-sys, and getrandom.
@@ -27,11 +25,12 @@ reqwest = { version = "0.13", default-features = false, features = ["native-tls"
 serde = { version = "1", features = ["derive"] }
 serde_urlencoded = "0.7"
 
-sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "migrate", "time", "sqlite"] }
+sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "macros", "migrate", "time", "sqlite"] }
 time = { version = "0.3", features = ["serde-human-readable"] }
 tokio = { version = "1", default-features = false, features = ["rt-multi-thread", "signal"] }
-tower-http = { version = "0.6", default-features = false, features = ["cors", "trace", "compression-gzip", "set-header", "fs"] }
+tower-http = { version = "0.7", default-features = false, features = ["cors", "trace", "compression-gzip", "set-header", "fs"] }
 tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
 url = "2"
 
 [dev-dependencies]

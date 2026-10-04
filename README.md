@@ -26,7 +26,7 @@ Add the following script tag to your website, replacing `OXITRACK_BASE_URL` with
 <script type="module" src="https://OXITRACK_BASE_URL/count.js"></script>
 ```
 
-The script calls `/register?path=PATH` to receive a visitor ID. After the minimum delay (`min_delay_secs`), it calls `/post-sleep/VISITOR_ID` to count the visit. When the visitor leaves the page, `/page-left/VISITOR_ID` is called to record the time spent.
+The script calls `/register?path=PATH` to receive a visitor ID. After the minimum delay (`min_delay_secs`), it calls `/post-sleep/VISITOR_ID` to count the visit. When the visitor leaves the page, `/page-left/VISITOR_ID/TIME_ON_PAGE_SEC` is called to record the time spent.
 
 ### Path validation
 
@@ -87,7 +87,7 @@ OxiTrack logs to stdout at the `info` level by default. Set `RUST_LOG` to one of
 | ------------------------ | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `/api/counts`            | Visit count for each registered path     | `[{"path": String, "count": i64}]`                                                                                                   |
 | `/api/count?path=PATH`   | Visit count for a specific path          | `i64`                                                                                                                                |
-| `/api/history?path=PATH` | Full visit history for a specific path   | `{"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "spent_time_seconds": Option<i64>}]}` |
+| `/api/history?path=PATH` | Full visit history for a specific path   | `{"utc_offset": String, "visits": [{"registered_at": String, "referrer": Option<String>, "spent_time_secs": Option<i32>}]}` |
 
 ### Tracking script endpoints
 

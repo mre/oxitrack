@@ -9,7 +9,7 @@
 //! Missing / expired / already-consumed sessions return `Ok(None)` so callers
 //! can log-and-200 instead of 4xx-ing the user.
 
-use rand::Rng;
+use rand::RngExt;
 use time::OffsetDateTime;
 
 use crate::db::{DbConnection, DbPool};

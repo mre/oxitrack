@@ -158,9 +158,7 @@ mod tests {
 
     struct Req {
         path: &'static str,
-        status: StatusCode,
         mime: Option<Mime>,
-        output: Option<&'static str>,
         /// Optional `(header_name, expected_value)` assertion. Used to verify
         /// htmx-driven endpoints set `HX-Push-Url` so the browser address bar
         /// stays in sync with the active filter without any client-side glue.
@@ -171,9 +169,7 @@ mod tests {
         fn new(path: &'static str) -> Self {
             Self {
                 path,
-                status: StatusCode::OK,
                 mime: None,
-                output: None,
                 header: None,
             }
         }
@@ -197,10 +193,8 @@ mod tests {
             //
             // Session endpoints always return 200 — see the doc comments on
             // `post_sleep::get` / `page_left::get` for the rationale. Visitor
-            // IDs are now random 53-bit integers persisted in the `sessions`
-            // table, so we no longer assert a specific body here; the
-            // `simple_requests_with_known_ids` flow is exercised separately
-            // in the `visitor_state` unit tests and in end-to-end runs.
+            // IDs are random 53-bit integers persisted in the `sessions`
+            // table, so these smoke tests do not assert specific response bodies.
             Req::new("/post-sleep/0"),
             Req::new("/register?path=/").mime(mime::APPLICATION_JSON),
             Req::new("/register?path=/").mime(mime::APPLICATION_JSON),
@@ -294,7 +288,7 @@ mod tests {
                             .await
                             .unwrap();
 
-                        assert_eq!(response.status(), req.status, "path={}", req.path);
+                        assert_eq!(response.status(), StatusCode::OK, "path={}", req.path);
 
                         if let Some(mime) = req.mime {
                             assert_eq!(
@@ -320,15 +314,6 @@ mod tests {
                                 .to_str()
                                 .unwrap();
                             assert_eq!(actual, expected, "path={} header={name}", req.path);
-                        }
-
-                        if let Some(output) = req.output {
-                            assert_eq!(
-                                to_bytes(response.into_body(), 1 << 10).await.unwrap(),
-                                output,
-                                "path={}",
-                                req.path,
-                            );
                         }
                     }
                 });

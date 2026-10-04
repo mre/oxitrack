@@ -1,4 +1,4 @@
-FROM docker.io/library/rust:slim AS builder
+FROM docker.io/library/rust:1.99.0-slim-bookworm AS builder
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libssl-dev pkg-config \
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 RUN cargo build --release --locked
 
-FROM docker.io/library/debian:stable-slim
+FROM docker.io/library/debian:bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates libssl3 \

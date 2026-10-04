@@ -143,29 +143,13 @@ fn deserialize_opt_hour<'de, D: Deserializer<'de>>(d: D) -> Result<Option<u8>, D
 /// matter of extending this struct.
 #[derive(Clone, Default, Deserialize)]
 pub struct DateRange {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_opt_date",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_opt_date")]
     pub from: Option<Date>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_opt_date",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_opt_date")]
     pub to: Option<Date>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_opt_hour",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_opt_hour")]
     pub from_hour: Option<u8>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_opt_hour",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_opt_hour")]
     pub to_hour: Option<u8>,
 }
 
@@ -350,19 +334,6 @@ impl Preset {
         Self::AllTime,
     ];
 
-    /// Stable identifier used as the `data-preset` attribute and (optionally)
-    /// in URLs. Not currently parsed back, but useful for tests / debugging.
-    pub const fn key(self) -> &'static str {
-        match self {
-            Self::Today => "today",
-            Self::Last7 => "7",
-            Self::Last30 => "30",
-            Self::Last90 => "90",
-            Self::Last365 => "365",
-            Self::AllTime => "all",
-        }
-    }
-
     /// Human-readable button label.
     pub const fn label(self) -> &'static str {
         match self {
@@ -420,7 +391,6 @@ impl Preset {
 /// CSS state. Handlers build these (one per [`Preset`]) and pass them to the
 /// template.
 pub struct PresetButton {
-    pub key: &'static str,
     pub label: &'static str,
     pub hx_url: String,
     pub active: bool,
@@ -495,7 +465,6 @@ impl<'a> StatsLink<'a> {
                     view: self.view,
                 };
                 PresetButton {
-                    key: preset.key(),
                     label: preset.label(),
                     hx_url: build_url(hx_endpoint, &link),
                     active: active == Some(preset),
@@ -531,35 +500,35 @@ where
         now: OffsetDateTime,
         start_datetime: Option<PrimitiveDateTime>,
         end_datetime: Option<PrimitiveDateTime>,
-        trunc_sql: &str,
+        trunc_format: &str,
     ) -> RespResult<Vec<Self>> {
         let start_utc = start_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
         let end_utc = end_datetime.map(|pdt| local_to_utc(pdt, state.utc_offset));
 
-        let sql = format!(
-            r"SELECT {trunc_sql} AS trunc_registered_at,
+        let rows = sqlx::query_as::<Db, TruncDateCount>(
+            r"SELECT strftime(?, datetime(registered_at, ?)) AS trunc_registered_at,
             COUNT(registered_at) AS count FROM visits
             WHERE (? IS NULL OR path_id = ?)
               AND (? IS NULL OR referrer_id = ?)
               AND (? IS NULL OR registered_at >= ?)
               AND (? IS NULL OR registered_at < ?)
             GROUP BY trunc_registered_at
-            ORDER BY trunc_registered_at"
-        );
-
-        let rows = sqlx::query_as::<Db, TruncDateCount>(&sql)
-            .bind(filter.path_id)
-            .bind(filter.path_id)
-            .bind(filter.referrer_id)
-            .bind(filter.referrer_id)
-            .bind(start_utc)
-            .bind(start_utc)
-            .bind(end_utc)
-            .bind(end_utc)
-            .fetch_all(&state.pool)
-            .await
-            .ctx(StatusCode::INTERNAL_SERVER_ERROR)
-            .log_msg("Failed to query chart data!")?;
+            ORDER BY trunc_registered_at",
+        )
+        .bind(trunc_format)
+        .bind(state.posix_utc_offset_str)
+        .bind(filter.path_id)
+        .bind(filter.path_id)
+        .bind(filter.referrer_id)
+        .bind(filter.referrer_id)
+        .bind(start_utc)
+        .bind(start_utc)
+        .bind(end_utc)
+        .bind(end_utc)
+        .fetch_all(&state.pool)
+        .await
+        .ctx(StatusCode::INTERNAL_SERVER_ERROR)
+        .log_msg("Failed to query chart data!")?;
 
         let now_date_part = D::from(now);
         // `end_datetime` is exclusive; use the preceding instant so the chart
@@ -715,36 +684,48 @@ pub async fn build_chart(
         } else {
             start_dt
         };
-        let trunc = format!(
-            "strftime('%Y-%m-%d %H:00:00', datetime(registered_at, '{}'))",
-            state.posix_utc_offset_str
-        );
-        let points =
-            DataPoint::<ContiguousHour>::all(state, filter, now, start, end_dt, &trunc).await?;
+        let points = DataPoint::<ContiguousHour>::all(
+            state,
+            filter,
+            now,
+            start,
+            end_dt,
+            "%Y-%m-%d %H:00:00",
+        )
+        .await?;
         to_chart_bars(points, range, now)
     } else if whole_days < 91 {
-        let trunc = format!(
-            "strftime('%Y-%m-%d 00:00:00', datetime(registered_at, '{}'))",
-            state.posix_utc_offset_str
-        );
-        let points =
-            DataPoint::<ContiguousDay>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
+        let points = DataPoint::<ContiguousDay>::all(
+            state,
+            filter,
+            now,
+            start_dt,
+            end_dt,
+            "%Y-%m-%d 00:00:00",
+        )
+        .await?;
         to_chart_bars(points, range, now)
     } else if whole_days < 3653 {
-        let trunc = format!(
-            "strftime('%Y-%m-01 00:00:00', datetime(registered_at, '{}'))",
-            state.posix_utc_offset_str
-        );
-        let points =
-            DataPoint::<ContiguousMonth>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
+        let points = DataPoint::<ContiguousMonth>::all(
+            state,
+            filter,
+            now,
+            start_dt,
+            end_dt,
+            "%Y-%m-01 00:00:00",
+        )
+        .await?;
         to_chart_bars(points, range, now)
     } else {
-        let trunc = format!(
-            "strftime('%Y-01-01 00:00:00', datetime(registered_at, '{}'))",
-            state.posix_utc_offset_str
-        );
-        let points =
-            DataPoint::<ContiguousYear>::all(state, filter, now, start_dt, end_dt, &trunc).await?;
+        let points = DataPoint::<ContiguousYear>::all(
+            state,
+            filter,
+            now,
+            start_dt,
+            end_dt,
+            "%Y-01-01 00:00:00",
+        )
+        .await?;
         to_chart_bars(points, range, now)
     }
 }
