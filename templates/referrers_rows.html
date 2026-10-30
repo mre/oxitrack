@@ -5,7 +5,7 @@
 #}
 {% if referrers.is_empty() %}
 <tr>
-    <td colspan="3" class="filter-empty">No matching referrers.</td>
+    <td colspan="4" class="filter-empty">No matching referrers.</td>
 </tr>
 {% else %}
 {% for (rc, pct) in &referrers %}
@@ -16,6 +16,10 @@
         >
     </td>
     <td class="num">{{ rc.count }}</td>
+    <td class="num">
+        {% match rc.median_duration %} {% when Some with (d) %}{{ d }} {% when None %}&mdash; {%
+        endmatch %}
+    </td>
     <td class="num pct-cell">
         <span class="bar-bg"><span class="bar-fill" style="width: {{ pct }}"></span></span>
         {{ pct }}

@@ -89,6 +89,7 @@
                     <tr>
                         <th>Domain</th>
                         <th class="num">Visits</th>
+                        <th class="num">Median duration</th>
                         <th class="num">Share</th>
                     </tr>
                 </thead>
@@ -102,6 +103,10 @@
                             >
                         </td>
                         <td class="num">{{ rc.count }}</td>
+                        <td class="num">
+                            {% match rc.median_duration %} {% when Some with (d) %}{{ d }} {% when None %}&mdash; {%
+                            endmatch %}
+                        </td>
                         <td class="num pct-cell">
                             <span class="bar-bg"
                                 ><span
