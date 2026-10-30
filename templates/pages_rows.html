@@ -23,7 +23,7 @@
         >
     </td>
     <td class="num">
-        {% match vc.avg_duration %} {% when Some with (d) %}{{ d }} {% when None %}&mdash; {%
+        {% match vc.median_duration %} {% when Some with (d) %}{{ d }} {% when None %}&mdash; {%
         endmatch %}
     </td>
     <td class="num pct-cell">

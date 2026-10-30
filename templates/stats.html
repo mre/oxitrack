@@ -38,9 +38,9 @@
                     <td>{{ "{:.2}"|format(visits.per_day) }}</td>
                 </tr>
                 <tr>
-                    <td>Avg. time spent</td>
+                    <td>Median time spent</td>
                     <td>
-                        {% match visits.average_time_spent %} {% when Some with
+                        {% match visits.median_time_spent %} {% when Some with
                         (t) %}{{ t }} {% when None %}&mdash; {% endmatch %}
                     </td>
                 </tr>
